@@ -352,8 +352,15 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                 {
                     if ( g_Plugin.nDockedDlgIsWaitingForOnStart != 1 )
                     {
+                        if ( g_QSearchDlg.uWmShowFlags == QS_SF_DLGSWITCH )
+                            g_QSearchDlg.uWmShowFlags = 0; // forbid to pick up selected text on WM_SHOWWINDOW
+                        else
+                            g_QSearchDlg.uWmShowFlags = QS_SF_CANPICKUPSELTEXT; // allow to pick up selected text on WM_SHOWWINDOW
+                        
                         SendMessage( g_Plugin.hMainWnd, AKD_DOCK, 
                           DK_SHOW, (LPARAM) g_QSearchDlg.pDockData );
+
+                        g_QSearchDlg.uWmShowFlags = 0;
                     }
                     else
                         g_QSearchDlg.pDockData->dwFlags |= DKF_HIDDEN;
@@ -377,7 +384,7 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                 return UD_NONUNLOAD_NONACTIVE;
             }
         }
-        SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, 0 );
+        SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, QS_SF_CANPICKUPSELTEXT ); // allow to pick up selected text
     }
 
     // Stay in memory, and show as active
@@ -923,9 +930,12 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 if ( g_Plugin.nDockedDlgIsWaitingForOnStart == 1 )
                 {
-                    // this code has been originally taken from HexSel plugin :)
+                    // This code has been originally taken from HexSel plugin :)
+                    // We get here when QSearch::QSearch is autoloaded
                     g_Plugin.nDockedDlgIsWaitingForOnStart = 2;
+                    g_QSearchDlg.uWmShowFlags = 0; // forbid to pick up selected text on WM_SHOWWINDOW
                     ShowWindow(g_QSearchDlg.hDlg, SW_SHOW);
+                    g_QSearchDlg.uWmShowFlags = 0; // just in case :)
                     g_QSearchDlg.pDockData->dwFlags &= ~DKF_HIDDEN;
                     g_Plugin.nDockedDlgIsWaitingForOnStart = 0;
                 }

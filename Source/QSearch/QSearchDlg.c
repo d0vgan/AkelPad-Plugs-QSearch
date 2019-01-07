@@ -65,6 +65,7 @@ const wchar_t* cszHighlightMainW = L"Coder::HighLight";
         pQSearchDlg->pDockData = NULL;
         pQSearchDlg->szFindTextW[0] = 0;
         pQSearchDlg->uSearchOrigin = QS_SO_UNKNOWN;
+        pQSearchDlg->uWmShowFlags = 0;
     }
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -102,7 +103,7 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
 void qsearchDoSearchText(HWND hEdit, DWORD dwParams);
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev);
 void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF);
-void qsearchDoShowHide(HWND hDlg, BOOL bShow);
+void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags);
 void qsearchDoTryHighlightAll(HWND hDlg);
 void qsearchDoTryUnhighlightAll(void);
 HWND qsearchGetFindEdit(HWND hDlg);
@@ -1455,13 +1456,13 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 }
 
                 //qsearchDoQuit( hFindEdit, hToolTip, hPopupMenuLoaded, hTextNotFoundBrush, hTextNotRegExpBrush, hTextEOFBrush );
-                qsearchDoShowHide(hDlg, FALSE);
+                qsearchDoShowHide(hDlg, FALSE, 0);
                 return 1;
             }
             else if ( id == IDC_BT_CANCEL )
             {
                 //qsearchDoQuit( hFindEdit, hToolTip, hPopupMenuLoaded, hTextNotFoundBrush, hTextNotRegExpBrush, hTextEOFBrush );
-                qsearchDoShowHide(hDlg, FALSE);
+                qsearchDoShowHide(hDlg, FALSE, 0);
                 return 1;
             }
             else if ( id == IDC_BT_FINDNEXT )
@@ -1832,17 +1833,20 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 qs_dwHotKey = getQSearchHotKey();
                 qs_bHotKeyPressedOnShow = isQSearchHotKeyPressed();
 
-                if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
+                if ( g_QSearchDlg.uWmShowFlags & QS_SF_CANPICKUPSELTEXT )
                 {
-                    if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW) )
+                    if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
                     {
-                        if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+                        if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW) )
                         {
-                            qs_bForceFindFirst = FALSE;
-                            qsearchDoTryHighlightAll(hDlg);
+                            if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+                            {
+                                qs_bForceFindFirst = FALSE;
+                                qsearchDoTryHighlightAll(hDlg);
+                            }
+                            else
+                                qs_bForceFindFirst = TRUE;
                         }
-                        else
-                            qs_bForceFindFirst = TRUE;
                     }
                 }
 
@@ -1979,7 +1983,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         }
         case QSM_SHOWHIDE:
         {
-            qsearchDoShowHide( hDlg, (BOOL) wParam );
+            qsearchDoShowHide( hDlg, (BOOL) wParam, (UINT) lParam );
             return 1;
         }
         case QSM_SETNOTFOUND:
@@ -2050,6 +2054,18 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         case QSM_QUIT:
         {
             qsearchDoQuit( hFindEdit, hToolTip, hPopupMenuLoaded, hTextNotFoundBrush, hTextNotRegExpBrush, hTextEOFBrush );
+            return 1;
+        }
+        case QSN_DLGSWITCH:
+        {
+            g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+            qs_bEditTextChanged = TRUE;
+            qs_bForceFindFirst = TRUE;
+            //getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
+            //if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+            //{
+            //    qsearchDoTryHighlightAll( hDlg );
+            //}
             return 1;
         }
         case WM_INITDIALOG:
@@ -2426,7 +2442,7 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF
     UpdateWindow(hEdit);
 }
 
-void qsearchDoShowHide(HWND hDlg, BOOL bShow)
+void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags)
 {
     BOOL bChangeSelection = !IsWindowVisible(hDlg);
 
@@ -2455,11 +2471,10 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow)
         qs_nEditEOF = 0;
     }
 
-    SendMessage( 
-        g_Plugin.hMainWnd, 
-        AKD_DOCK,
-        (bShow ? DK_SHOW : DK_HIDE),
-        (LPARAM) g_QSearchDlg.pDockData );
+    g_QSearchDlg.uWmShowFlags = 0; // forbid to pick up selected text on WM_SHOWWINDOW
+    SendMessage( g_Plugin.hMainWnd, AKD_DOCK,
+      (bShow ? DK_SHOW : DK_HIDE), (LPARAM) g_QSearchDlg.pDockData );
+    g_QSearchDlg.uWmShowFlags = 0; // just in case :)
 
     // Change AkelPad's plugin status (running/not running)
     if ( g_szFunctionQSearchW[0] )
@@ -2496,25 +2511,28 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow)
         BOOL bGotSelectedText = FALSE;
         HWND hEdit = qsearchGetFindEdit(hDlg);
 
-        if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
+        if ( uShowFlags & QS_SF_CANPICKUPSELTEXT )
         {
-            bGotSelectedText = getAkelPadSelectedText(g_QSearchDlg.szFindTextW);
-            if ( bGotSelectedText )
+            if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
             {
-                bChangeSelection = TRUE;
-            }
-            else
-            {
-                getEditFindText(hEdit, g_QSearchDlg.szFindTextW);
-            }
-            setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
-            if ( (!bChangeSelection) || g_Options.dwFlags[OPTF_EDIT_FOCUS_SELECTALL] )
-            {
-                SendMessage(hEdit, EM_SETSEL, 0, -1);
-#ifdef _DEBUG
-                Debug_Output("qsearchDoShowHide, PickUpSel, SETSEL(0, -1)\n");
-#endif
-                qs_bEditSelJustChanged = TRUE;
+                bGotSelectedText = getAkelPadSelectedText(g_QSearchDlg.szFindTextW);
+                if ( bGotSelectedText )
+                {
+                    bChangeSelection = TRUE;
+                }
+                else
+                {
+                    getEditFindText(hEdit, g_QSearchDlg.szFindTextW);
+                }
+                setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
+                if ( (!bChangeSelection) || g_Options.dwFlags[OPTF_EDIT_FOCUS_SELECTALL] )
+                {
+                    SendMessage(hEdit, EM_SETSEL, 0, -1);
+    #ifdef _DEBUG
+                    Debug_Output("qsearchDoShowHide, PickUpSel, SETSEL(0, -1)\n");
+    #endif
+                    qs_bEditSelJustChanged = TRUE;
+                }
             }
         }
         if ( bChangeSelection && !g_Options.dwFlags[OPTF_EDIT_FOCUS_SELECTALL] )

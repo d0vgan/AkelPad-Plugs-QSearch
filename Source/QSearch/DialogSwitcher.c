@@ -601,10 +601,12 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             SendMessage(ei.hWndEdit, WM_SETREDRAW, TRUE, 0);
             if ( g_QSearchDlg.hDlg )
             {
-                SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, 0 );
+                SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, 0 ); // forbid to pick up selected text
             }
             else
             {
+                g_QSearchDlg.uWmShowFlags = QS_SF_DLGSWITCH;
+
                 if ( ds_bOldWindows )
                 {
                     PLUGINCALLSENDA pcsA;
@@ -627,6 +629,8 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
 
                     SendMessageW( ds_hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
                 }
+
+                g_QSearchDlg.uWmShowFlags = 0;
             }
             if ( bSetText && g_QSearchDlg.hDlg )
             {
@@ -643,6 +647,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                         SendMessageW( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextW );
                     SendMessageW( hFindTextWnd, EM_SETSEL, 0, -1 );
                 }
+                SendMessage( g_QSearchDlg.hDlg, QSN_DLGSWITCH, TRUE, 0 );
             }
             break;
     }
