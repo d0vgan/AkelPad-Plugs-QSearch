@@ -1,0 +1,105 @@
+#include "resource.h"
+#include <windows.h>
+
+IDI_QSEARCH ICON DISCARDABLE "QSearch.ico"
+
+IDD_QSEARCH DIALOGEX 6, 12, 418, 16
+FONT 8, "MS Shell Dlg", 0, 0
+STYLE WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+EXSTYLE WS_EX_CONTROLPARENT
+BEGIN
+    CONTROL "", IDC_ED_FINDTEXT, "Edit", WS_CHILD | WS_TABSTOP | ES_WANTRETURN | 
+            ES_AUTOHSCROLL | NOT WS_VISIBLE, 18, 2, 160, 13, WS_EX_CLIENTEDGE
+    CONTROL "", IDC_CB_FINDTEXT, "ComboBox", WS_CHILD | WS_TABSTOP | WS_VSCROLL | 
+            CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | NOT WS_VISIBLE, 18, 2, 160, 100, WS_EX_CLIENTEDGE
+    CONTROL "", IDC_PB_PROGRESS, "msctls_progress32", WS_CHILD | NOT WS_VISIBLE, 
+            182, 5, 108, 8
+    CONTROL "Match case", IDC_CH_MATCHCASE, "Button", WS_VISIBLE | 
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 182, 4, 82, 10
+    CONTROL "Whole word", IDC_CH_WHOLEWORD, "Button", WS_VISIBLE |
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 266, 4, 72, 10
+    CONTROL "Highlight all", IDC_CH_HIGHLIGHTALL, "Button", WS_VISIBLE |
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 340, 4, 72, 10
+    CONTROL "", IDC_BT_CANCEL, "Button", WS_VISIBLE | WS_CHILD | BS_FLAT | 
+            BS_PUSHBUTTON | BS_OWNERDRAW | BS_CENTER | BS_VCENTER, 4, 3, 10, 10
+END
+
+IDD_QSEARCH_NEW_01 DIALOGEX 6, 12, 466, 16
+FONT 8, "MS Shell Dlg", 0, 0
+STYLE WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+EXSTYLE WS_EX_CONTROLPARENT
+BEGIN
+    CONTROL "", IDC_ED_FINDTEXT, "Edit", WS_CHILD | WS_TABSTOP | ES_WANTRETURN | 
+            ES_AUTOHSCROLL | NOT WS_VISIBLE, 18, 2, 160, 13, WS_EX_CLIENTEDGE
+    CONTROL "", IDC_CB_FINDTEXT, "ComboBox", WS_CHILD | WS_TABSTOP | WS_VSCROLL | 
+            CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | NOT WS_VISIBLE, 18, 2, 160, 100, WS_EX_CLIENTEDGE
+    CONTROL ">", IDC_BT_FINDNEXT, "Button", WS_VISIBLE | 
+            WS_CHILD | BS_PUSHBUTTON | WS_TABSTOP, 206, 2, 18, 12
+    CONTROL "<", IDC_BT_FINDPREV, "Button", WS_VISIBLE | 
+            WS_CHILD | BS_PUSHBUTTON | WS_TABSTOP, 184, 2, 18, 12
+    CONTROL "", IDC_PB_PROGRESS, "msctls_progress32", WS_CHILD | NOT WS_VISIBLE, 
+            232, 5, 108, 8
+    CONTROL "Match case", IDC_CH_MATCHCASE, "Button", WS_VISIBLE | 
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 230, 4, 82, 10
+    CONTROL "Whole word", IDC_CH_WHOLEWORD, "Button", WS_VISIBLE |
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 314, 4, 72, 10
+    CONTROL "Highlight all", IDC_CH_HIGHLIGHTALL, "Button", WS_VISIBLE |
+            WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX, 388, 4, 72, 10
+    CONTROL "", IDC_BT_CANCEL, "Button", WS_VISIBLE | WS_CHILD | BS_FLAT | 
+            BS_PUSHBUTTON | BS_OWNERDRAW | BS_CENTER | BS_VCENTER, 4, 3, 10, 10
+END
+
+IDR_MENU_OPTIONS MENU
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Search: On-the-fly mode",                IDM_SRCHONTHEFLYMODE
+        MENUITEM "Search: Always from beginning",          IDM_SRCHFROMBEGINNING
+        MENUITEM "Search: Use special characters ( \\n, \\t, * and ? )", IDM_SRCHUSESPECIALCHARS
+        MENUITEM "Search: Use regular expressions",        IDM_SRCHUSEREGEXP
+        MENUITEM "Search: Pick up selected text",          IDM_SRCHPICKUPSELECTION
+        MENUITEM "Search: SelFind picks up selected text", IDM_SRCHSELFINDPICKUP
+        MENUITEM "Search: Stop at EOF (end of file)",      IDM_SRCHSTOPEOF
+        MENUITEM "Window: Docked top",                     IDM_SRCHWNDDOCKEDTOP
+        MENUITEM "Window: Select all when focused",        IDM_EDITFOCUSSELECTALL
+        MENUITEM "Window: Catch main F3",                  IDM_CATCHMAINF3
+        MENUITEM "Window: Catch main Esc",                 IDM_CATCHMAINESC
+        MENUITEM "Window: Hotkey hides the panel",         IDM_HOTKEYHIDESPANEL
+        MENUITEM "Window: Editor auto-focus",              IDM_EDITORAUTOFOCUS
+        MENUITEM "Window: QSearch auto-focus",             IDM_QSEARCHAUTOFOCUS
+    END
+END
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 6, 0, 0, 0
+ PRODUCTVERSION 6, 0, 0, 0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "042204b0"
+        BEGIN
+            VALUE "Comments", "Pig is really neat! :-)"
+            VALUE "CompanyName", "Full of Madness Co."
+            VALUE "FileDescription", "QSearch plugin for AkelPad text editor"
+            VALUE "FileVersion", "6, 0, 0, 0"
+            VALUE "InternalName", "QSearch"
+            VALUE "LegalCopyright", "(C) Sep 2007 - Dec 2014, Vitaliy Dovgan aka DV"
+            VALUE "OriginalFilename", "QSearch.dll"
+            VALUE "ProductName", "QSearch plugin for AkelPad text editor"
+            VALUE "ProductVersion", "6, 0, 0, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x422, 1200
+    END
+END
