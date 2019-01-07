@@ -1628,6 +1628,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         {
                             CheckMenuItem( hPopupMenu, IDM_SRCHUSEREGEXP, 
                               MF_BYCOMMAND | MF_UNCHECKED );
+                            EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE,
+                              MF_BYCOMMAND | MF_GRAYED );
                             g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] = 0;
                         }
                         qsdlgShowHideWholeWordCheckBox(hDlg);
@@ -1640,6 +1642,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         {
                             CheckMenuItem( hPopupMenu, IDM_SRCHUSESPECIALCHARS, 
                               MF_BYCOMMAND | MF_UNCHECKED );
+                            EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE,
+                              MF_BYCOMMAND | MF_ENABLED );
                             g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] = 0;
                         }
                         qsdlgShowHideWholeWordCheckBox(hDlg);
@@ -1906,6 +1910,12 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 }
                 CheckMenuItem( hPopupMenu, IDM_START + i, MF_BYCOMMAND | uCheck );
             }
+
+            if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] )
+                uCheck = MF_BYCOMMAND | MF_ENABLED;
+            else
+                uCheck = MF_BYCOMMAND | MF_GRAYED;
+            EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, uCheck );
 
             TrackPopupMenuEx(hPopupMenu, 0, pt.x, pt.y, hDlg, NULL);
 
@@ -2879,7 +2889,10 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams)
     if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] )
     {
         dwSearchFlags |= FRF_REGEXP;
-        //dwSearchFlags |= FRF_REGEXPNONEWLINEDOT;
+        if ( g_Options.dwFlags[OPTF_SRCH_REGEXP_DOT_NEWLINE] == 0 )
+        {
+            dwSearchFlags |= FRF_REGEXPNONEWLINEDOT;
+        }
     }
 
     if ( g_Plugin.bOldWindows )

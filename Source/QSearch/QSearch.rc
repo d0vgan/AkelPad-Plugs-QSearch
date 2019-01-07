@@ -57,6 +57,7 @@ BEGIN
         MENUITEM "Search: Always from beginning",          IDM_SRCHFROMBEGINNING
         MENUITEM "Search: Use special characters ( \\n, \\t, * and ? )", IDM_SRCHUSESPECIALCHARS
         MENUITEM "Search: Use regular expressions",        IDM_SRCHUSEREGEXP
+        MENUITEM "Search:  .  matches  \\n  in reg.expressions", IDM_SRCHREGEXPDOTNEWLINE
         MENUITEM "Search: Pick up selected text",          IDM_SRCHPICKUPSELECTION
         MENUITEM "Search: SelFind picks up selected text", IDM_SRCHSELFINDPICKUP
         MENUITEM "Search: Stop at EOF (end of file)",      IDM_SRCHSTOPEOF
@@ -71,8 +72,8 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6, 5, 0, 0
- PRODUCTVERSION 6, 5, 0, 0
+ FILEVERSION 6, 6, 0, 0
+ PRODUCTVERSION 6, 6, 0, 0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -90,12 +91,12 @@ BEGIN
             VALUE "Comments", "Pig is really neat! :-)"
             VALUE "CompanyName", "Full of Madness Co."
             VALUE "FileDescription", "QSearch plugin for AkelPad text editor"
-            VALUE "FileVersion", "6, 5, 0, 0"
+            VALUE "FileVersion", "6, 6, 0, 0"
             VALUE "InternalName", "QSearch"
-            VALUE "LegalCopyright", "(C) Sep 2007 - Jan 2016, Vitaliy Dovgan aka DV"
+            VALUE "LegalCopyright", "(C) Sep 2007 - Mar 2016, Vitaliy Dovgan aka DV"
             VALUE "OriginalFilename", "QSearch.dll"
             VALUE "ProductName", "QSearch plugin for AkelPad text editor"
-            VALUE "ProductVersion", "6, 5, 0, 0"
+            VALUE "ProductVersion", "6, 6, 0, 0"
         END
     END
     BLOCK "VarFileInfo"

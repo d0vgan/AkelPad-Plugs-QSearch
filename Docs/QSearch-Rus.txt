@@ -97,7 +97,14 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Поиск с регулярными выражениями. Используется реализация регулярных
      выражений в AkelPad.
 
-5) "Search: Pick up selected text"
+5) "Search: . matches \n in reg.expressions"
+   "Поиск: . захватывает \n в рег.выражениях"
+   srch_regexp_dot_newline = 0
+     При поиске с регулярными выражениями,  .  не захватывает  \n
+   srch_regexp_dot_newline = 1
+     При поиске с регулярными выражениями,  .  захватывает  \n
+
+6) "Search: Pick up selected text"
    "Поиск: Подхватывать выделенный текст"
    srch_pickup_selection = 1
      При вызове QSearch или при нажатии F3 в окне редактирования AkelPad,
@@ -120,7 +127,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      При снятии галочки "Search: Pick up selected text" значение параметра
      srch_pickup_selection устанавливается в 10.
 
-6) "Search: SelFind picks up selected text"
+7) "Search: SelFind picks up selected text"
    "Поиск: SelFind подхватывает выделенный текст"
    srch_selfind_pickup = 0
      Вызов SelFindNext или SelFindPrev не меняет текст в строке поиска 
@@ -129,7 +136,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Вызов SelFindNext или SelFindPrev вставляет в строку поиска панели 
      QSearch текст, выделенный в окне редактирования AkelPad.
 
-7) "Search: Stop at EOF (end of file)"
+8) "Search: Stop at EOF (end of file)"
    "Поиск: Останавливаться в конце файла"
    srch_stop_eof = 0
      При достижении конца файла поиск продолжается с начала этого файла.
@@ -145,14 +152,14 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      При снятии галочки "Search: Stop at EOF" значение параметра
      srch_stop_eof устанавливается в 10.
 
-8) "Window: Docked top"
+9) "Window: Docked top"
    "Окно: Расположить сверху"
    srch_wnd_dockedtop = 1
      Панель QSearch находится в верхней клиентской части окна AkelPad.
    srch_wnd_dockedtop = 0
      Панель QSearch находится в нижней клиентской части окна AkelPad.
 
-9) "Window: Select all when focused"
+10) "Window: Select all when focused"
    "Окно: Фокус ввода выделяет всё"
    edit_focus_selectall = 1 
      Каждый раз, когда строка поиска QSearch получает фокус ввода, 
@@ -161,7 +168,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Весь текст в строке поиска выделяется только при явном вызове 
      QSearch::QSearch.
 
-10) "Window: Catch main F3"
+11) "Window: Catch main F3"
    "Окно: Обрабатывать F3 от главного окна"
    catch_main_f3 = 1
      Нажатие клавиши F3 (Shift+F3) в окне редактора AkelPad продолжает 
@@ -170,7 +177,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
    catch_main_f3 = 0
      Стандартное поведение AkelPad.
 
-11) "Window: Catch main Esc"
+12) "Window: Catch main Esc"
    "Окно: Обрабатывать Esc от главного окна"
    catch_main_esc = 1
      Нажатие клавиши Esc в окне редактора AkelPad скрывает панель QSearch,
@@ -189,7 +196,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      При снятии галочки "Window: Catch main Esc" значение параметра
      catch_main_esc устанавливается в 10.
 
-12) "Window: Hotkey hides the panel" 
+13) "Window: Hotkey hides the panel" 
    "Окно: Hotkey скрывает панель"
    hotkey_hides_panel = 1
      При нажатии "горячей клавиши" плагина в панели QSearch, она (панель) 
@@ -199,7 +206,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      При нажатии "горячей клавиши" плагина в панели QSearch, фокус ввода
      передается окну редактирования AkelPad.
 
-13) "Window: Editor auto-focus"
+14) "Window: Editor auto-focus"
    "Окно: Авто-фокус в редактор"
    editor_autofocus = 1
      При qsearch_autofocus = 1:
@@ -218,7 +225,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Ничего особенного не происходит: окно редактирования AkelPad не получает
      фокус ввода автоматически при наведении указателя мыши.
 
-14) "Window: QSearch auto-focus"
+15) "Window: QSearch auto-focus"
    "Окно: Авто-фокус в QSearch"
    qsearch_autofocus = 1
      Если указатель мыши передвинулся в строку поиска панели QSearch, то
@@ -231,44 +238,44 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
        Если указатель мыши передвинулся в строку поиска панели QSearch, то
        фокус ввода переходит к строке поиска.
 
-15) dock_rect_disabled = 1
+16) dock_rect_disabled = 1
      Если значение этого параметра вручную установлено в 1, то координаты
      "встроенной" панели QSearch не будут сохраняться.
 
-16) dock_rect = ...
+17) dock_rect = ...
      (внутренний параметр, сохраняется автоматически при 'dock_rect_disabled'
      равном 0)
 
-17) color_notfound = FFE0E000
+18) color_notfound = FFE0E000
      Цвет фона, который устанавливается в случае, когда искомый текст не
      найден. Этот цвет задается в виде "RRGGBB00", где RR, GG и BB - это
      шестнадцатеричные значения красного, зеленого и синего цветов (от 00
      до FF).
 
-18) color_notregexp=F8E0F800
+19) color_notregexp=F8E0F800
      Цвет фона, который устанавливается в случае неудачного регулярного
      выражения. Этот цвет задается в виде "RRGGBB00", где RR, GG и BB -
      это шестнадцатеричные значения красного, зеленого и синего цветов
      (от 00 до FF).
 
-19) color_eof = E4FFE400
+20) color_eof = E4FFE400
      Цвет фона, который устанавливается при пересечении конца файла (когда
      поиск продолжается с начала файла). Этот цвет задается в виде 
      "RRGGBB00", где RR, GG и BB - это шестнадцатеричные значения красного,
      зеленого и синего цветов (от 00 до FF).
      При установке "color_eof = FFFFFF00" цвет меняться не будет.
 
-20) color_highlight = C0FFC000
+21) color_highlight = C0FFC000
      Цвет фона для текста, который подсвечивается при установленной галочке
      "Highlight all". Этот цвет задается в виде "RRGGBB00", где RR, GG и BB -
      это шестнадцатеричные значения красного, зеленого и синего цветов (от 00
      до FF).
 
-21) highlight_mark_id = 1001
+22) highlight_mark_id = 1001
      Параметр 'ID' для плагина HighLight когда QSearch вызывает его функцию
      "HighLight::Main" для подсветки (пометки) текста.
 
-22) highlight_state = 0
+23) highlight_state = 0
     (сохраняется автоматически при вкл/выкл галочки "Highlight all").
     Также можно вручную установить одно из следующих значений:
     highlight_state = 10
@@ -276,7 +283,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
     highlight_state = 11
       При запуске AkelPad галочка "Highlight all" всегда установлена.
 
-23) use_alt_hotkeys = 0
+24) use_alt_hotkeys = 0
      Дополнительные сочетания клавиш в панели QSearch отключены.
     use_alt_hotkeys = 1
      В панели QSearch доступны следующие дополнительные сочетания клавиш:
@@ -284,7 +291,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Alt+alt_whole_word    (Alt+W) - Слово целиком (whole word) вкл/выкл
      Alt+alt_highlight_all (Alt+H) - Подсветить все (highlight) вкл/выкл
 
-24) alt_match_case = 67
+25) alt_match_case = 67
      Если 'use_alt_hotkeys' включено (установлено в 1), этот параметр задаёт
      код быстрой клавиши для галочки "Учитывать регистр" (панель QSearch).
      Значение 67 соответствует клавише 'C', т.е. получаем сочетание Alt+C.
@@ -294,23 +301,23 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      Для детальной информации по кодам клавиш см. страницу Virtual-Key Codes
      в MSDN.
 
-25) alt_whole_word = 87
+26) alt_whole_word = 87
      Если 'use_alt_hotkeys' включено (установлено в 1), этот параметр задаёт
      код быстрой клавиши для галочки "Слово целиком" (панель QSearch).
      Значение 87 соответствует клавише 'W', т.е. получаем сочетание Alt+W.
      См. 'alt_match_case' для более детальной информации.
 
-26) alt_highlight_all = 72
+27) alt_highlight_all = 72
      Если 'use_alt_hotkeys' включено (установлено в 1), этот параметр задаёт
      код быстрой клавиши для галочки "Подсветить все" (панель QSearch).
      Значение 72 соответствует клавише 'H', т.е. получаем сочетание Alt+H.
      См. 'alt_match_case' для более детальной информации.
 
-27) find_history_items = 15
+28) find_history_items = 15
      Максимальное количество элементов в истории поиска (выпадающем списке).
      Установка этого значения в 0 отключает историю поиска.
 
-28) history_save = 3
+29) history_save = 3
      Может быть установлено в 0 или быть суммой следующих значений:
      0 - история поиска и состояние галочек не сохраняется.
      1 - история поиска сохраняется в Системном Реестре.
@@ -320,14 +327,14 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
          настройки AkelPad (например, в .ini файл).
          Позволяет сделать настройки QSearch полностью портабельными.
 
-29) new_ui = 0
+30) new_ui = 0
      QSearch показывает свой старый "классический" интерфейс:
      [искомый текст]  [ ]Учит.регистр [ ]Слов.целиком [ ]Подсв.все
     new_ui = 1
      QSearch показывает обновлённый "классический" интерфейс (с кнопками):
      [искомый текст]  [ < ] [ > ]  [ ]Учит.регистр [ ]Слов.целиком [ ]Подсв.все
 
-30) select_by_f3 = 0
+31) select_by_f3 = 0
      Актуально при установленных галочках "Search: Pick up selected text" и
      "Window: Catch main F3".
      Когда в окне редактирования нет выделенного текста, F3 использует текст
@@ -347,7 +354,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      этого слова.
      (Пример: с|лово, сл|ово, сло|во, слов|о - но не слово| или |слово.)
 
-31) adj_incompl_regexp = 1
+32) adj_incompl_regexp = 1
      Корректирует "незавершённое" регулярное выражение: символы "+", "*",
      "+?" and "*?" в конце регулярного выражения игнорируются, чтобы
      избежать выделения до конца файла.
@@ -363,6 +370,9 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 --------
 История:
 --------
+v.6.6 (Март 2016)
+ + добавлено: 'srch_regexp_dot_newline'
+
 v.6.5 (Январь 2016)
  + добавлено: 'adj_incompl_regexp'
 
@@ -606,7 +616,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Jan 2016, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Mar 2016, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Этот плагин является бесплатным (бесплатным как для частного, так и для
