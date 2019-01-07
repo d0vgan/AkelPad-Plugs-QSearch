@@ -2650,6 +2650,15 @@ static void adjustIncompleteRegExA(char* szTextA)
 {
     int n1, n2;
 
+    if ( g_Options.dwAdjIncomplRegExp == 0 )
+        return;
+
+    if ( g_Options.dwAdjIncomplRegExp == 2 )
+    {
+        if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] == 0 )
+            return;
+    }
+
     if ( !szTextA )
         return; // NULL, nothing to do
 
@@ -2701,6 +2710,15 @@ static void adjustIncompleteRegExA(char* szTextA)
 static void adjustIncompleteRegExW(wchar_t* szTextW)
 {
     int n1, n2;
+
+    if ( g_Options.dwAdjIncomplRegExp == 0 )
+        return;
+
+    if ( g_Options.dwAdjIncomplRegExp == 2 )
+    {
+        if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] == 0 )
+            return;
+    }
 
     if ( !szTextW )
         return; // NULL, nothing to do

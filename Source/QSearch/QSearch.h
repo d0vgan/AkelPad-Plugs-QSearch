@@ -53,6 +53,7 @@
         DWORD    dwHistorySave;
         DWORD    dwNewUI;
         DWORD    dwSelectByF3;
+        DWORD    dwAdjIncomplRegExp;
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);

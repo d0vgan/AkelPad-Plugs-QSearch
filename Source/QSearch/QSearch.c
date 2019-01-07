@@ -65,6 +65,7 @@ void CloseLog(void)
 #define  DEFAULT_HISTORY_SAVE        0x03
 #define  DEFAULT_QS_UI               QS_UI_NEW_01
 #define  DEFAULT_SELECT_BY_F3        2
+#define  DEFAULT_ADJ_INCOMPL_REGEXP  1
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
@@ -122,6 +123,7 @@ void CloseLog(void)
         pOptions->dwHistorySave = WRONG_DWORD_VALUE;
         pOptions->dwNewUI = WRONG_DWORD_VALUE;
         pOptions->dwSelectByF3 = WRONG_DWORD_VALUE;
+        pOptions->dwAdjIncomplRegExp = WRONG_DWORD_VALUE;
     }
 
     void copyOptions(QSearchOpt* pOptDst, const QSearchOpt* pOptSrc)
@@ -149,6 +151,7 @@ void CloseLog(void)
         pOptDst->dwHistorySave      = pOptSrc->dwHistorySave;
         pOptDst->dwNewUI            = pOptSrc->dwNewUI;
         pOptDst->dwSelectByF3       = pOptSrc->dwSelectByF3;
+        pOptDst->dwAdjIncomplRegExp = pOptSrc->dwAdjIncomplRegExp;
     }
 
     BOOL equalOptions(const QSearchOpt* pOpt1, const QSearchOpt* pOpt2)
@@ -177,7 +180,8 @@ void CloseLog(void)
              (pOpt1->dwFindHistoryItems !=  pOpt2->dwFindHistoryItems) ||
              (pOpt1->dwHistorySave      !=  pOpt2->dwHistorySave)      ||
              (pOpt1->dwNewUI            !=  pOpt2->dwNewUI)            ||
-             (pOpt1->dwSelectByF3       !=  pOpt2->dwSelectByF3) )
+             (pOpt1->dwSelectByF3       !=  pOpt2->dwSelectByF3)       ||
+             (pOpt1->dwAdjIncomplRegExp !=  pOpt2->dwAdjIncomplRegExp) )
         {
             return FALSE;
         }
@@ -221,7 +225,8 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 26 */  "find_history_items",
   /* 27 */  "history_save",
   /* 28 */  "new_ui",
-  /* 29 */  "select_by_f3"
+  /* 29 */  "select_by_f3",
+  /* 30 */  "adj_incompl_regexp"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -254,7 +259,8 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 26 */  L"find_history_items",
   /* 27 */  L"history_save",
   /* 28 */  L"new_ui",
-  /* 29 */  L"select_by_f3"
+  /* 29 */  L"select_by_f3",
+  /* 30 */  L"adj_incompl_regexp"
 };
 
 
@@ -1139,6 +1145,9 @@ void ReadOptions(void)
             g_Options.dwSelectByF3 = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_SELECT_BY_F3], WRONG_DWORD_VALUE );
 
+            g_Options.dwAdjIncomplRegExp = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1202,6 +1211,9 @@ void ReadOptions(void)
 
             g_Options.dwSelectByF3 = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_SELECT_BY_F3], WRONG_DWORD_VALUE );
+
+            g_Options.dwAdjIncomplRegExp = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1306,6 +1318,9 @@ void ReadOptions(void)
 
     if ( g_Options.dwSelectByF3 == WRONG_DWORD_VALUE )
         g_Options.dwSelectByF3 = DEFAULT_SELECT_BY_F3;
+
+    if ( g_Options.dwAdjIncomplRegExp == WRONG_DWORD_VALUE )
+        g_Options.dwAdjIncomplRegExp = DEFAULT_ADJ_INCOMPL_REGEXP;
 }
 
 void SaveOptions(void)
@@ -1413,6 +1428,9 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_F3],
                   g_Options.dwSelectByF3 );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
+                  g_Options.dwAdjIncomplRegExp );
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -1488,6 +1506,9 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_F3],
                   g_Options.dwSelectByF3 );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
+                  g_Options.dwAdjIncomplRegExp );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);

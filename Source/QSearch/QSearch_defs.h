@@ -34,8 +34,9 @@
 #define  OPT_HISTORY_SAVE           27
 #define  OPT_NEW_UI                 28
 #define  OPT_SELECT_BY_F3           29
+#define  OPT_ADJ_INCOMPL_REGEXP     30
 
-#define  OPT_TOTALCOUNT             30
+#define  OPT_TOTALCOUNT             31
 
 #define  PICKUP_SEL_ALWAYS           1
 #define  PICKUP_SEL_IF_NOT_QSBTN    11

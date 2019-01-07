@@ -71,8 +71,8 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6, 4, 0, 0
- PRODUCTVERSION 6, 4, 0, 0
+ FILEVERSION 6, 5, 0, 0
+ PRODUCTVERSION 6, 5, 0, 0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -90,12 +90,12 @@ BEGIN
             VALUE "Comments", "Pig is really neat! :-)"
             VALUE "CompanyName", "Full of Madness Co."
             VALUE "FileDescription", "QSearch plugin for AkelPad text editor"
-            VALUE "FileVersion", "6, 4, 0, 0"
+            VALUE "FileVersion", "6, 5, 0, 0"
             VALUE "InternalName", "QSearch"
-            VALUE "LegalCopyright", "(C) Sep 2007 - Dec 2015, Vitaliy Dovgan aka DV"
+            VALUE "LegalCopyright", "(C) Sep 2007 - Jan 2016, Vitaliy Dovgan aka DV"
             VALUE "OriginalFilename", "QSearch.dll"
             VALUE "ProductName", "QSearch plugin for AkelPad text editor"
-            VALUE "ProductVersion", "6, 4, 0, 0"
+            VALUE "ProductVersion", "6, 5, 0, 0"
         END
     END
     BLOCK "VarFileInfo"

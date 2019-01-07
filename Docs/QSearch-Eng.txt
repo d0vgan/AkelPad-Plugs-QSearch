@@ -330,10 +330,23 @@ Additional options (QSearch panel's popup menu or file
      last character.
      (Example: w|ord, wo|rd, wor|d - but not word| or |word.)
 
+31) adj_incompl_regexp = 1
+     Adjusts "incomplete" RegExp: the symbols "+", "*", "+?" and "*?" at the
+     end of RegExp are ignored to avoid selection till the end of the file.
+     The purpose of this is highly noticeable in the On-the-fly mode, when
+     "+" or "*" appears in the middle of the RegEx being typed.
+    adj_incompl_regexp = 2
+     Adjusts "incomplete" RegExp only in the On-the-fly mode.
+    adj_incompl_regexp = 0
+     Does not adjust "incomplete" RegExp.
+
 
 --------
 History:
 --------
+v.6.5 (January 2016)
+ + added: 'adj_incompl_regexp'
+
 v.6.4 (December 2015)
  * AkelPad 4.9.7+
  + supports '\0' symbol inside of AEM_GETWORDDELIMITERS string
@@ -572,7 +585,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Dec 2015, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Jan 2016, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
