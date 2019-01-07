@@ -41,6 +41,15 @@ const char* szHintBtFindPrevA[INLNG_COUNT] = {
       "\xF3\xE2\xE5\xF0\xF5\x29" )
 };
 
+const char* szHintBtFindAllA[INLNG_COUNT] = {
+    /* eng */
+    ( "Find all" ),
+    /* rus */
+    ( "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5" ),
+    /* ukr */
+    ( "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5" )
+};
+
 const char* szHintChMatchCaseA[INLNG_COUNT] = {
     /* eng */
     ( "Match case" ),
@@ -248,6 +257,15 @@ const wchar_t* szHintBtFindPrevW[INLNG_COUNT] = {
     ( L"\x0428\x0443\x043A\x0430\x0442\x0438\x0020\x043F\x043E\x043F\x0435" \
       L"\x0440\x0435\x0434\x002E\x0020\x0028\x0443\x0432\x0435\x0440\x0445" \
       L"\x0029" )
+};
+
+const wchar_t* szHintBtFindAllW[INLNG_COUNT] = {
+    /* eng */
+    ( L"Find all" ),
+    /* rus */
+    ( L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435" ),
+    /* ukr */
+    ( L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435" )
 };
 
 const wchar_t* szHintChMatchCaseW[INLNG_COUNT] = {
@@ -587,6 +605,8 @@ const char* qsearchGetHintA(unsigned int uDlgItemID)
             return szHintBtFindNextA[uInternalLng];
         case IDC_BT_FINDPREV:
             return szHintBtFindPrevA[uInternalLng];
+        case IDC_BT_FINDALL:
+            return szHintBtFindAllA[uInternalLng];
         case IDC_CH_MATCHCASE:
             return szHintChMatchCaseA[uInternalLng];
         case IDC_CH_WHOLEWORD:
@@ -614,6 +634,8 @@ const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
             return szHintBtFindNextW[uInternalLng];
         case IDC_BT_FINDPREV:
             return szHintBtFindPrevW[uInternalLng];
+        case IDC_BT_FINDALL:
+            return szHintBtFindAllW[uInternalLng];
         case IDC_CH_MATCHCASE:
             return szHintChMatchCaseW[uInternalLng];
         case IDC_CH_WHOLEWORD:

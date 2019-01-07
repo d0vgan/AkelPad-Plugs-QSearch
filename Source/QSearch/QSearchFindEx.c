@@ -407,162 +407,170 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
     return 0;
 }
 
-LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[])
+void getTextToSearchA(LPCSTR cszTextA, BOOL* pbSearchEx, const DWORD dwOptFlags[], CHAR out_pszSearchTextA[])
 {
     *pbSearchEx = FALSE;
 
     if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
     {
-        static wchar_t szSearchTextW[MAX_TEXT_SIZE];
-
         int  i, k;
         BOOL bEscapeChars, bMask;
+        char ch;
 
         bEscapeChars = FALSE;
         bMask = FALSE;
 
-        if ( g_Plugin.bOldWindows )
+        i = 0;
+        while ( cszTextA[i] )
         {
-            char ch;
-
-            i = 0;
-            while ( ((LPCSTR) cszTextW)[i] )
+            switch ( cszTextA[i] )
             {
-                switch ( ((LPCSTR) cszTextW)[i] )
-                {
-                    case '*':
-                    case '?':
-                        bMask = TRUE;
-                        break;
-                    case '\\':
-                        bEscapeChars = TRUE;
-                        if ( ((LPCSTR) cszTextW)[i + 1] )
-                            ++i;
-                        break;
-                    default:
-                        break;
-                }
-                ++i;
+                case '*':
+                case '?':
+                    bMask = TRUE;
+                    break;
+                case '\\':
+                    bEscapeChars = TRUE;
+                    if ( cszTextA[i + 1] )
+                        ++i;
+                    break;
+                default:
+                    break;
             }
-
-            if ( bMask )
-            {
-                *pbSearchEx = TRUE;
-            }
-
-            if ( bEscapeChars )
-            {
-                i = 0;
-                k = 0;
-                for ( ; ; )
-                {
-                    ch = ((LPCSTR) cszTextW)[i++];
-                    if ( ch == '\\' )
-                    {
-                        ch = ((LPCSTR) cszTextW)[i++];
-                        switch ( ch )
-                        {
-                            case 't':
-                                ((LPSTR) szSearchTextW)[k++] = '\t';
-                                break;
-                            case 'n':
-                                ((LPSTR) szSearchTextW)[k++] = '\r';
-                                break;
-                            case '\\':
-                            case '*':
-                            case '?':
-                                if ( bMask )
-                                {
-                                    ((LPSTR) szSearchTextW)[k++] = '\\';
-                                }
-                            default:
-                                ((LPSTR) szSearchTextW)[k++] = ch;
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        ((LPSTR) szSearchTextW)[k++] = ch;
-                    }
-                    if ( ch == 0 )
-                    {
-                        return szSearchTextW;
-                    }
-                }
-            }
+            ++i;
         }
-        else
+
+        if ( bMask )
         {
-            wchar_t wch;
+            *pbSearchEx = TRUE;
+        }
 
+        if ( bEscapeChars )
+        {
             i = 0;
-            while ( cszTextW[i] )
+            k = 0;
+            for ( ; ; )
             {
-                switch ( cszTextW[i] )
+                ch = cszTextA[i++];
+                if ( ch == '\\' )
                 {
-                    case L'*':
-                    case L'?':
-                        bMask = TRUE;
-                        break;
-                    case L'\\':
-                        bEscapeChars = TRUE;
-                        if ( cszTextW[i + 1] )
-                            ++i;
-                        break;
-                    default:
-                        break;
+                    ch = cszTextA[i++];
+                    switch ( ch )
+                    {
+                        case 't':
+                            out_pszSearchTextA[k++] = '\t';
+                            break;
+                        case 'n':
+                            out_pszSearchTextA[k++] = '\r';
+                            break;
+                        case '\\':
+                        case '*':
+                        case '?':
+                            if ( bMask )
+                            {
+                                out_pszSearchTextA[k++] = '\\';
+                            }
+                        default:
+                            out_pszSearchTextA[k++] = ch;
+                            break;
+                    }
                 }
-                ++i;
-            }
-
-            if ( bMask )
-            {
-                *pbSearchEx = TRUE;
-            }
-
-            if ( bEscapeChars )
-            {
-                i = 0;
-                k = 0;
-                for ( ; ; )
+                else
                 {
-                    wch = cszTextW[i++];
-                    if ( wch == L'\\' )
-                    {
-                        wch = cszTextW[i++];
-                        switch ( wch )
-                        {
-                            case L't':
-                                szSearchTextW[k++] = L'\t';
-                                break;
-                            case L'n':
-                                szSearchTextW[k++] = L'\r';
-                                break;
-                            case L'\\':
-                            case L'*':
-                            case L'?':
-                                if ( bMask )
-                                {
-                                    szSearchTextW[k++] = L'\\';
-                                }
-                            default:
-                                szSearchTextW[k++] = wch;
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        szSearchTextW[k++] = wch;
-                    }
-                    if ( wch == 0 )
-                    {
-                        return szSearchTextW;
-                    }
+                    out_pszSearchTextA[k++] = ch;
+                }
+                if ( ch == 0 )
+                {
+                    return;
                 }
             }
         }
     }
-    return cszTextW;
+    
+    lstrcpyA( out_pszSearchTextA, cszTextA );
+}
+
+void getTextToSearchW(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[], WCHAR out_pszSearchTextW[])
+{
+    *pbSearchEx = FALSE;
+
+    if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
+    {
+        int  i, k;
+        BOOL bEscapeChars, bMask;
+        wchar_t wch;
+
+        bEscapeChars = FALSE;
+        bMask = FALSE;
+
+        i = 0;
+        while ( cszTextW[i] )
+        {
+            switch ( cszTextW[i] )
+            {
+                case L'*':
+                case L'?':
+                    bMask = TRUE;
+                    break;
+                case L'\\':
+                    bEscapeChars = TRUE;
+                    if ( cszTextW[i + 1] )
+                        ++i;
+                    break;
+                default:
+                    break;
+            }
+            ++i;
+        }
+
+        if ( bMask )
+        {
+            *pbSearchEx = TRUE;
+        }
+
+        if ( bEscapeChars )
+        {
+            i = 0;
+            k = 0;
+            for ( ; ; )
+            {
+                wch = cszTextW[i++];
+                if ( wch == L'\\' )
+                {
+                    wch = cszTextW[i++];
+                    switch ( wch )
+                    {
+                        case L't':
+                            out_pszSearchTextW[k++] = L'\t';
+                            break;
+                        case L'n':
+                            out_pszSearchTextW[k++] = L'\r';
+                            break;
+                        case L'\\':
+                        case L'*':
+                        case L'?':
+                            if ( bMask )
+                            {
+                                out_pszSearchTextW[k++] = L'\\';
+                            }
+                        default:
+                            out_pszSearchTextW[k++] = wch;
+                            break;
+                    }
+                }
+                else
+                {
+                    out_pszSearchTextW[k++] = wch;
+                }
+                if ( wch == 0 )
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    lstrcpyW( out_pszSearchTextW, cszTextW );
 }
 
 static void setSearchProgressBarState(BOOL bIsSearching, int nSearchRange)

@@ -1,3 +1,5 @@
+#define AEC_FUNCTIONS
+
 #include "QSearch.h"
 #include "QSearchDlg.h"
 #include "QSearchLng.h"
@@ -20,6 +22,40 @@
 #define  VK_QS_FINDUP        VK_SHIFT    // Shift
 #define  VK_QS_PICKUPTEXT    VK_CONTROL  // Ctrl
 
+
+// extern vars
+extern PluginState     g_Plugin;
+extern QSearchDlgState g_QSearchDlg;
+extern QSearchOpt      g_Options;
+extern wchar_t         g_szFunctionQSearchW[128];
+extern BOOL            g_bHighlightPlugin;
+
+
+// plugin call helpers
+static void CallPluginFuncA(const char* cszFuncA, void* pParams)
+{
+    PLUGINCALLSENDA pcsA;
+
+    pcsA.pFunction = cszFuncA;
+    //pcsA.bOnStart = FALSE;
+    pcsA.lParam = (LPARAM) pParams;
+    pcsA.dwSupport = 0;
+
+    SendMessageA( g_Plugin.hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
+}
+static void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams)
+{
+    PLUGINCALLSENDW pcsW;
+
+    pcsW.pFunction = cszFuncW;
+    //pcsW.bOnStart = FALSE;
+    pcsW.lParam = (LPARAM) pParams;
+    pcsW.dwSupport = 0;
+
+    SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
+}
+
+
 /* >>>>>>>>>>>>>>>>>>>>>>>> highlight plugin >>>>>>>>>>>>>>>>>>>>>>>> */
 #define DLLA_HIGHLIGHT_MARK                2
 #define DLLA_HIGHLIGHT_UNMARK              3
@@ -29,6 +65,7 @@
 #define MARKFLAG_REGEXP    0x02
 #define MARKFLAG_WHOLEWORD 0x04
 
+// DLL External Call
 typedef struct sDLLECHIGHLIGHT_MARK {
     UINT_PTR dwStructSize;
     INT_PTR nAction;
@@ -48,7 +85,62 @@ typedef struct sDLLECHIGHLIGHT_UNMARK {
 
 const char*    cszHighlightMainA = "Coder::HighLight";
 const wchar_t* cszHighlightMainW = L"Coder::HighLight";
+
+static void CallHighlightMain(void* phlParams)
+{
+    if ( g_Plugin.bOldWindows )
+    {
+        CallPluginFuncA(cszHighlightMainA, phlParams);
+    }
+    else
+    {
+        CallPluginFuncW(cszHighlightMainW, phlParams);
+    }
+}
 /* <<<<<<<<<<<<<<<<<<<<<<<< highlight plugin <<<<<<<<<<<<<<<<<<<<<<<< */
+
+
+/* >>>>>>>>>>>>>>>>>>>>>>>> log plugin >>>>>>>>>>>>>>>>>>>>>>>> */
+
+// DLL External Call
+typedef struct sDLLECLOG_OUTPUT_1 {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    LPCWSTR pszProgram;
+    LPCWSTR pszWorkDir;
+    LPCWSTR pszRePattern;
+    LPCWSTR pszReTags;
+    INT_PTR nInputCodepage;
+    INT_PTR nOutputCodepage;
+    UINT_PTR nFlags;
+    LPCWSTR pszAlias;
+} DLLECLOG_OUTPUT_1;
+
+typedef struct sDLLECLOG_OUTPUT_4 {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    LPCWSTR pszText;
+    INT_PTR nTextLen;
+    INT_PTR nAppend;
+    INT_PTR nCodepage;
+    LPCWSTR pszAlias;
+} DLLECLOG_OUTPUT_4;
+
+const char*    cszLogOutputA = "Log::Output";
+const wchar_t* cszLogOutputW = L"Log::Output";
+
+static void CallLogOutput(void* ploParams)
+{
+    if ( g_Plugin.bOldWindows )
+    {
+        CallPluginFuncA(cszLogOutputA, ploParams);
+    }
+    else
+    {
+        CallPluginFuncW(cszLogOutputW, ploParams);
+    }
+}
+/* <<<<<<<<<<<<<<<<<<<<<<<< log plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
@@ -58,6 +150,7 @@ const wchar_t* cszHighlightMainW = L"Coder::HighLight";
         pQSearchDlg->hFindEdit = NULL;
         pQSearchDlg->hBtnFindNext = NULL;
         pQSearchDlg->hBtnFindPrev = NULL;
+        pQSearchDlg->hBtnFindAll = NULL;
         pQSearchDlg->bMatchCase = FALSE;
         //pQSearchDlg->bOnDlgStart = FALSE;
         pQSearchDlg->bQSearching = FALSE;
@@ -71,18 +164,11 @@ const wchar_t* cszHighlightMainW = L"Coder::HighLight";
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
 
-// extern vars
-extern PluginState     g_Plugin;
-extern QSearchDlgState g_QSearchDlg;
-extern QSearchOpt      g_Options;
-extern wchar_t         g_szFunctionQSearchW[128];
-extern BOOL            g_bHighlightPlugin;
-
-
 // static (local) vars
 static WNDPROC prev_editWndProc = NULL;
 static WNDPROC prev_btnFindNextWndProc = NULL;
 static WNDPROC prev_btnFindPrevWndProc = NULL;
+static WNDPROC prev_btnFindAllWndProc = NULL;
 /*static WNDPROC prev_chWndProc = NULL;*/
 static BOOL    qs_bEditIsActive = TRUE;
 static BOOL    qs_bEditCanBeNonActive = TRUE;
@@ -98,10 +184,254 @@ static BOOL    qs_bBtnFindIsFocused = FALSE;
 static DWORD   qs_dwHotKey = 0;
 
 
+// Helpers for find all...
+// There is a single reason for so many helpers.
+// The reason is: Flexibility.
+
+typedef struct sDynamicBuffer {
+    void* ptr;
+    UINT_PTR nBytesAllocated;
+} tDynamicBuffer;
+
+typedef void (*tShowFindResults_Init)(void);
+typedef void (*tShowFindResults_AddOccurrence)(const wchar_t* cszOccurrence);
+typedef void (*tShowFindResults_Done)(unsigned int nOccurrences);
+
+static void LogOutput_AddText(const wchar_t* cszText)
+{
+    DLLECLOG_OUTPUT_4 loParams;
+
+    loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_4);
+    loParams.nAction = 4;
+    loParams.pszText = cszText;
+    loParams.nTextLen = lstrlenW(cszText);
+    loParams.nAppend = 2; // 2 = new line
+    loParams.nCodepage = 0;
+    loParams.pszAlias = NULL;
+    CallLogOutput( &loParams );
+}
+
+static void qsShowFindResults_LogOutput_Init(void)
+{
+    DLLECLOG_OUTPUT_1 loParams;
+
+    loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_1);
+    loParams.nAction = 1;
+    loParams.pszProgram = NULL;
+    loParams.pszWorkDir = NULL;
+    loParams.pszRePattern = L"^\\((\\d+),(\\d+)\\)"; // corresponds to the output string format:
+    loParams.pszReTags = L"/GOTOLINE=\\1:\\2";
+    loParams.nInputCodepage = -2;
+    loParams.nOutputCodepage = -2;
+    loParams.nFlags = 2; // 2 = no input line
+    loParams.pszAlias = NULL;
+
+    CallLogOutput( &loParams );
+}
+
+static void qsShowFindResults_LogOutput_AddOccurrence(const wchar_t* cszOccurrence)
+{
+    LogOutput_AddText(cszOccurrence);
+}
+
+static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences)
+{
+    wchar_t szOccurrences[64];
+    wsprintfW(szOccurrences, L"%u occurrence(s) found.", nOccurrences);
+    LogOutput_AddText(szOccurrences);
+}
+
+typedef struct sShowFindResults {
+    tShowFindResults_Init pfnInit;
+    tShowFindResults_AddOccurrence pfnAddOccurrence;
+    tShowFindResults_Done pfnDone;
+} tShowFindResults;
+
+typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
+
+static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+{
+    wchar_t* pStr;
+    UINT_PTR nBytesToAllocate;
+    INT_X nLinePos;
+    INT_X nLineStartPos;
+    int nUnwrappedLine;
+
+    nBytesToAllocate = (lstrlenW(cszFindResult) + 32) * sizeof(wchar_t);
+    if ( pBuf->nBytesAllocated < nBytesToAllocate )
+    {
+        if ( pBuf->ptr )
+            SysMemFree( pBuf->ptr );
+
+        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
+        pBuf->ptr = SysMemAlloc( nBytesToAllocate );
+        if ( pBuf->ptr )
+            pBuf->nBytesAllocated = nBytesToAllocate;
+        else
+            return; // failed to allocate the memory
+    }
+
+    nLinePos = (INT_X) SendMessage(hWndEdit, AEM_INDEXTORICHOFFSET, 0, (LPARAM) &pcrFound->ciMin);
+    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+        nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) pcrFound->ciMin.nLine, 0);
+    else
+        nUnwrappedLine = pcrFound->ciMin.nLine;
+    nLineStartPos = (INT_X) SendMessage(hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0);
+
+    // the output string:
+    pStr = pBuf->ptr;
+    pStr += wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos - nLineStartPos + 1) );
+    lstrcpyW( pStr, cszFindResult );
+
+    pfnAddOccurrence(pBuf->ptr);
+}
+
+#define QSFRM_LINE       1 // number of lines
+#define QSFRM_CHAR       2 // number of chars
+#define QSFRM_CHARINLINE 3 // number of chars within the current line
+
+typedef struct sGetFindResultPolicy {
+    short int nMode;       // one of QSFRM_*
+    short int nBefore;     // number of lines or chars before the search result
+    short int nAfter;      // number of lines or chars after the search result
+    short int nMaxLineLen; // max line length to show (0 - no limit)
+    tStoreResultCallback pfnStoreResultCallback;
+} tGetFindResultPolicy;
+// nBefore=0 and nAfter=0 with nMode=QSFRM_LINE means: whole line
+// nBefore=0 and nAfter=0 with nMode=QSFRM_CHAR means: just the matching word
+
+typedef void (*tFindResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence);
+
+static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence)
+{
+    AETEXTRANGEW tr;
+    UINT_PTR     nBytesToAllocate;
+
+    if ( !pfrPolicy->pfnStoreResultCallback )
+        return; // no sense to retrieve the find result
+
+    x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
+    x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
+    // TODO: check pfrPolicy->nMaxLineLen
+    if ( pfrPolicy->nMode == QSFRM_CHAR )
+    {
+        AEINDEXOFFSET io;
+
+        if ( pfrPolicy->nBefore > 0 )
+        {
+            io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMin;
+            io.ciCharOut = &tr.cr.ciMin;
+            io.nOffset = -pfrPolicy->nBefore;
+            io.nNewLine = AELB_R;
+            SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
+        }
+        if ( pfrPolicy->nAfter > 0)
+        {
+            io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMax;
+            io.ciCharOut = &tr.cr.ciMax;
+            io.nOffset = pfrPolicy->nAfter;
+            io.nNewLine = AELB_R;
+            SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
+        }
+    }
+    else if ( pfrPolicy->nMode == QSFRM_CHARINLINE )
+    {
+        if ( tr.cr.ciMin.nCharInLine > pfrPolicy->nBefore )
+            tr.cr.ciMin.nCharInLine -= pfrPolicy->nBefore;
+        else
+            tr.cr.ciMin.nCharInLine = 0;
+
+        if ( tr.cr.ciMax.nCharInLine + pfrPolicy->nAfter < tr.cr.ciMax.lpLine->nLineLen )
+            tr.cr.ciMax.nCharInLine += pfrPolicy->nAfter;
+        else
+            tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+    }
+    else // QSFRM_LINE
+    {
+        if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
+        {
+            tr.cr.ciMin.nCharInLine = 0;
+            tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+        }
+        else
+        {
+            INT_X  nLineStartPos;
+            int    nUnwrappedLine;
+            int    nLineCount;
+
+            if ( pfrPolicy->nBefore > 0 )
+            {
+                if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                    nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
+                else
+                    nUnwrappedLine = tr.cr.ciMin.nLine;
+
+                if ( nUnwrappedLine > pfrPolicy->nBefore )
+                    nUnwrappedLine -= pfrPolicy->nBefore;
+                else
+                    nUnwrappedLine = 0;
+
+                nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
+                SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMin );
+            }
+            if ( pfrPolicy->nAfter > 0)
+            {
+                if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                    nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
+                else
+                    nUnwrappedLine = tr.cr.ciMax.nLine;
+
+                nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
+                if ( nUnwrappedLine + pfrPolicy->nAfter < nLineCount )
+                    nUnwrappedLine += pfrPolicy->nAfter;
+                else
+                    nUnwrappedLine = nLineCount;
+
+                nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
+                SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMax );
+            }
+        }
+    }
+    tr.bColumnSel = FALSE;
+    tr.pBuffer = NULL;
+    tr.nNewLine = AELB_ASIS;
+    tr.bFillSpaces = FALSE;
+
+    tr.dwBufferMax = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+    if ( tr.dwBufferMax == 0 )
+        return; // no text to retrieve
+
+    nBytesToAllocate = tr.dwBufferMax * sizeof(wchar_t);
+    if ( pBuf->nBytesAllocated < nBytesToAllocate )
+    {
+        if ( pBuf->ptr )
+            SysMemFree( pBuf->ptr );
+
+        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
+        pBuf->ptr = SysMemAlloc( nBytesToAllocate );
+        if ( pBuf->ptr )
+            pBuf->nBytesAllocated = nBytesToAllocate;
+        else
+            return; // failed to allocate the memory
+    }
+    tr.pBuffer = (wchar_t *) pBuf->ptr;
+    tr.pBuffer[0] = 0;
+    SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+    pfrPolicy->pfnStoreResultCallback( hWndEdit, pcrFound, tr.pBuffer, pBuf2, pfnAddOccurrence );
+}
+
+typedef struct sQSFindAll {
+    tFindResultCallback pfnFindResultCallback;
+    tShowFindResults ShowFindResults;
+    tDynamicBuffer buf;
+    tDynamicBuffer buf2;
+} tQSFindAll;
+
+
 // funcs
 HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit);
 void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBrush1, HBRUSH hBrush2, HBRUSH hBrush3);
-void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[]);
+void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], tQSFindAll* pFindAll /* = NULL */);
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[]);
 void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF);
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[]);
@@ -587,7 +917,8 @@ static LRESULT CALLBACK btnFindWndProc(HWND hBtn,
 
             hWndToFocus = (HWND) wParam;
             if ( (hWndToFocus != g_QSearchDlg.hBtnFindNext) &&
-                 (hWndToFocus != g_QSearchDlg.hBtnFindPrev) )
+                 (hWndToFocus != g_QSearchDlg.hBtnFindPrev) &&
+                 (hWndToFocus != g_QSearchDlg.hBtnFindAll) )
             {
                 qs_bBtnFindIsFocused = FALSE;
                 if ( hWndToFocus != g_QSearchDlg.hFindEdit )
@@ -630,8 +961,10 @@ static LRESULT CALLBACK btnFindWndProc(HWND hBtn,
 
     if ( hBtn == g_QSearchDlg.hBtnFindNext )
         prevWndProc = prev_btnFindNextWndProc;
-    else
+    else if ( hBtn == g_QSearchDlg.hBtnFindPrev )
         prevWndProc = prev_btnFindPrevWndProc;
+    else
+        prevWndProc = prev_btnFindAllWndProc;
     return callWndProc(prevWndProc, hBtn, uMsg, wParam, lParam);
 }
 
@@ -1169,7 +1502,8 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 
                 hWndToFocus = (HWND) wParam;
                 if ( (hWndToFocus != g_QSearchDlg.hBtnFindNext) &&
-                     (hWndToFocus != g_QSearchDlg.hBtnFindPrev) )
+                     (hWndToFocus != g_QSearchDlg.hBtnFindPrev) &&
+                     (hWndToFocus != g_QSearchDlg.hBtnFindAll) )
                 {
                     qs_nEditEOF = 0;
                     SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
@@ -1379,7 +1713,7 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
             DWORD dwOptFlagsTemp[OPTF_COUNT];
             copyOptionsFlags(dwOptFlagsTemp, dwOptFlags);
             dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0; // disabling here
-            qsearchDoSearchText( hEdit, QSEARCH_NEXT, dwOptFlagsTemp );
+            qsearchDoSearchText( hEdit, QSEARCH_NEXT, dwOptFlagsTemp, NULL );
         }
 
         qsearchDoTryHighlightAll(hDlg, dwOptFlags);
@@ -1390,7 +1724,7 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
         DWORD dwOptFlagsTemp[OPTF_COUNT];
         copyOptionsFlags(dwOptFlagsTemp, dwOptFlags);
         dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0; // disabling here
-        qsearchDoSearchText( hEdit, QSEARCH_NEXT, dwOptFlagsTemp );
+        qsearchDoSearchText( hEdit, QSEARCH_NEXT, dwOptFlagsTemp, NULL );
 
         qsearchDoTryHighlightAll(hDlg, dwOptFlags);
     }
@@ -1452,7 +1786,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsPickUpSelection( hFindEdit, g_Options.dwFlags );
                 }*/
                 getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
-                qsearchDoSearchText( hFindEdit, uSearch, g_Options.dwFlags );
+                qsearchDoSearchText( hFindEdit, uSearch, g_Options.dwFlags, NULL );
                 if ( uSearch & QSEARCH_FIRST )
                 {
                     qsearchDoTryHighlightAll( hDlg, g_Options.dwFlags );
@@ -1494,6 +1828,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     uFindFlags |= QS_FF_NOPICKUPSEL;
                 PostMessage( hDlg, QSM_FINDNEXT, TRUE, uFindFlags );
                 //PostMessage( hDlg, WM_COMMAND, IDOK_FINDPREV, 0 );
+                return 1;
+            }
+            else if ( id == IDC_BT_FINDALL )
+            {
+                PostMessage( hDlg, QSM_FINDALL, 0, 0 );
                 return 1;
             }
             else if ( id == IDC_CH_MATCHCASE )
@@ -1564,7 +1903,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                             copyOptionsFlags(dwOptFlagsTemp, g_Options.dwFlags);
                             dwOptFlagsTemp[OPTF_SRCH_ONTHEFLY_MODE] = 1;
                             dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0;
-                            qsearchDoSearchText( hFindEdit, QSEARCH_FIRST, dwOptFlagsTemp );
+                            qsearchDoSearchText( hFindEdit, QSEARCH_FIRST, dwOptFlagsTemp, NULL );
 
                             qsearchDoTryHighlightAll(hDlg, g_Options.dwFlags);
                         }
@@ -1982,8 +2321,23 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             break;
         }
         case QSM_FINDNEXT:
+        case QSM_FINDALL:
         {
             DWORD dwSearch;
+            tQSFindAll qsfa;
+            tQSFindAll* pqsfa;
+
+            if ( uMsg == QSM_FINDALL )
+            {
+                x_zero_mem(&qsfa, sizeof(tQSFindAll));
+                qsfa.pfnFindResultCallback = qsFindResultCallback;
+                qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
+                qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
+                qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
+                pqsfa = &qsfa;
+            }
+            else
+                pqsfa = NULL;
 
             if ( (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01) && 
                  (g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR) && 
@@ -2000,7 +2354,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 dwSearch = QSEARCH_FIRST;
                 if ( wParam )
                     dwSearch |= QSEARCH_FINDUP;
-                qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags );
+                qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags, pqsfa );
                 qsearchDoTryHighlightAll( hDlg, g_Options.dwFlags );
             }
             else
@@ -2008,7 +2362,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 dwSearch = QSEARCH_NEXT;
                 if ( wParam )
                     dwSearch |= QSEARCH_FINDUP;
-                qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags );
+                qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags, pqsfa );
             }
             return 1;
         }
@@ -2023,7 +2377,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 dwSearch |= QSEARCH_NOFINDBEGIN;
 
             getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
-            qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags );
+            qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags, NULL );
             qsearchDoTryHighlightAll( hDlg, g_Options.dwFlags );
             return 1;
         }
@@ -2212,6 +2566,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 prev_btnFindPrevWndProc = setWndProc(g_QSearchDlg.hBtnFindPrev, btnFindWndProc);
             }
+            g_QSearchDlg.hBtnFindAll = GetDlgItem(hDlg, IDC_BT_FINDALL);
+            if ( g_QSearchDlg.hBtnFindAll )
+            {
+                prev_btnFindAllWndProc = setWndProc(g_QSearchDlg.hBtnFindAll, btnFindWndProc);
+            }
 
             hToolTip = qsearchDoInitToolTip(hDlg, hFindEdit);
             if ( g_Plugin.bOldWindows )
@@ -2367,7 +2726,8 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            if ( g_Options.dwNewUI == QS_UI_NEW_01 )
+            if ( g_Options.dwNewUI == QS_UI_NEW_01 || 
+                 g_Options.dwNewUI == QS_UI_NEW_02 )
             {
                 fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDNEXT), 
                   GetDlgItem(hDlg, IDC_BT_FINDNEXT) );
@@ -2376,6 +2736,13 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
                 fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDPREV), 
                   GetDlgItem(hDlg, IDC_BT_FINDPREV) );
                 SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
+
+                if ( g_Options.dwNewUI == QS_UI_NEW_02 )
+                {
+                    fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDALL), 
+                      GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
+                }
             }
         }
         else
@@ -2402,7 +2769,8 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            if ( g_Options.dwNewUI == QS_UI_NEW_01 )
+            if ( g_Options.dwNewUI == QS_UI_NEW_01 ||
+                 g_Options.dwNewUI == QS_UI_NEW_02 )
             {
                 fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDNEXT), 
                   GetDlgItem(hDlg, IDC_BT_FINDNEXT) );
@@ -2411,6 +2779,13 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
                 fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDPREV), 
                   GetDlgItem(hDlg, IDC_BT_FINDPREV) );
                 SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
+
+                if ( g_Options.dwNewUI == QS_UI_NEW_02 )
+                {
+                    fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDALL), 
+                      GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
+                }
             }
         }
     }
@@ -2468,6 +2843,11 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
     {
         setWndProc(g_QSearchDlg.hBtnFindPrev, prev_btnFindPrevWndProc);
         prev_btnFindPrevWndProc = NULL;
+    }
+    if ( prev_btnFindAllWndProc )
+    {
+        setWndProc(g_QSearchDlg.hBtnFindAll, prev_btnFindAllWndProc);
+        prev_btnFindAllWndProc = NULL;
     }
     if ( hToolTip )
     {
@@ -2701,7 +3081,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
 
         dwSearchParams = QSEARCH_NEXT | QSEARCH_SEL;
         if ( bFindPrev )  dwSearchParams |= QSEARCH_SEL_FINDUP;
-        qsearchDoSearchText(hEdit, dwSearchParams, dwOptFlagsTemp);
+        qsearchDoSearchText(hEdit, dwSearchParams, dwOptFlagsTemp, NULL);
     }
 }
 
@@ -2827,8 +3207,136 @@ static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[])
     szTextW[n1] = 0;
 }
 
+static void convertFindExToRegExA(const char* cszFindExA, char* pszRegExA)
+{
+    char ch;
+    char next_ch;
+
+    while ( (ch = *cszFindExA) != 0 )
+    {
+        switch ( ch )
+        {
+            case '\\':
+                *(pszRegExA++) = '\\';
+                next_ch = *(cszFindExA + 1);
+                switch ( next_ch )
+                {
+                    case '\\':  // "\\" -> "\\"
+                    case 'n':   // "\n" -> "\n"
+                    case 't':   // "\t" -> "\t"
+                    case '*':   // "\*" -> "\*"
+                    case '?':   // "\?" -> "\?"
+                        *(pszRegExA++) = next_ch;
+                        ++cszFindExA;
+                        break;
+                
+                    default:     // "\" -> "\\"
+                        *(pszRegExA++) = '\\';
+                        break;
+                }
+                break;
+
+            case '*':  // "*" -> ".*" (any 0 or more chars)
+                *(pszRegExA++) = '.';
+                *(pszRegExA++) = '*';
+                break;
+
+            case '?':  // "?" -> "." (any single char)
+                *(pszRegExA++) = '.';
+                break;
+
+            case '.':
+            case '(':
+            case ')':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case '^':
+            case '$':
+            case '+':
+            case '|':
+                *(pszRegExA++) = '\\';
+                *(pszRegExA++) = ch;
+                break;
+
+            default:
+                *(pszRegExA++) = ch;
+                break;
+        }
+
+        ++cszFindExA;
+    }
+
+    *pszRegExA = 0;
+}
+
+static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
+{
+    wchar_t wch;
+    wchar_t next_wch;
+
+    while ( (wch = *cszFindExW) != 0 )
+    {
+        switch ( wch )
+        {
+            case L'\\':
+                *(pszRegExW++) = L'\\';
+                next_wch = *(cszFindExW + 1);
+                switch ( next_wch )
+                {
+                    case L'\\':  // "\\" -> "\\"
+                    case L'n':   // "\n" -> "\n"
+                    case L't':   // "\t" -> "\t"
+                    case L'*':   // "\*" -> "\*"
+                    case L'?':   // "\?" -> "\?"
+                        *(pszRegExW++) = next_wch;
+                        ++cszFindExW;
+                        break;
+                
+                    default:     // "\" -> "\\"
+                        *(pszRegExW++) = L'\\';
+                        break;
+                }
+                break;
+
+            case L'*':  // "*" -> ".*" (any 0 or more chars)
+                *(pszRegExW++) = L'.';
+                *(pszRegExW++) = L'*';
+                break;
+
+            case L'?':  // "?" -> "." (any single char)
+                *(pszRegExW++) = L'.';
+                break;
+
+            case L'.':
+            case L'(':
+            case L')':
+            case L'[':
+            case L']':
+            case L'{':
+            case L'}':
+            case L'^':
+            case L'$':
+            case L'+':
+            case L'|':
+                *(pszRegExW++) = L'\\';
+                *(pszRegExW++) = wch;
+                break;
+
+            default:
+                *(pszRegExW++) = wch;
+                break;
+        }
+
+        ++cszFindExW;
+    }
+
+    *pszRegExW = 0;
+}
+
 // searches for g_QSearchDlg.szFindTextW
-void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
+void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], tQSFindAll* pFindAll)
 {
     EDITINFO ei;
     HWND     hDlgItm;
@@ -2884,21 +3392,28 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
         g_QSearchDlg.bQSearching = TRUE;
     }
 
-    if ( (dwParams & QSEARCH_SEL_FINDUP) ||
-         (dwParams & QSEARCH_FINDUP) ||
-         (((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
-          ((dwParams & QSEARCH_NOFINDUP) != QSEARCH_NOFINDUP) &&
-          ((GetKeyState(VK_QS_FINDUP) & 0x80) == 0x80)) )
+    if ( !pFindAll )
     {
-        dwSearchFlags = FR_UP;
-    }
+        if ( (dwParams & QSEARCH_SEL_FINDUP) ||
+             (dwParams & QSEARCH_FINDUP) ||
+             (((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
+              ((dwParams & QSEARCH_NOFINDUP) != QSEARCH_NOFINDUP) &&
+              ((GetKeyState(VK_QS_FINDUP) & 0x80) == 0x80)) )
+        {
+            dwSearchFlags = FR_UP;
+        }
 
-    if ( ((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
-         ((dwParams & QSEARCH_NOFINDBEGIN) != QSEARCH_NOFINDBEGIN) &&
-         ((dwParams & QSEARCH_FINDBEGIN) ||
-          ((GetKeyState(VK_QS_FINDBEGIN) & 0x80) == 0x80)) )
+        if ( ((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
+             ((dwParams & QSEARCH_NOFINDBEGIN) != QSEARCH_NOFINDBEGIN) &&
+             ((dwParams & QSEARCH_FINDBEGIN) ||
+              ((GetKeyState(VK_QS_FINDBEGIN) & 0x80) == 0x80)) )
+        {
+            dwSearchFlags |= FR_BEGINNING;
+            qs_nEditEOF = 0;
+        }
+    }
+    else // pFindAll
     {
-        dwSearchFlags |= FR_BEGINNING;
         qs_nEditEOF = 0;
     }
 
@@ -2954,7 +3469,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
 
         //g_QSearchDlg.szFindTextW[0] = 0;
         //GetWindowTextA( hEdit, (LPSTR) g_QSearchDlg.szFindTextW, MAX_TEXT_SIZE - 1 );
-        lstrcpyA( szFindTextA, (LPCSTR) getTextToSearch(g_QSearchDlg.szFindTextW, &bSearchEx, dwOptFlags) );
+        getTextToSearchA( (LPCSTR) g_QSearchDlg.szFindTextW, &bSearchEx, dwOptFlags, szFindTextA );
         if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
         {
             adjustIncompleteRegExA(szFindTextA, dwOptFlags);
@@ -3104,119 +3619,99 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
 
         //g_QSearchDlg.szFindTextW[0] = 0;
         //GetWindowTextW( hEdit, (LPWSTR) g_QSearchDlg.szFindTextW, MAX_TEXT_SIZE - 1 );
-        lstrcpyW( szFindTextW, (LPCWSTR) getTextToSearch(g_QSearchDlg.szFindTextW, &bSearchEx, dwOptFlags) );
+        getTextToSearchW( g_QSearchDlg.szFindTextW, &bSearchEx, dwOptFlags, szFindTextW );
         if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
         {
             adjustIncompleteRegExW(szFindTextW, dwOptFlags);
         }
-        tfW.dwFlags = dwSearchFlags;
-        tfW.pFindIt = szFindTextW;
-        tfW.nFindItLen = -1;
-        srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
-        if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
-        {
-            if ( !bSearchEx )
-            {
-                iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
-                  AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
-            }
-            else
-            {
-                iFindResult = doFindTextExW( ei.hWndEdit, &tfW ) ;
-            }
-        }
-        if ( iFindResult < 0 )
-        {
-            BOOL bContinueSearch = FALSE;
 
-            if ( (dwSearchFlags & FRF_REGEXP) && (iFindResult <= -100) )
+        if ( !pFindAll )
+        {
+            tfW.dwFlags = dwSearchFlags;
+            tfW.pFindIt = szFindTextW;
+            tfW.nFindItLen = -1;
+            srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
+            if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
             {
-                // RegExp syntax error
-                bNotRegExp = TRUE;
-                bNotFound = TRUE;
-                bEOF = TRUE;
-                qs_nEditEOF = 0;
-            }
-            else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
-            {
-                bNotFound = TRUE;
-                bEOF = TRUE;
-                qs_nEditEOF = srchEOF;
-            }
-            else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) && 
-                      ((qs_nEditEOF & srchEOF) == 0) &&
-                      (dwParams & QSEARCH_NEXT) )
-            {
-                HWND hWndFocused = GetFocus();
-
-                qs_nEditEOF = srchEOF;
-                if ( MessageBoxW( 
-                       g_Plugin.hMainWnd, 
-                       qsearchGetHintW(IDS_EOFREACHED),
-                       L"AkelPad (QSearch)",
-                       MB_OKCANCEL | MB_ICONQUESTION | MB_DEFBUTTON1
-                       ) == IDOK )
+                if ( !bSearchEx )
                 {
-                    bContinueSearch = TRUE;
+                    iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
+                      AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
                 }
                 else
                 {
-                    // When a Find Button loses focus, the value of qs_nEditEOF resets to 0.
-                    // So we need to set the value of qs_nEditEOF here again.
+                    iFindResult = doFindTextExW( ei.hWndEdit, &tfW ) ;
+                }
+            }
+            if ( iFindResult < 0 )
+            {
+                BOOL bContinueSearch = FALSE;
+
+                if ( (dwSearchFlags & FRF_REGEXP) && (iFindResult <= -100) )
+                {
+                    // RegExp syntax error
+                    bNotRegExp = TRUE;
+                    bNotFound = TRUE;
+                    bEOF = TRUE;
+                    qs_nEditEOF = 0;
+                }
+                else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
+                {
+                    bNotFound = TRUE;
+                    bEOF = TRUE;
                     qs_nEditEOF = srchEOF;
                 }
-
-                if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
-                    SetFocus(hEdit);
-                else
-                    SetFocus(ei.hWndEdit);
-            }
-            else
-            {
-                bContinueSearch = TRUE;
-            }
-
-            if ( bContinueSearch )
-            {
-                bEOF = TRUE;
-
-                if ( (dwSearchFlags & FR_UP) == FR_UP )
+                else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) && 
+                          ((qs_nEditEOF & srchEOF) == 0) &&
+                          (dwParams & QSEARCH_NEXT) )
                 {
-                    INT_X       pos = 0;
-                    CHARRANGE_X cr = {0, 0};
+                    HWND hWndFocused = GetFocus();
 
-                    SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
-                    pos = cr.cpMin;
-                    cr.cpMin = -1;
-                    cr.cpMax = -1;
-                    SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
-                    if ( tfW.dwFlags & FR_BEGINNING )
+                    qs_nEditEOF = srchEOF;
+                    if ( MessageBoxW( 
+                           g_Plugin.hMainWnd, 
+                           qsearchGetHintW(IDS_EOFREACHED),
+                           L"AkelPad (QSearch)",
+                           MB_OKCANCEL | MB_ICONQUESTION | MB_DEFBUTTON1
+                           ) == IDOK )
                     {
-                        tfW.dwFlags -= FR_BEGINNING;
-                    }
-                    if ( !bSearchEx )
-                    {
-                        iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
-                          AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
+                        bContinueSearch = TRUE;
                     }
                     else
                     {
-                        iFindResult = doFindTextExW( ei.hWndEdit, &tfW );
+                        // When a Find Button loses focus, the value of qs_nEditEOF resets to 0.
+                        // So we need to set the value of qs_nEditEOF here again.
+                        qs_nEditEOF = srchEOF;
                     }
-                    if ( iFindResult < 0 )
-                    {
-                        cr.cpMin = pos;
-                        cr.cpMax = pos;
-                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
-                        bNotFound = TRUE;
-                    }
+
+                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
+                        SetFocus(hEdit);
+                    else
+                        SetFocus(ei.hWndEdit);
                 }
                 else
                 {
-                    if ( ((dwSearchFlags & FR_BEGINNING) != FR_BEGINNING) ||
-                         (qs_nEditEOF & srchEOF) )
+                    bContinueSearch = TRUE;
+                }
+
+                if ( bContinueSearch )
+                {
+                    bEOF = TRUE;
+
+                    if ( (dwSearchFlags & FR_UP) == FR_UP )
                     {
-                        tfW.dwFlags = dwSearchFlags | FR_BEGINNING;
+                        INT_X       pos = 0;
+                        CHARRANGE_X cr = {0, 0};
+
+                        SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+                        pos = cr.cpMin;
+                        cr.cpMin = -1;
+                        cr.cpMax = -1;
+                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                        if ( tfW.dwFlags & FR_BEGINNING )
+                        {
+                            tfW.dwFlags -= FR_BEGINNING;
+                        }
                         if ( !bSearchEx )
                         {
                             iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
@@ -3228,20 +3723,133 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
                         }
                         if ( iFindResult < 0 )
                         {
+                            cr.cpMin = pos;
+                            cr.cpMax = pos;
+                            SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
                     }
                     else
                     {
-                        bNotFound = TRUE;
+                        if ( ((dwSearchFlags & FR_BEGINNING) != FR_BEGINNING) ||
+                             (qs_nEditEOF & srchEOF) )
+                        {
+                            tfW.dwFlags = dwSearchFlags | FR_BEGINNING;
+                            if ( !bSearchEx )
+                            {
+                                iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
+                                  AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
+                            }
+                            else
+                            {
+                                iFindResult = doFindTextExW( ei.hWndEdit, &tfW );
+                            }
+                            if ( iFindResult < 0 )
+                            {
+                                bNotFound = TRUE;
+                            }
+                        }
+                        else
+                        {
+                            bNotFound = TRUE;
+                        }
                     }
+                    qs_nEditEOF = 0;
                 }
+            }
+            else
+            {
                 qs_nEditEOF = 0;
             }
         }
-        else
+        else // pFindAll
         {
-            qs_nEditEOF = 0;
+            unsigned int         nMatches;
+            tGetFindResultPolicy frPolicy;
+            AEFINDTEXTW          aeftW;
+            wchar_t              szFindAllW[2*MAX_TEXT_SIZE];
+
+            //frPolicy.nMode = QSFRM_LINE;
+            //frPolicy.nBefore = 0;
+            //frPolicy.nAfter = 0;
+            frPolicy.nMode = QSFRM_CHARINLINE;
+            frPolicy.nBefore = 64;
+            frPolicy.nAfter = 64;
+            frPolicy.nMaxLineLen = 0;
+            frPolicy.pfnStoreResultCallback = qsStoreResultCallback;
+
+            aeftW.dwFlags = AEFR_DOWN;
+            if ( dwSearchFlags & FR_MATCHCASE )
+                aeftW.dwFlags |= AEFR_MATCHCASE;
+            if ( dwSearchFlags & FR_WHOLEWORD )
+                aeftW.dwFlags |= AEFR_WHOLEWORD;
+            if ( bSearchEx )
+            {
+                aeftW.dwFlags |= (AEFR_REGEXP | AEFR_REGEXPNONEWLINEDOT);
+            }
+            else if ( dwSearchFlags & FRF_REGEXP )
+            {
+                aeftW.dwFlags |= AEFR_REGEXP;
+                if ( dwSearchFlags & FRF_REGEXPNONEWLINEDOT )
+                    aeftW.dwFlags |= AEFR_REGEXPNONEWLINEDOT;
+            }
+
+            if ( bSearchEx )
+                convertFindExToRegExW(szFindTextW, szFindAllW);
+            else
+                lstrcpyW(szFindAllW, szFindTextW);
+            aeftW.pText = szFindAllW;
+            aeftW.dwTextLen = lstrlenW(szFindAllW);
+
+            aeftW.nNewLine = AELB_ASIS;
+
+            SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
+            SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+
+            nMatches = 0;
+
+            pFindAll->ShowFindResults.pfnInit();
+            
+            while ( SendMessageW(ei.hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+            {
+                ++nMatches;
+
+                if ( pFindAll->pfnFindResultCallback )
+                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, pFindAll->ShowFindResults.pfnAddOccurrence);
+
+                x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMin, sizeof(AECHARINDEX) );
+                AEC_IndexInc( &aeftW.crSearch.ciMin );
+            }
+
+            if ( pFindAll->buf.ptr )
+            {
+                SysMemFree( pFindAll->buf.ptr );
+                x_zero_mem( &pFindAll->buf, sizeof(tDynamicBuffer) );
+            }
+
+            if ( pFindAll->buf2.ptr )
+            {
+                SysMemFree( pFindAll->buf2.ptr );
+                x_zero_mem( &pFindAll->buf2, sizeof(tDynamicBuffer) );
+            }
+
+            pFindAll->ShowFindResults.pfnDone(nMatches);
+
+            if ( nMatches == 0 )
+            {
+                bNotFound = TRUE;
+                if ( (dwSearchFlags & FRF_REGEXP) && (aeftW.nCompileErrorOffset > 0) )
+                {
+                    bNotRegExp = TRUE;
+                    bEOF = TRUE;
+                    qs_nEditEOF = 0;
+                }
+                else
+                {
+                    bEOF = TRUE;
+                    qs_nEditEOF = QSEARCH_EOF_DOWN | QSEARCH_EOF_UP;
+                }
+            }
         }
     }
 
@@ -3253,7 +3861,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
     //    }
     //}
 
-    if ( (!bNotFound) && (!qs_nEditEOF) )
+    if ( (!pFindAll) && (!bNotFound) && (!qs_nEditEOF) )
     {
         int         nLine;
         int         nLine1st;
@@ -3282,32 +3890,6 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[])
     qsearchDoSetNotFound(hEdit, bNotFound, bNotRegExp, bEOF);
 
     g_QSearchDlg.bIsQSearchingRightNow = FALSE;
-}
-
-static void CallHighlightMain(void* phlParams)
-{
-    if ( g_Plugin.bOldWindows )
-    {
-        PLUGINCALLSENDA pcsA;
-
-        pcsA.pFunction = (char *) cszHighlightMainA;
-        //pcsA.bOnStart = FALSE;
-        pcsA.lParam = (LPARAM) phlParams;
-        pcsA.dwSupport = 0;
-
-        SendMessageA( g_Plugin.hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
-    }
-    else
-    {
-        PLUGINCALLSENDW pcsW;
-
-        pcsW.pFunction = (wchar_t *) cszHighlightMainW;
-        //pcsW.bOnStart = FALSE;
-        pcsW.lParam = (LPARAM) phlParams;
-        pcsW.dwSupport = 0;
-
-        SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
-    }
 }
 
 void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[])

@@ -17,9 +17,11 @@
 #define  IDS_EOFREACHED             1040
 
 #define  IDD_QSEARCH_NEW_01         2000
+#define  IDD_QSEARCH_NEW_02         2100
 #define  IDC_BT_FINDNEXT            2001
 #define  IDC_BT_FINDPREV            2002
 #define  IDOK_FINDPREV              2003
+#define  IDC_BT_FINDALL             2004
 
 #define  IDM_START                  10001
 #define  IDM_SRCHONTHEFLYMODE       (IDM_START + OPTF_SRCH_ONTHEFLY_MODE)

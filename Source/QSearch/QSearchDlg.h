@@ -56,6 +56,7 @@
 // messages...
 #define  QSM_FINDFIRST      (WM_USER + 1001) /*  0, 0                        */
 #define  QSM_FINDNEXT       (WM_USER + 1002) /*  (BOOL) bFindPrev, QS_FF_... */
+#define  QSM_FINDALL        (WM_USER + 1003) /*  0, 0                        */
 #define  QSM_SELFIND        (WM_USER + 1011) /*  (BOOL) bFindPrev, 0         */
 #define  QSM_PICKUPSELTEXT  (WM_USER + 1015) /*  0, (BOOL *) &bPickedUp      */
 #define  QSM_GETHWNDEDIT    (WM_USER + 1021) /*  0, (HWND *) &hWnd           */
@@ -77,6 +78,7 @@
         HWND    hFindEdit;
         HWND    hBtnFindNext;
         HWND    hBtnFindPrev;
+        HWND    hBtnFindAll;
         BOOL    bMatchCase;
         //BOOL    bOnDlgStart;
         BOOL    bQSearching;

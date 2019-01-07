@@ -319,10 +319,18 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
     {
         int iddQSearch;
 
-        if ( g_Options.dwNewUI == QS_UI_NEW_01 )
-            iddQSearch = IDD_QSEARCH_NEW_01;
-        else
-            iddQSearch = IDD_QSEARCH;
+        switch ( g_Options.dwNewUI )
+        {
+            case QS_UI_NEW_02:
+                iddQSearch = IDD_QSEARCH_NEW_02;
+                break;
+            case QS_UI_NEW_01:
+                iddQSearch = IDD_QSEARCH_NEW_01;
+                break;
+            default:
+                iddQSearch = IDD_QSEARCH;
+                break;
+        }
 
         if ( g_Plugin.bOldWindows )
         {
