@@ -1,6 +1,7 @@
 #include "DialogSwitcher.h"
 #include "AkelPad/resource.h"
 #include "QSearchDlg.h"
+#include "XMemStrFunc.h"
 
 
 #define  ACCEL_FVIRT_MASK        (FALT | FCONTROL | FSHIFT)
@@ -14,10 +15,6 @@
 #define  DLGTYPE_GOTO            4
 #define  DLGTYPE_UNKNOWN         5
 #define  WNDTYPE_MAINEDIT       10
-
-
-#define SysMemAlloc(sizeInBytes) (void *) GlobalAlloc( GMEM_FIXED, (sizeInBytes) )
-#define SysMemFree(ptr)          GlobalFree( (HGLOBAL) (ptr) )
 
 
 // extern vars

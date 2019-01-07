@@ -108,3 +108,51 @@ void x_zero_mem(void* pDest, UINT_PTR nBytes)
         }
     }
 }
+
+void* x_mem_alloc(unsigned int nSizeInBytes)
+{
+    return SysMemAlloc(nSizeInBytes);
+}
+
+void  x_mem_free(void* ptr)
+{
+    SysMemFree(ptr);
+}
+
+BOOL x_wstr_startswith(const WCHAR* str, const WCHAR* substr)
+{
+    for ( ; ; )
+    {
+        if ( *substr == 0 )
+            break; // end of substr - OK
+
+        if ( *substr != *str )
+            return FALSE; // diff
+
+        ++substr;
+        ++str;
+    }
+
+    return TRUE;
+}
+
+BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSubstrLen)
+{
+    if ( nSubstrLen > nStrLen )
+        return FALSE;
+    
+    str += (nStrLen - nSubstrLen);
+    for ( ; ; )
+    {
+        if ( *str != *substr )
+            return FALSE; // diff
+
+        if ( *str == 0 )
+            break; // end of both strings - OK
+
+        ++str;
+        ++substr;
+    }
+
+    return TRUE;
+}

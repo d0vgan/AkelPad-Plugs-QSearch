@@ -57,6 +57,7 @@
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);
+    void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[]);
     void copyOptions(QSearchOpt* pOptDst, const QSearchOpt* pOptSrc);
     BOOL equalOptions(const QSearchOpt* pOpt1, const QSearchOpt* pOpt2);
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearch options <<<<<<<<<<<<<<<<<<<<<<<< */

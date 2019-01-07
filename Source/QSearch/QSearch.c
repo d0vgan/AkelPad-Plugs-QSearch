@@ -127,13 +127,14 @@ void CloseLog(void)
         pOptions->dwAdjIncomplRegExp = WRONG_DWORD_VALUE;
     }
 
+    void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[])
+    {
+        x_mem_cpy(dwOptFlagsDst, dwOptFlagsSrc, OPTF_COUNT*sizeof(DWORD));
+    }
+
     void copyOptions(QSearchOpt* pOptDst, const QSearchOpt* pOptSrc)
     {
-        int i;
-        for ( i = 0; i < OPTF_COUNT; i++ )
-        {
-            pOptDst->dwFlags[i] = pOptSrc->dwFlags[i];
-        }
+        copyOptionsFlags(pOptDst->dwFlags, pOptSrc->dwFlags);
         pOptDst->dockRect.left      = pOptSrc->dockRect.left;
         pOptDst->dockRect.right     = pOptSrc->dockRect.right;
         pOptDst->dockRect.top       = pOptSrc->dockRect.top;
@@ -212,23 +213,24 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 12 */  "hotkey_hides_panel",
   /* 13 */  "editor_autofocus",
   /* 14 */  "qsearch_autofocus",
-  /* 15 */  "dock_rect_disabled",
-  /* 16 */  "dock_rect",
-  /* 17 */  "color_notfound",
-  /* 18 */  "color_notregexp",
-  /* 19 */  "color_eof",
-  /* 20 */  "color_highlight",
-  /* 21 */  "highlight_mark_id",
-  /* 22 */  "highlight_state",
-  /* 23 */  "use_alt_hotkeys",
-  /* 24 */  "alt_match_case",
-  /* 25 */  "alt_whole_word",
-  /* 26 */  "alt_highlight_all",
-  /* 27 */  "find_history_items",
-  /* 28 */  "history_save",
-  /* 29 */  "new_ui",
-  /* 30 */  "select_by_f3",
-  /* 31 */  "adj_incompl_regexp"
+  /* 15 */  "qsearch_autofocus_file",
+  /* 16 */  "dock_rect_disabled",
+  /* 17 */  "dock_rect",
+  /* 18 */  "color_notfound",
+  /* 19 */  "color_notregexp",
+  /* 20 */  "color_eof",
+  /* 21 */  "color_highlight",
+  /* 22 */  "highlight_mark_id",
+  /* 23 */  "highlight_state",
+  /* 24 */  "use_alt_hotkeys",
+  /* 25 */  "alt_match_case",
+  /* 26 */  "alt_whole_word",
+  /* 27 */  "alt_highlight_all",
+  /* 28 */  "find_history_items",
+  /* 29 */  "history_save",
+  /* 30 */  "new_ui",
+  /* 31 */  "select_by_f3",
+  /* 32 */  "adj_incompl_regexp"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -247,23 +249,24 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 12 */  L"hotkey_hides_panel",
   /* 13 */  L"editor_autofocus",
   /* 14 */  L"qsearch_autofocus",
-  /* 15 */  L"dock_rect_disabled",
-  /* 16 */  L"dock_rect",
-  /* 17 */  L"color_notfound",
-  /* 18 */  L"color_notregexp",
-  /* 19 */  L"color_eof",
-  /* 20 */  L"color_highlight",
-  /* 21 */  L"highlight_mark_id",
-  /* 22 */  L"highlight_state",
-  /* 23 */  L"use_alt_hotkeys",
-  /* 24 */  L"alt_match_case",
-  /* 25 */  L"alt_whole_word",
-  /* 26 */  L"alt_highlight_all",
-  /* 27 */  L"find_history_items",
-  /* 28 */  L"history_save",
-  /* 29 */  L"new_ui",
-  /* 30 */  L"select_by_f3",
-  /* 31 */  L"adj_incompl_regexp"
+  /* 15 */  L"qsearch_autofocus_file",
+  /* 16 */  L"dock_rect_disabled",
+  /* 17 */  L"dock_rect",
+  /* 18 */  L"color_notfound",
+  /* 19 */  L"color_notregexp",
+  /* 20 */  L"color_eof",
+  /* 21 */  L"color_highlight",
+  /* 22 */  L"highlight_mark_id",
+  /* 23 */  L"highlight_state",
+  /* 24 */  L"use_alt_hotkeys",
+  /* 25 */  L"alt_match_case",
+  /* 26 */  L"alt_whole_word",
+  /* 27 */  L"alt_highlight_all",
+  /* 28 */  L"find_history_items",
+  /* 29 */  L"history_save",
+  /* 30 */  L"new_ui",
+  /* 31 */  L"select_by_f3",
+  /* 32 */  L"adj_incompl_regexp"
 };
 
 
@@ -785,14 +788,14 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch ( uMsg )
     {
         case WM_MOUSEMOVE:
-            if ( g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS] & 0x01 )
+            if ( g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS_MOUSE] & 0x01 )
             {
                 if ( g_QSearchDlg.hDlg && !g_QSearchDlg.bIsQSearchingRightNow )
                 {
                     BOOL bCanBeFocused = g_QSearchDlg.bMouseJustLeavedFindEdit;
                     if ( !bCanBeFocused )
                     {
-                        if ( (g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS] & 0x01) == 0 )
+                        if ( (g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_MOUSE] & 0x01) == 0 )
                         {
                             static WORD f = 0;
                             static WORD x = 0;
@@ -957,13 +960,31 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         case AKDN_FRAME_ACTIVATE:
+        case AKDN_OPENDOCUMENT_FINISH:
         {
-            if ( g_Plugin.nMDI == WMD_PMDI )
+            if ( uMsg == AKDN_FRAME_ACTIVATE )
             {
-                if ( g_QSearchDlg.hDlg )
+                if ( g_Plugin.nMDI == WMD_PMDI )
                 {
-                    g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
+                    if ( g_QSearchDlg.hDlg )
+                    {
+                        g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
+                        SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
+                    }
+                }
+            }
+            if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] )
+            {
+                if ( g_QSearchDlg.hDlg && IsWindowVisible(g_QSearchDlg.hDlg) )
+                {
+                    LRESULT lResult = 0;
+
+                    if ( g_Plugin.pMainProcData && g_Plugin.pMainProcData->NextProc )
+                        lResult = g_Plugin.pMainProcData->NextProc(hWnd, uMsg, wParam, lParam);
+
+                    PostMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, 0 );
+
+                    return lResult;
                 }
             }
             break;
@@ -1275,11 +1296,14 @@ void ReadOptions(void)
     if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] == WRONG_DWORD_VALUE )
         g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] = 1;
 
-    if ( g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS] == WRONG_DWORD_VALUE )
-        g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS] = 0;
+    if ( g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS_MOUSE] == WRONG_DWORD_VALUE )
+        g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS_MOUSE] = 0;
 
-    if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS] == WRONG_DWORD_VALUE )
-        g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS] = 1;
+    if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_MOUSE] == WRONG_DWORD_VALUE )
+        g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_MOUSE] = 1;
+
+    if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] == WRONG_DWORD_VALUE )
+        g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] = 0;
 
     if ( g_Options.dwFlags[OPTF_DOCK_RECT_DISABLED] == WRONG_DWORD_VALUE )
         g_Options.dwFlags[OPTF_DOCK_RECT_DISABLED] = 0;

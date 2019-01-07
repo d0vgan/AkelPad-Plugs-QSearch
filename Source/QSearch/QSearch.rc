@@ -53,27 +53,28 @@ IDR_MENU_OPTIONS MENU
 BEGIN
     POPUP "Options"
     BEGIN
-        MENUITEM "Search: On-the-fly mode",                IDM_SRCHONTHEFLYMODE
-        MENUITEM "Search: Always from beginning",          IDM_SRCHFROMBEGINNING
+        MENUITEM "Search: On-the-fly mode",                      IDM_SRCHONTHEFLYMODE
+        MENUITEM "Search: Always from beginning",                IDM_SRCHFROMBEGINNING
         MENUITEM "Search: Use special characters ( \\n, \\t, * and ? )", IDM_SRCHUSESPECIALCHARS
-        MENUITEM "Search: Use regular expressions",        IDM_SRCHUSEREGEXP
+        MENUITEM "Search: Use regular expressions",              IDM_SRCHUSEREGEXP
         MENUITEM "Search:  .  matches  \\n  in reg.expressions", IDM_SRCHREGEXPDOTNEWLINE
-        MENUITEM "Search: Pick up selected text",          IDM_SRCHPICKUPSELECTION
-        MENUITEM "Search: SelFind picks up selected text", IDM_SRCHSELFINDPICKUP
-        MENUITEM "Search: Stop at EOF (end of file)",      IDM_SRCHSTOPEOF
-        MENUITEM "Window: Docked top",                     IDM_SRCHWNDDOCKEDTOP
-        MENUITEM "Window: Select all when focused",        IDM_EDITFOCUSSELECTALL
-        MENUITEM "Window: Catch main F3",                  IDM_CATCHMAINF3
-        MENUITEM "Window: Catch main Esc",                 IDM_CATCHMAINESC
-        MENUITEM "Window: Hotkey hides the panel",         IDM_HOTKEYHIDESPANEL
-        MENUITEM "Window: Editor auto-focus",              IDM_EDITORAUTOFOCUS
-        MENUITEM "Window: QSearch auto-focus",             IDM_QSEARCHAUTOFOCUS
+        MENUITEM "Search: Pick up selected text",                IDM_SRCHPICKUPSELECTION
+        MENUITEM "Search: SelFind picks up selected text",       IDM_SRCHSELFINDPICKUP
+        MENUITEM "Search: Stop at EOF (end of file)",            IDM_SRCHSTOPEOF
+        MENUITEM "Window: Docked top",                           IDM_SRCHWNDDOCKEDTOP
+        MENUITEM "Window: Select all when focused",              IDM_EDITFOCUSSELECTALL
+        MENUITEM "Window: Catch main F3",                        IDM_CATCHMAINF3
+        MENUITEM "Window: Catch main Esc",                       IDM_CATCHMAINESC
+        MENUITEM "Window: Hotkey hides the panel",               IDM_HOTKEYHIDESPANEL
+        MENUITEM "Window: Editor auto-focus (on mouse move)",    IDM_EDITORAUTOFOCUSMOUSE
+        MENUITEM "Window: QSearch auto-focus (on mouse move)",   IDM_QSEARCHAUTOFOCUSMOUSE
+        MENUITEM "Window: QSearch auto-focus (on file open)",    IDM_QSEARCHAUTOFOCUSFILE
     END
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7, 0, 0, 0
- PRODUCTVERSION 7, 0, 0, 0
+ FILEVERSION 7, 1, 0, 0
+ PRODUCTVERSION 7, 1, 0, 0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -91,12 +92,12 @@ BEGIN
             VALUE "Comments", "Pig is really neat! :-)"
             VALUE "CompanyName", "Full of Madness Co."
             VALUE "FileDescription", "QSearch plugin for AkelPad text editor"
-            VALUE "FileVersion", "7, 0, 0, 0"
+            VALUE "FileVersion", "7, 1, 0, 0"
             VALUE "InternalName", "QSearch"
-            VALUE "LegalCopyright", "(C) Sep 2007 - Dec 2017, Vitaliy Dovgan aka DV"
+            VALUE "LegalCopyright", "(C) Sep 2007 - Dec 2018, Vitaliy Dovgan aka DV"
             VALUE "OriginalFilename", "QSearch.dll"
             VALUE "ProductName", "QSearch plugin for AkelPad text editor"
-            VALUE "ProductVersion", "7, 0, 0, 0"
+            VALUE "ProductVersion", "7, 1, 0, 0"
         END
     END
     BLOCK "VarFileInfo"

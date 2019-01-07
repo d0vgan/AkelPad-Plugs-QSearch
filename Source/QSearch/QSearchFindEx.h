@@ -6,7 +6,7 @@
 
 INT_X   doFindTextExA(HWND hEd, TEXTFINDA* ptfA);
 INT_X   doFindTextExW(HWND hEd, TEXTFINDW* ptfW);
-LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx);
+LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[]);
 
 int     match_mask(const char* mask, const char* str, char** last_pos, int whole_word);
 int     match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, int whole_word);

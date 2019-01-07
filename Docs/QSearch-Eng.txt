@@ -195,7 +195,7 @@ Additional options (QSearch panel's popup menu or file
      When you press the plugin hot-key in QSearch'es panel, the AkelPad's
      editor window becomes focused.
 
-14) "Window: Editor auto-focus"
+14) "Window: Editor auto-focus (on mouse move)"
    editor_autofocus = 1
      While qsearch_autofocus = 1:
        When QSearch has the keyboard focus and mouse pointer leaves
@@ -213,7 +213,7 @@ Additional options (QSearch panel's popup menu or file
      Nothing special happens: AkelPad's editor window does not become
      focused when mouse pointer moves to.
 
-15) "Window: QSearch auto-focus"
+15) "Window: QSearch auto-focus (on mouse move)"
    qsearch_autofocus = 1
      When mouse pointer moves to QSearch'es edit control, the edit control
      becomes focused.
@@ -225,41 +225,48 @@ Additional options (QSearch panel's popup menu or file
        When mouse pointer moves to QSearch'es edit control, the edit
        control becomes focused.
 
-16) dock_rect_disabled = 1
+16) "Window: QSearch auto-focus (on file open)"
+    qsearch_autofocus_file = 1
+     When opening a file or switching to another file (document), the QSearch'es
+     edit control becomes focused.
+   qsearch_autofocus_file = 0
+     Nothing special happens: QSearch does not obtain the focus.
+
+17) dock_rect_disabled = 1
      If this option is manually set to 1, the docked panel's coordinates
      will not be saved.
 
-17) dock_rect = ...
+18) dock_rect = ...
      (internal parameter, auto-saved when 'dock_rect_disabled' is 0)
 
-18) color_notfound = FFE0E000
+19) color_notfound = FFE0E000
      Background colour to be set when the searched text is not found.
      This colour is specified in a form of "RRGGBB00", where RR, GG and BB
      are hex values of red, green and blue colours (from 00 to FF).
 
-19) color_notregexp=F8E0F800
+20) color_notregexp=F8E0F800
      Background colour to be set when regular expression failed.
      This colour is specified in a form of "RRGGBB00", where RR, GG and BB
      are hex values of red, green and blue colours (from 00 to FF).
 
-20) color_eof = E4FFE400
+21) color_eof = E4FFE400
      Background colour to be set when the search passes the end of file
      (and continues from the beginning of file).
      This colour is specified in a form of "RRGGBB00", where RR, GG and BB
      are hex values of red, green and blue colours (from 00 to FF).
      You can set "color_eof = FFFFFF00" to disable the colour change.
 
-21) color_highlight = C0FFC000
+22) color_highlight = C0FFC000
      Background colour of the text to be highlighted when "Highlight all"
      is checked.
      This colour is specified in a form of "RRGGBB00", where RR, GG and BB
      are hex values of red, green and blue colours (from 00 to FF).
 
-22) highlight_mark_id = 1001
+23) highlight_mark_id = 1001
      'ID' parameter for the HighLight plugin when QSearch calls its function
      "HighLight::Main" to highlight (mark) the text.
 
-23) highlight_state = 0
+24) highlight_state = 0
     (auto-saved when "Highlight all" is checked or unchecked).
     Also you can manually set one of the following values:
     highlight_state = 10
@@ -267,7 +274,7 @@ Additional options (QSearch panel's popup menu or file
     highlight_state = 11
       When AkelPad starts, "Highlight all" is always checked.
 
-24) use_alt_hotkeys = 0
+25) use_alt_hotkeys = 0
      QSearch panel's additional accelerator keys are disabled.
     use_alt_hotkeys = 1
      The following additional accelerator keys are available in QSearch panel:
@@ -275,7 +282,7 @@ Additional options (QSearch panel's popup menu or file
      Alt+alt_whole_word    (Alt+W) - Whole word on/off
      Alt+alt_highlight_all (Alt+H) - Highlight all on/off
 
-25) alt_match_case = 67
+26) alt_match_case = 67
      When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
      an accelerator key code for QSearch'es "Match case" check-box.
      The default value of 67 means a 'C' key i.e. the accelerator is Alt+C.
@@ -284,23 +291,23 @@ Additional options (QSearch panel's popup menu or file
      Also, 48 means Alt+0, 49 means Alt+1, 50 means Alt+2 and so on.
      For more details, refer to Virtual-Key Codes in MSDN.
 
-26) alt_whole_word = 87
+27) alt_whole_word = 87
      When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
      an accelerator key code for QSearch'es "Whole word" check-box.
      The default value of 87 means a 'W' key i.e. the accelerator is Alt+W.
      See 'alt_match_case' for more details.
 
-27) alt_highlight_all = 72
+28) alt_highlight_all = 72
      When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
      an accelerator key code for QSearch'es "Highlight all" check-box.
      The default value of 72 means a 'H' key i.e. the accelerator is Alt+H.
      See 'alt_match_case' for more details.
 
-28) find_history_items = 15
+29) find_history_items = 15
      Maximum number of items in the find history (drop-down list).
      You can set it to 0 to disable the find history.
 
-29) history_save = 3
+30) history_save = 3
      Can be set to 0 or be a sum of the following values:
      0 - the find history and the state are not saved.
      1 - the find history is saved to the System Registry.
@@ -309,14 +316,14 @@ Additional options (QSearch panel's popup menu or file
          being used by AkelPad to save the settings (e.g. to .ini file).
          Allows QSearch'es settings to be completely portable.
 
-30) new_ui = 0
+31) new_ui = 0
      QSearch shows its old "classic" UI:
      [text to find]  [ ]Match case [ ]Whole word [ ]Highlight all
     new_ui = 1
      QSearch shows updated "classic" UI (with buttons):
      [text to find]  [ < ] [ > ]  [ ]Match case [ ]Whole word [ ]Highlight all
 
-31) select_by_f3 = 0
+32) select_by_f3 = 0
      This option is topical when both "Search: Pick up selected text" and
      "Window: Catch main F3" are checked.
      When there is no selected text in the editor window, F3 uses the text
@@ -336,7 +343,7 @@ Additional options (QSearch panel's popup menu or file
      last character.
      (Example: w|ord, wo|rd, wor|d - but not word| or |word.)
 
-32) adj_incompl_regexp = 1
+33) adj_incompl_regexp = 1
      Adjusts "incomplete" RegExp: the symbols "+", "*", "+?" and "*?" at the
      end of RegExp are ignored to avoid selection till the end of the file.
      The purpose of this is highly noticeable in the On-the-fly mode, when
@@ -350,6 +357,12 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.7.1 (December 2018)
+ + fixed: "Whole word" had no effect on "Highlight all" while searching with
+   regular expressions
+ + new option: "QSearch auto-focus (on file open)"
+ * small improvements
+
 v.7.0 (December 2017)
  + fixed: the "not found" state (from the previous unsuccessful searching) was
    not cleared when picking up the word(s) selected in the editor
@@ -616,7 +629,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Dec 2017, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Dec 2018, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);

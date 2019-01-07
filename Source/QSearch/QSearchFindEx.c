@@ -1,11 +1,13 @@
 #include "QSearchFindEx.h"
 #include "QSearchDlg.h"
 #include "QSearch.h"
+#include "XMemStrFunc.h"
 
 
-#define  MAX_MASK_SIZE       MAX_TEXT_SIZE
-#define  MAX_LINE_SIZE       0x10000
-#define  MAX_LINES_TO_CHECK  16
+#define  MAX_MASK_SIZE         MAX_TEXT_SIZE
+#define  MAX_LINE_SIZE         0x10000
+#define  MAX_LINES_TO_CHECK    16
+#define  STACK_LINES_TO_CHECK  4 // pre-allocated on stack
 
 // progress bar will not be 
 // shown and updated before:
@@ -14,12 +16,8 @@
 
 // extern vars
 extern PluginState     g_Plugin;
-extern QSearchOpt      g_Options;
 extern QSearchDlgState g_QSearchDlg;
 
-
-// static (local) vars
-static wchar_t szLineBufW[MAX_LINE_SIZE];
 
 /*
   Original code of match_mask: 
@@ -409,11 +407,11 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
     return 0;
 }
 
-LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx)
+LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[])
 {
     *pbSearchEx = FALSE;
 
-    if ( g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] )
+    if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
     {
         static wchar_t szSearchTextW[MAX_TEXT_SIZE];
 
@@ -613,7 +611,7 @@ static BOOL hasLastAsteriskA(const char* maskA, int len)
 
 static int prepareFindMasksA(
   LPCSTR cszMaskEx, 
-  char   outMasksA[MAX_LINES_TO_CHECK][MAX_MASK_SIZE], 
+  char*  outMasksA[MAX_LINES_TO_CHECK], 
   /*int    outMasksLen[MAX_LINES_TO_CHECK],*/
   int    nWholeWord,
   BOOL*  lpbWholeLastLine,
@@ -665,6 +663,12 @@ static int prepareFindMasksA(
                     );
                     return 0; // error
                 }
+                if ( !outMasksA[nLines - 1] )
+                {
+                    outMasksA[nLines - 1] = (char *) x_mem_alloc(MAX_MASK_SIZE*sizeof(char));
+                    if ( !outMasksA[nLines - 1] )
+                        return 0; // error
+                }
             }
             else
             {
@@ -701,10 +705,25 @@ static int prepareFindMasksA(
     return nLines;
 }
 
+static void cleanupFindTextExA(char* pszLineA, char* pszMasksA[MAX_LINES_TO_CHECK])
+{
+    int n;
+
+    if ( pszLineA )
+        x_mem_free(pszLineA);
+
+    for ( n = STACK_LINES_TO_CHECK; n < MAX_LINES_TO_CHECK; n++ )
+    {
+        if ( pszMasksA[n] )
+            x_mem_free(pszMasksA[n]);
+    }
+}
+
 INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 {
     /*int       pnMasksLen[MAX_LINES_TO_CHECK];*/
-    char      szMasksA[MAX_LINES_TO_CHECK][MAX_MASK_SIZE];
+    char*     pszMasksA[MAX_LINES_TO_CHECK];
+    char      szMasksOnStackA[STACK_LINES_TO_CHECK][MAX_MASK_SIZE];
     char*     pszLineA;
     int       nLinesToCheck;
     int       nLine;
@@ -723,26 +742,48 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
     INT_X       pos2;
     CHARRANGE_X cr = { 0, 0 };
 
-    pszLineA = (char *) szLineBufW;
-
     bSearchUp = ((ptfA->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
     nWholeWord = ((ptfA->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? QSF_WW_DELIM : 0;
 
+    pszLineA = NULL;
+    for ( n = 0; n < STACK_LINES_TO_CHECK; n++ )
+    {
+        pszMasksA[n] = szMasksOnStackA[n];
+    }
+    //for ( n = STACK_LINES_TO_CHECK; n < MAX_LINES_TO_CHECK; n++ )
+    //{
+    //    pszMasksA[n] = NULL;
+    //}
+    x_zero_mem(pszMasksA + STACK_LINES_TO_CHECK, (MAX_LINES_TO_CHECK - STACK_LINES_TO_CHECK)*sizeof(char*));
+
     nLinesToCheck = prepareFindMasksA(ptfA->pFindIt, 
-      szMasksA, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
+      pszMasksA, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
+    {
+        cleanupFindTextExA(pszLineA, pszMasksA);
         return 0; // error
+    }
 
     nEditMaxLine = (int) SendMessage(hEd, EM_GETLINECOUNT, 0, 0);
     nEditMaxLine -= nLinesToCheck;
     if ( nEditMaxLine < 0 )
+    {
+        cleanupFindTextExA(pszLineA, pszMasksA);
         return (-1); // not found
+    }
+
+    pszLineA = (char *) x_mem_alloc(MAX_LINE_SIZE*sizeof(char));
+    if ( !pszLineA )
+    {
+        cleanupFindTextExA(pszLineA, pszMasksA);
+        return 0; // error
+    }
 
     if ( (ptfA->dwFlags & FR_MATCHCASE) != FR_MATCHCASE )
     {
         for ( n = 0; n < nLinesToCheck; n++ )
         {
-            CharLowerA(szMasksA[n]);
+            CharLowerA(pszMasksA[n]);
         }
     }
 
@@ -792,8 +833,8 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 
             pos2 = 0;
             bBack = FALSE;
-            if ( (!pszLineA[0]) && szMasksA[n][0] && 
-                 ((nLinesToCheck == 1) || (szMasksA[n][0] != '*')) )
+            if ( (!pszLineA[0]) && pszMasksA[n][0] && 
+                 ((nLinesToCheck == 1) || (pszMasksA[n][0] != '*')) )
             {
                 break;
             }
@@ -803,7 +844,8 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                 char* pszMaskA;
                 BOOL  bMatched = FALSE;
 
-                pszMaskA = (char *) szMasksA[n];
+                ptr = pszLineA;
+                pszMaskA = pszMasksA[n];
 
                 if ( nLine == nEditStartLine )
                 {
@@ -912,13 +954,13 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                         }
                         else if ( (n == 0) && !bExactBeginning )
                         {
-                            // When (n == 0), szMasksA[n][0] is the same as 
-                            // szMasksA[0][0];
-                            // if szMasksA[n] is started with "*" or "?*",
+                            // When (n == 0), pszMasksA[n][0] is the same as 
+                            // pszMasksA[0][0];
+                            // if pszMasksA[n] is started with "*" or "?*",
                             // it matches ANY beginning part of a string.
                             if ( nWholeWord || 
-                                ((szMasksA[0][0] != '*') &&
-                                 ((szMasksA[0][0] != '?') || (szMasksA[0][1] != '*'))) )
+                                ((pszMasksA[0][0] != '*') &&
+                                 ((pszMasksA[0][0] != '?') || (pszMasksA[0][1] != '*'))) )
                                 ++pos2;
                             else
                                 break;
@@ -962,6 +1004,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                 setSearchProgressBarState(FALSE, 0);
             }
 
+            cleanupFindTextExA(pszLineA, pszMasksA);
             return 1; // found
         }
 
@@ -1015,6 +1058,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
         setSearchProgressBarState(FALSE, 0);
     }
 
+    cleanupFindTextExA(pszLineA, pszMasksA);
     return (-1); // not found
 }
 
@@ -1036,7 +1080,7 @@ static BOOL hasLastAsteriskW(const wchar_t* maskW, int len)
 
 static int prepareFindMasksW(
   LPCWSTR cszMaskEx, 
-  wchar_t outMasksW[MAX_LINES_TO_CHECK][MAX_MASK_SIZE], 
+  wchar_t* outMasksW[MAX_LINES_TO_CHECK], 
   /*int     outMasksLen[MAX_LINES_TO_CHECK],*/
   int     nWholeWord,
   BOOL*   lpbWholeLastLine,
@@ -1088,6 +1132,12 @@ static int prepareFindMasksW(
                     );
                     return 0; // error
                 }
+                if ( !outMasksW[nLines - 1] )
+                {
+                    outMasksW[nLines - 1] = (wchar_t *) x_mem_alloc(MAX_MASK_SIZE*sizeof(wchar_t));
+                    if ( !outMasksW[nLines - 1] )
+                        return 0; // error
+                }
             }
             else
             {
@@ -1124,10 +1174,25 @@ static int prepareFindMasksW(
     return nLines;
 }
 
+static void cleanupFindTextExW(wchar_t* pszLineW, wchar_t* pszMasksW[MAX_LINES_TO_CHECK])
+{
+    int n;
+
+    if ( pszLineW )
+        x_mem_free(pszLineW);
+
+    for ( n = STACK_LINES_TO_CHECK; n < MAX_LINES_TO_CHECK; n++ )
+    {
+        if ( pszMasksW[n] )
+            x_mem_free(pszMasksW[n]);
+    }
+}
+
 INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 {
     /*int       pnMasksLen[MAX_LINES_TO_CHECK];*/
-    wchar_t   szMasksW[MAX_LINES_TO_CHECK][MAX_MASK_SIZE];
+    wchar_t*  pszMasksW[MAX_LINES_TO_CHECK];
+    wchar_t   szMasksOnStackW[STACK_LINES_TO_CHECK][MAX_MASK_SIZE];
     wchar_t*  pszLineW;
     int       nLinesToCheck;
     int       nLine;
@@ -1146,26 +1211,48 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     INT_X       pos2;
     CHARRANGE_X cr = { 0, 0 };
 
-    pszLineW = (wchar_t *) szLineBufW;
-
     bSearchUp = ((ptfW->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
     nWholeWord = ((ptfW->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? QSF_WW_DELIM : 0;
 
+    pszLineW = NULL;
+    for ( n = 0; n < STACK_LINES_TO_CHECK; n++ )
+    {
+        pszMasksW[n] = szMasksOnStackW[n];
+    }
+    //for ( n = STACK_LINES_TO_CHECK; n < MAX_LINES_TO_CHECK; n++ )
+    //{
+    //    pszMasksW[n] = NULL;
+    //}
+    x_zero_mem(pszMasksW + STACK_LINES_TO_CHECK, (MAX_LINES_TO_CHECK - STACK_LINES_TO_CHECK)*sizeof(wchar_t*));
+
     nLinesToCheck = prepareFindMasksW(ptfW->pFindIt, 
-      szMasksW, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
+      pszMasksW, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
+    {
+        cleanupFindTextExW(pszLineW, pszMasksW);
         return 0; // error
+    }
 
     nEditMaxLine = (int) SendMessage(hEd, EM_GETLINECOUNT, 0, 0);
     nEditMaxLine -= nLinesToCheck;
     if ( nEditMaxLine < 0 )
+    {
+        cleanupFindTextExW(pszLineW, pszMasksW);
         return (-1); // not found
+    }
+
+    pszLineW = (wchar_t *) x_mem_alloc(MAX_LINE_SIZE*sizeof(wchar_t));
+    if ( !pszLineW )
+    {
+        cleanupFindTextExW(pszLineW, pszMasksW);
+        return 0; // error
+    }
 
     if ( (ptfW->dwFlags & FR_MATCHCASE) != FR_MATCHCASE )
     {
         for ( n = 0; n < nLinesToCheck; n++ )
         {
-            CharLowerW(szMasksW[n]);
+            CharLowerW(pszMasksW[n]);
         }
     }
 
@@ -1215,8 +1302,8 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
             pos2 = 0;
             bBack = FALSE;
-            if ( (!pszLineW[0]) && szMasksW[n][0] && 
-                 ((nLinesToCheck == 1) || (szMasksW[n][0] != L'*')) )
+            if ( (!pszLineW[0]) && pszMasksW[n][0] && 
+                 ((nLinesToCheck == 1) || (pszMasksW[n][0] != L'*')) )
             {
                 break;
             }
@@ -1226,7 +1313,8 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                 wchar_t* pszMaskW;
                 BOOL     bMatched = FALSE;
 
-                pszMaskW = (wchar_t *) szMasksW[n];
+                ptr = pszLineW;
+                pszMaskW = pszMasksW[n];
 
                 if ( nLine == nEditStartLine )
                 {
@@ -1335,13 +1423,13 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                         }
                         else if ( (n == 0) && !bExactBeginning )
                         {
-                            // When (n == 0), szMasksW[n][0] is the same as 
-                            // szMasksW[0][0];
-                            // if szMasksW[n] is started with L"*" or L"?*",
+                            // When (n == 0), pszMasksW[n][0] is the same as 
+                            // pszMasksW[0][0];
+                            // if pszMasksW[n] is started with L"*" or L"?*",
                             // it matches ANY beginning part of a string.
                             if ( nWholeWord || 
-                                ((szMasksW[0][0] != L'*') &&
-                                 ((szMasksW[0][0] != L'?') || (szMasksW[0][1] != L'*'))) )
+                                ((pszMasksW[0][0] != L'*') &&
+                                 ((pszMasksW[0][0] != L'?') || (pszMasksW[0][1] != L'*'))) )
                                 ++pos2;
                             else
                                 break;
@@ -1385,6 +1473,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                 setSearchProgressBarState(FALSE, 0);
             }
 
+            cleanupFindTextExW(pszLineW, pszMasksW);
             return 1; // found
         }
 
@@ -1438,5 +1527,6 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         setSearchProgressBarState(FALSE, 0);
     }
 
+    cleanupFindTextExW(pszLineW, pszMasksW);
     return (-1); // not found
 }
