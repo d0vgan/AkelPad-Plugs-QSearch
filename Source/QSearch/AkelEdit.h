@@ -45,10 +45,10 @@
                                           //Compatibility: define same as ES_SAVESEL.
 
 //Strings
-#define AES_WORDDELIMITERSW     L" \t\n'`\"\\|[](){}<>,.;:+-=~!@#$%^&*/?"
-#define AES_WRAPDELIMITERSW     L" \t"
-#define AES_URLLEFTDELIMITERSW  L" \t\n'`\"(<{[="
-#define AES_URLRIGHTDELIMITERSW L" \t\n'`\")>}]"
+#define AES_WORDDELIMITERSW     L" \t\n'`\"\\|[](){}<>,.;:+-=~!@#$%^&*/?\0\0"
+#define AES_WRAPDELIMITERSW     L" \t\0\0"
+#define AES_URLLEFTDELIMITERSW  L" \t\n'`\"(<{[=\0\0"
+#define AES_URLRIGHTDELIMITERSW L" \t\n'`\")>}]\0\0"
 #define AES_URLPREFIXESW        L"http:\0https:\0www.\0ftp:\0file:\0mailto:\0\0"
 
 //AEM_SETEVENTMASK flags
@@ -152,7 +152,9 @@
 #define AEPTF_NOTIFYDELETE  0x00000010  //Don't use it. For internal code only.
 #define AEPTF_NOTIFYINSERT  0x00000020  //Don't use it. For internal code only.
 #define AEPTF_VALIDLINE     0x00000040  //Don't use it. For internal code only.
+#define AEPTF_WRAPMOVESET   0x00000080  //Don't use it. For internal code only.
 #define AEPTF_FOLD          0x00000100  //If set, AEPOINT.ciPoint index is used in fold. AEPOINT.dwUserData is pointer to a AEFOLD structure.
+#define AEPTF_WRAPMOVE      0x00000200  //If set, move point to the next line if it located at wrap place.
 #define AEPTF_MOVEOFFSET    0x00001000  //If set, AEPOINT.nPointOffset has been changed.
 #define AEPTF_MOVELINE      0x00002000  //If set, AEPOINT.ciPoint.nLine has been changed.
 
@@ -262,8 +264,8 @@
 #define AEGL_LINEUNWRAPCOUNT          11  //Total number of unwrapped text lines. If the control has no text, the return value is 1.
 #define AEGL_UNWRAPSELMULTILINE       12  //Returns value: TRUE - if selection on multiple lines. FALSE - if no selection or selection is on single line.
                                           //  Next flags require RichEdit offset in lParam.
-#define AEGI_LINEFROMRICHOFFSET       20  //Line of the specified RichEdit offset. lParam is RichEdit offset (if -1 caret offset). Equivalent to EM_EXLINEFROMCHAR.
-#define AEGI_UNWRAPLINEFROMRICHOFFSET 21  //Unwrapped line of the specified RichEdit offset. lParam is RichEdit offset (if -1 caret offset).
+#define AEGL_LINEFROMRICHOFFSET       20  //Line of the specified RichEdit offset. lParam is RichEdit offset (if -1 caret offset). Equivalent to EM_EXLINEFROMCHAR.
+#define AEGL_UNWRAPLINEFROMRICHOFFSET 21  //Unwrapped line of the specified RichEdit offset. lParam is RichEdit offset (if -1 caret offset).
 
 //AEM_GETINDEX and AEM_GETRICHOFFSET flags
 #define AEGI_FIRSTCHAR                 1  //First character.
@@ -344,6 +346,7 @@
 #define AEREPT_COLUMNASIS          0x00000002  //Leave column selection as is.
 #define AEREPT_LOCKSCROLL          0x00000004  //Lock edit window scroll. However edit window can be scrolled during window resize when AECO_DISABLENOSCROLL option not set.
 #define AEREPT_UNDOGROUPING        0x00000100  //Continue undo grouping.
+#define AEREPT_SELECT              0x00000200  //Select inserted text.
 
 //AEM_CHARFROMPOS return value
 #define AEPC_ERROR    0  //Error.
@@ -369,6 +372,7 @@
 //AEM_PASTE flags
 #define AEPFC_ANSI           0x00000001  //Paste text as ANSI. Default is paste as Unicode text, if no Unicode text available ANSI text will be used.
 #define AEPFC_COLUMN         0x00000002  //Paste to column selection.
+#define AEPFC_SELECT         0x00000004  //Select pasted text.
 
 //AEM_LOCKUPDATE FLAGS
 #define AELU_SCROLLBAR  0x00000001
@@ -553,6 +557,12 @@
 //AEREGROUPCOLOR flags
 #define AEREGCF_BACKREFCOLORTEXT  0x00000001  //AEREGROUPCOLOR.crText is backreference index for text color in format #RRGGBB or RRGGBB.
 #define AEREGCF_BACKREFCOLORBK    0x00000002  //AEREGROUPCOLOR.crBk is backreference index for background color in format #RRGGBB or RRGGBB.
+
+//Parent type
+#define AEHAP_NONE   0
+#define AEHAP_ROOT   1
+#define AEHAP_QUOTE  2
+#define AEHAP_FOLD   3
 
 //Fold flags
 #define AEFOLDF_COLLAPSED    0x00000001  //Fold is collapsed.
@@ -1340,6 +1350,9 @@ typedef struct _AEQUOTEMATCHITEM {
   AECHARRANGE crQuoteStart;
   AECHARRANGE crQuoteEnd;
   INT_PTR nQuoteLen;
+  DWORD dwFontStyle;   //See AEHLS_* defines.
+  DWORD dwActiveText;  //Text color. If -1, then don't set.
+  DWORD dwActiveBk;    //Background color. If -1, then don't set.
 } AEQUOTEMATCHITEM;
 
 typedef struct {
@@ -1355,6 +1368,10 @@ typedef struct {
   AECHARINDEX ciFindFirst;
   AECHARINDEX ciChildScan;
   AESTACKQUOTEMATCH hParentStack;
+  int nParentType;     //See AEHAP_* defines.
+  DWORD dwFontStyle;   //See AEHLS_* defines.
+  DWORD dwActiveText;  //Text color. If -1, then don't set.
+  DWORD dwActiveBk;    //Background color. If -1, then don't set.
 } AEQUOTEMATCH;
 
 typedef struct {
@@ -2716,8 +2733,7 @@ wParam        == not used.
 (DWORD)lParam == see AEPFC_* defines.
 
 Return Value
- TRUE   success.
- FALSE  failed.
+ Number of characters pasted, -1 if error.
 
 Example:
  SendMessage(hWndEdit, AEM_PASTE, 0, 0);

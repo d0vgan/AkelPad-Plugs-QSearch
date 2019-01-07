@@ -8,7 +8,7 @@
   #define MAKE_IDENTIFIER(a, b, c, d)  ((DWORD)MAKELONG(MAKEWORD(a, b), MAKEWORD(c, d)))
 #endif
 
-#define AKELDLL MAKE_IDENTIFIER(2, 2, 0, 0)
+#define AKELDLL MAKE_IDENTIFIER(2, 2, 0, 4)
 
 
 //// Defines
@@ -489,12 +489,12 @@
 #define FIS_URLPREFIXESENABLE    40  //(BOOL)FRAMEINFO.dwData - URL prefixes enable.
 #define FIS_URLPREFIXES          41  //(wchar_t *)FRAMEINFO.dwData - URL prefixes.
 #define FIS_URLDELIMITERSENABLE  45  //(BOOL)FRAMEINFO.dwData - URL delimiters enable.
-#define FIS_URLLEFTDELIMITERS    46  //(wchar_t *)FRAMEINFO.dwData - URL left delimiters.
-#define FIS_URLRIGHTDELIMITERS   50  //(wchar_t *)FRAMEINFO.dwData - URL right delimiters.
+#define FIS_URLLEFTDELIMITERS    46  //(wchar_t *)FRAMEINFO.dwData - URL left delimiters, two null-terminated.
+#define FIS_URLRIGHTDELIMITERS   50  //(wchar_t *)FRAMEINFO.dwData - URL right delimiters, two null-terminated.
 #define FIS_WORDDELIMITERSENABLE 54  //(BOOL)FRAMEINFO.dwData - word delimiters enabled.
-#define FIS_WORDDELIMITERS       55  //(wchar_t *)FRAMEINFO.dwData - word delimiters.
+#define FIS_WORDDELIMITERS       55  //(wchar_t *)FRAMEINFO.dwData - word delimiters, two null-terminated.
 #define FIS_WRAPDELIMITERSENABLE 59  //(BOOL)FRAMEINFO.dwData - wrap delimiters enabled.
-#define FIS_WRAPDELIMITERS       60  //(wchar_t *)FRAMEINFO.dwData - wrap delimiters.
+#define FIS_WRAPDELIMITERS       60  //(wchar_t *)FRAMEINFO.dwData - wrap delimiters, two null-terminated.
 #define FIS_LOCKINHERIT          68  //(DWORD)FRAMEINFO.dwData - lock inherit new document settings from current document. FRAMEINFO.dwData contain lock inherit flags, see LI_* defines.
 #define FIS_COLORS               72  //(AECOLORS *)FRAMEINFO.dwData - set colors.
 #define FIS_BKIMAGE              73  //(BKIMAGE *)FRAMEINFO.dwData - set background image.
@@ -538,6 +538,7 @@
 #define PAINT_ENTIRENEWLINEDRAW     0x00000004  //Draw new line selection to the right edge.
 #define PAINT_HIDESEL               0x00000008  //Hides the selection when the control loses the input focus and inverts the selection when the control receives the input focus.
 #define PAINT_NOMARKERAFTERLASTLINE 0x00000010  //Disables marker painting after last line.
+#define PAINT_VSCROLLBYLINE         0x00000080  //Unit of vertical scrolling is line (default is pixel).
 #define PAINT_HIDENOSCROLL          0x00000100  //Hides scroll bars instead of disabling them when they are not needed.
 #define PAINT_STATICEDGE            0x00000200  //Draw thin edit window border.
 #define PAINT_NOEDGE                0x00000400  //Draw no edit window border.
@@ -730,11 +731,12 @@
 #define FWDE_NOWINDOW  3  //Frame doesn't have associated edit window (FRAMEDATA.ei.hWndEdit == NULL).
 
 //AKD_FRAMESTATS flags
-#define FWS_COUNTALL      0  //Count of windows.
-#define FWS_COUNTMODIFIED 1  //Count of modified windows.
-#define FWS_COUNTSAVED    2  //Count of unmodified windows.
-#define FWS_CURSEL        3  //Active window zero based index.
-#define FWS_COUNTNAMED    4  //Count of named windows.
+#define FWS_COUNTALL      0  //Count of windows. lParam not used.
+#define FWS_COUNTMODIFIED 1  //Count of modified windows. lParam not used.
+#define FWS_COUNTSAVED    2  //Count of unmodified windows. lParam not used.
+#define FWS_CURSEL        3  //Active window zero based index. lParam not used.
+#define FWS_COUNTNAMED    4  //Count of named windows. lParam not used.
+#define FWS_COUNTFILE     5  //Count of file in different frames. (wchar_t *)lParam is full file name string.
 
 //Lock inherit new document settings from current document
 #define LI_FONT           0x00000001  //Lock inherit font.
@@ -761,10 +763,15 @@
 #define FRF_CYCLESEARCH        0x08000000
 #define FRF_CYCLESEARCHPROMPT  0x10000000
 #define FRF_REPLACEALLNOMSG    0x20000000
+#define FRF_TEST               0x80000000  //Test only. Without text replacement and selection.
+
+//Replace flags
+#define RRF_ALL                0x00000001  //Replace all.
 
 //AKD_PASTE
 #define PASTE_ANSI       0x00000001  //Paste text as ANSI. Default is paste as Unicode text, if no Unicode text available ANSI text will be used.
 #define PASTE_COLUMN     0x00000002  //Paste to column selection.
+#define PASTE_SELECT     0x00000004  //Select pasted text.
 #define PASTE_CASE       0x00000800  //Detect selected text case type and paste text with this case.
 #define PASTE_AFTER      0x00001000  //Paste text after caret.
 #define PASTE_SINGLELINE 0x00002000  //Paste multiline text to single line edit control. All new lines replaced with '\r'.
@@ -1058,13 +1065,13 @@ typedef struct _FRAMEDATA {
   BOOL bShowURL;                                      //Show URL.
   wchar_t wszUrlPrefixes[URL_PREFIXES_SIZE];          //URL prefixes.
   int nUrlPrefixesLen;                                //URL prefixes length.
-  wchar_t wszUrlLeftDelimiters[URL_DELIMITERS_SIZE];  //URL left delimiters.
+  wchar_t wszUrlLeftDelimiters[URL_DELIMITERS_SIZE];  //URL left delimiters, two null-terminated.
   int nUrlLeftDelimitersLen;                          //URL left delimiters length.
-  wchar_t wszUrlRightDelimiters[URL_DELIMITERS_SIZE]; //URL right delimiters.
+  wchar_t wszUrlRightDelimiters[URL_DELIMITERS_SIZE]; //URL right delimiters, two null-terminated.
   int nUrlRightDelimitersLen;                         //URL right delimiters length.
-  wchar_t wszWordDelimiters[WORD_DELIMITERS_SIZE];    //Word delimiters.
+  wchar_t wszWordDelimiters[WORD_DELIMITERS_SIZE];    //Word delimiters, two null-terminated.
   int nWordDelimitersLen;                             //Word delimiters length.
-  wchar_t wszWrapDelimiters[WRAP_DELIMITERS_SIZE];    //Wrap delimiters.
+  wchar_t wszWrapDelimiters[WRAP_DELIMITERS_SIZE];    //Wrap delimiters, two null-terminated.
   int nWrapDelimitersLen;                             //Wrap delimiters length.
   wchar_t wszBkImageFile[MAX_PATH];                   //Background image file.
   int nBkImageAlpha;                                  //Alpha transparency value that ranges from 0 to 255.
@@ -1312,7 +1319,7 @@ typedef struct {
   HANDLE hFile;          //File handle, returned by CreateFile function.
   UINT_PTR dwMax;        //AKD_READFILECONTENT: maximum bytes to read, if -1 read entire file.
                          //AKD_WRITEFILECONTENT: wpContent length in characters. If this value is -1, the wpContent is assumed to be null-terminated and the length is calculated automatically.
-  int nCodePage;         //File codepage.
+  int nCodePage;         //File codepage. If -1, use ANSI codepage.
   BOOL bBOM;             //File BOM.
   wchar_t *wpContent;    //AKD_READFILECONTENT: returned file contents. On input points to text buffer or NULL if buffer must be allocated automatically.
                          //                     Automatically allocated buffer must be released with AKD_FREETEXT.
@@ -1528,22 +1535,22 @@ typedef struct {
 } TEXTFINDW;
 
 typedef struct {
-  DWORD dwFlags;               //See FRF_* defines.
+  DWORD dwFindFlags;           //See FRF_* defines.
   const char *pFindIt;         //Find string.
   int nFindItLen;              //Find string length. If this value is -1, the string is assumed to be null-terminated and the length is calculated automatically.
   const char *pReplaceWith;    //Replace string.
   int nReplaceWithLen;         //Replace string length. If this value is -1, the string is assumed to be null-terminated and the length is calculated automatically.
-  BOOL bAll;                   //Replace all.
+  DWORD dwReplaceFlags;        //See RRF_* defines.
   INT_PTR nChanges;            //Count of changes.
 } TEXTREPLACEA;
 
 typedef struct {
-  DWORD dwFlags;               //See FRF_* defines.
+  DWORD dwFindFlags;           //See FRF_* defines.
   const wchar_t *pFindIt;      //Find string.
   int nFindItLen;              //Find string length. If this value is -1, the string is assumed to be null-terminated and the length is calculated automatically.
   const wchar_t *pReplaceWith; //Replace string.
   int nReplaceWithLen;         //Replace string length. If this value is -1, the string is assumed to be null-terminated and the length is calculated automatically.
-  BOOL bAll;                   //Replace all.
+  DWORD dwReplaceFlags;        //See RRF_* defines.
   INT_PTR nChanges;            //Count of changes.
 } TEXTREPLACEW;
 
@@ -1646,6 +1653,16 @@ typedef struct {
   HICON hIcon;                //Custom icon.
   BUTTONMESSAGEBOX *bmb;      //Array of the BUTTONMESSAGEBOX structures. Each element specified one message box button. Last item in the array should contain all zeros in members.
 } DIALOGMESSAGEBOX;
+
+typedef struct {
+  INT_PTR nReserved;          //Reserved.
+  HWND hWndParent;            //Handle to the owner window.
+  const wchar_t *wpText;      //Pointer to a null-terminated string that contains the message to be displayed.
+  const wchar_t *wpCaption;   //Pointer to a null-terminated string that contains the dialog box title.
+  UINT uType;                 //Specifies the standard message box icon. See MSDN for MB_ICON* defines of the MessageBox function.
+  UINT dwLoadStringID;        //Last loaded string id. See MSG_* defines in "[AkelPad sources]\AkelFiles\Langs\Resources\resource.h".
+  int nResult;                //MessageBox call result.
+} NMESSAGEBOX;
 
 typedef struct {
   HWND hWnd;           //Window handle.
@@ -1794,7 +1811,7 @@ typedef struct {
 #define IDM_FILE_CREATENEW              4102  //Create new instance of program.
                                               //Return Value: new main window handle.
                                               //
-#define IDM_FILE_OPEN                   4103  //Open file dialog.
+#define IDM_FILE_OPEN                   4103  //Open file dialog. lParam: 1 - force to use last directory.
                                               //Return Value: TRUE - success, FALSE - failed.
                                               //
 #define IDM_FILE_REOPEN                 4104  //Reopen file.
@@ -1803,7 +1820,7 @@ typedef struct {
 #define IDM_FILE_SAVE                   4105  //Save file.
                                               //Return Value: TRUE - success, FALSE - failed.
                                               //
-#define IDM_FILE_SAVEAS                 4106  //Save file dialog.
+#define IDM_FILE_SAVEAS                 4106  //Save file dialog. lParam: 1 - force to use last directory.
                                               //Return Value: TRUE - success, FALSE - failed.
                                               //
 #define IDM_FILE_PAGESETUP              4107  //Print setup dialog.
@@ -1887,8 +1904,8 @@ typedef struct {
 #define IDM_EDIT_COPY                   4154  //Copy.
                                               //Return Value: TRUE - clipboard changed, FALSE - clipboard not changed.
                                               //
-#define IDM_EDIT_PASTE                  4155  //Paste.
-                                              //Return Value: TRUE - success, FALSE - failed.
+#define IDM_EDIT_PASTE                  4155  //Paste. lParam: see PASTE_* defines.
+                                              //Return Value: Number of characters pasted, -1 if error.
                                               //
 #define IDM_EDIT_CLEAR                  4156  //Delete.
                                               //Return Value: zero.
@@ -1984,13 +2001,13 @@ typedef struct {
                                               //Return Value: TRUE - is on, FALSE - is off.
                                               //
 #define IDM_EDIT_PASTEANSI              4191  //Paste as ANSI text.
-                                              //Return Value: TRUE - success, FALSE - failed.
+                                              //Return Value: Number of characters pasted, -1 if error.
                                               //
 #define IDM_EDIT_PASTECOLUMN            4192  //Paste to column selection.
-                                              //Return Value: TRUE - success, FALSE - failed.
+                                              //Return Value: Number of characters pasted, -1 if error.
                                               //
 #define IDM_EDIT_PASTEAFTER             4193  //Paste text after caret.
-                                              //Return Value: TRUE - success, FALSE - failed.
+                                              //Return Value: Number of characters pasted, -1 if error.
                                               //
 #define IDM_EDIT_PASTECASE              4194  //Detect selected text case type and paste text with this case.
                                               //Return Value: see SCT_* defines.
@@ -2826,8 +2843,8 @@ ____________________
 
 Notification message, sends to the main procedure before messagebox is open.
 
-(HWND)wParam  == parent window of the messagebox.
-(DWORD)lParam == last loaded string id. See MSG_* defines in "[AkelPad sources]\AkelFiles\Langs\Resources\resource.h".
+wParam                == not used.
+(NMESSAGEBOX *)lParam == pointer to an NMESSAGEBOX structure that contains message box information.
 
 Return Value
  Zero.
@@ -2838,8 +2855,8 @@ __________________
 
 Notification message, sends to the main procedure after messagebox is closed.
 
-(int)wParam   == MessageBox call result.
-(DWORD)lParam == same value as lParam of AKDN_MESSAGEBOXBEGIN.
+wParam                == not used.
+(NMESSAGEBOX *)lParam == pointer to an NMESSAGEBOX structure that contains message box information.
 
 Return Value
  Zero.
@@ -3686,8 +3703,7 @@ Paste text from clipboard to the edit control.
 (DWORD)lParam == see PASTE_* defines.
 
 Return Value
- TRUE   success.
- FALSE  failed.
+ Number of characters pasted, -1 if error.
 
 Example:
  SendMessage(pd->hMainWnd, AKD_PASTE, (WPARAM)pd->hWndEdit, 0);
@@ -3753,7 +3769,7 @@ Example (Unicode):
  tr.nFindItLen=-1;
  tr.pReplaceWith=L"Text to replace";
  tr.nReplaceWithLen=-1;
- tr.bAll=TRUE;
+ tr.dwReplaceFlags=RRF_ALL;
  SendMessage(pd->hMainWnd, AKD_TEXTREPLACEW, (WPARAM)pd->hWndEdit, (LPARAM)&tr);
 
 
@@ -4360,8 +4376,8 @@ ______________
 
 Retrieve windows statistics.
 
-(int)wParam == see FWS_* defines.
-lParam      == not used.
+(int)wParam    == see FWS_* defines.
+(void *)lParam == depend on FWS_ value.
 
 Return Value
  Depend of FWS_* define.

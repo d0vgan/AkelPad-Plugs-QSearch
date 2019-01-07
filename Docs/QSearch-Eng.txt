@@ -350,6 +350,9 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.9 (July 2016)
+ * AkelPad 4.9.8+
+
 v.6.8 (July 2016)
  + get rid of MSVCR's stuff = smaller binary
 
