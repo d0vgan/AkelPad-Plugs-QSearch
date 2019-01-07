@@ -350,6 +350,15 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.7.0 (December 2017)
+ + fixed: the "not found" state (from the previous unsuccessful searching) was
+   not cleared when picking up the word(s) selected in the editor
+ * changed: now checking the "Highlight all" checkbox picks up the word(s)
+   selected in the editor when srch_pickup_selection = 1 and the mode is
+   "Search: On-the-fly mode". (The selection is not picked up if either
+   srch_pickup_selection = 11 or the mode is not "on-the-fly".)
+ * 10 years of QSearch! :)
+
 v.6.9 (July 2016)
  * AkelPad 4.9.8+
 
@@ -607,7 +616,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Jul 2016, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Dec 2017, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);

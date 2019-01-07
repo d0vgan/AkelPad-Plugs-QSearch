@@ -733,6 +733,7 @@ BOOL qsPickUpSelection(HWND hEdit)
 {
     if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW) )
     {
+        qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
         setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
 
         SendMessage(hEdit, EM_SETSEL, 0, -1);
@@ -1499,14 +1500,31 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
                     HWND hChHighlightAll;
-
-                    qs_bForceFindFirst = TRUE;
-                    qs_bEditTextChanged = TRUE;
-                    qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
+                    BOOL bHighlightAllChecked = FALSE;
+                    BOOL bProcessed = FALSE;
 
                     hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
                     if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                        qsUpdateHighlight(hDlg, hFindEdit);
+                        bHighlightAllChecked = TRUE;
+
+                    if ( bHighlightAllChecked &&
+                         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
+                         g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
+                         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
+                    {
+                        qs_bForceFindFirst = TRUE;
+                        bProcessed = qsPickUpSelection(hFindEdit); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
+                    }
+
+                    if ( !bProcessed )
+                    {
+                        qs_bForceFindFirst = TRUE;
+                        qs_bEditTextChanged = TRUE;
+                        qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
+
+                        if ( bHighlightAllChecked )
+                            qsUpdateHighlight(hDlg, hFindEdit);
+                    }
                 }
             }
             else if ( id == IDC_CH_WHOLEWORD )
@@ -1514,28 +1532,45 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
                     HWND hChHighlightAll;
-
-                    qs_bForceFindFirst = TRUE;
-                    qs_bEditTextChanged = TRUE;
-                    qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
+                    BOOL bHighlightAllChecked = FALSE;
+                    BOOL bProcessed = FALSE;
 
                     hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
                     if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                        bHighlightAllChecked = TRUE;
+
+                    if ( bHighlightAllChecked &&
+                         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
+                         g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
+                         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
-                        DWORD dwOnTheFlyMode;
-                        DWORD dwStopEOF;
+                        qs_bForceFindFirst = TRUE;
+                        bProcessed = qsPickUpSelection(hFindEdit); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
+                    }
 
-                        getEditFindText(hFindEdit, g_QSearchDlg.szFindTextW);
+                    if ( !bProcessed )
+                    {
+                        qs_bForceFindFirst = TRUE;
+                        qs_bEditTextChanged = TRUE;
+                        qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
 
-                        dwOnTheFlyMode = g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE];
-                        g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] = 1;
-                        dwStopEOF = g_Options.dwFlags[OPTF_SRCH_STOP_EOF];
-                        g_Options.dwFlags[OPTF_SRCH_STOP_EOF] = 0;
-                        qsearchDoSearchText( hFindEdit, QSEARCH_FIRST );
-                        g_Options.dwFlags[OPTF_SRCH_STOP_EOF] = dwStopEOF;
-                        g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] = dwOnTheFlyMode;
+                        if ( bHighlightAllChecked )
+                        {
+                            DWORD dwOnTheFlyMode;
+                            DWORD dwStopEOF;
 
-                        qsearchDoTryHighlightAll(hDlg);
+                            getEditFindText(hFindEdit, g_QSearchDlg.szFindTextW);
+
+                            dwOnTheFlyMode = g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE];
+                            g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] = 1;
+                            dwStopEOF = g_Options.dwFlags[OPTF_SRCH_STOP_EOF];
+                            g_Options.dwFlags[OPTF_SRCH_STOP_EOF] = 0;
+                            qsearchDoSearchText( hFindEdit, QSEARCH_FIRST );
+                            g_Options.dwFlags[OPTF_SRCH_STOP_EOF] = dwStopEOF;
+                            g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] = dwOnTheFlyMode;
+
+                            qsearchDoTryHighlightAll(hDlg);
+                        }
                     }
                 }
             }
@@ -1544,18 +1579,35 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
                     HWND hChHighlightAll;
+                    BOOL bHighlightAllChecked = FALSE;
+                    BOOL bProcessed = FALSE;
 
                     hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
                     if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                        bHighlightAllChecked = TRUE;
+
+                    if ( bHighlightAllChecked &&
+                         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
+                         g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
+                         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
                         g_Options.dwHighlightState |= HLS_IS_CHECKED;
-                        qsUpdateHighlight(hDlg, hFindEdit);
+                        bProcessed = qsPickUpSelection(hFindEdit); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
                     }
-                    else
+
+                    if ( !bProcessed )
                     {
-                        if ( (g_Options.dwHighlightState & HLS_IS_CHECKED) == HLS_IS_CHECKED )
-                            g_Options.dwHighlightState -= HLS_IS_CHECKED;
-                        qsearchDoTryUnhighlightAll();
+                        if ( bHighlightAllChecked )
+                        {
+                            g_Options.dwHighlightState |= HLS_IS_CHECKED;
+                            qsUpdateHighlight(hDlg, hFindEdit);
+                        }
+                        else
+                        {
+                            if ( (g_Options.dwHighlightState & HLS_IS_CHECKED) == HLS_IS_CHECKED )
+                                g_Options.dwHighlightState -= HLS_IS_CHECKED;
+                            qsearchDoTryUnhighlightAll();
+                        }
                     }
                 }
             }
