@@ -1,5 +1,6 @@
 #include "QSearchLng.h"
 #include "QSearch.h"
+#include "XMemStrFunc.h"
 #include "resource.h"
 
 
@@ -513,8 +514,10 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
     {
         if ( g_Plugin.bOldWindows )
         {
-            MENUITEMINFOA miiA = { 0 };
+            MENUITEMINFOA miiA;
             int           i;
+
+            x_zero_mem(&miiA, sizeof(MENUITEMINFOA));
 
             for ( i = 0; i < OPTF_COUNT - 1; i++ )
             {
@@ -528,8 +531,10 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
         }
         else
         {
-            MENUITEMINFOW miiW = { 0 };
+            MENUITEMINFOW miiW;
             int           i;
+
+            x_zero_mem(&miiW, sizeof(MENUITEMINFOW));
 
             for ( i = 0; i < OPTF_COUNT - 1; i++ )
             {

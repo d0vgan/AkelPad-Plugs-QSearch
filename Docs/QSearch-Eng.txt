@@ -350,6 +350,9 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.8 (July 2016)
+ + get rid of MSVCR's stuff = smaller binary
+
 v.6.7 (July 2016)
  + changed: when "editor_autofocus" sets focus to the editor window right after
    something was selected in QSearch'es find history (the drop-down list), the

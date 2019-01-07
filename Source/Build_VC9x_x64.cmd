@@ -25,7 +25,7 @@ set MACHINE=AMD64
 cd .\QSearch
 
 rc /R /DRC_VERSIONBIT=%BIT% /Fo"QSearch.res" "QSearch.rc"
-cl /O1 %CLFLAGS% /D "AKELPAD_X64" QSearch.c QSearchDlg.c QSearchLng.c QSearchFindEx.c DialogSwitcher.c QSearch.res /LD /link kernel32.lib user32.lib comctl32.lib gdi32.lib Advapi32.lib /OPT:NOWIN98 /MACHINE:%MACHINE% /OUT:..\..\Plugs64\QSearch.dll
+cl /O1 /GS- %CLFLAGS% /D "AKELPAD_X64" QSearch.c QSearchDlg.c QSearchLng.c QSearchFindEx.c DialogSwitcher.c XMemStrFunc.c QSearch.res /LD /link kernel32.lib user32.lib comctl32.lib gdi32.lib Advapi32.lib /MACHINE:%MACHINE% /NODEFAULTLIB /ENTRY:DllMain /OUT:..\..\Plugs64\QSearch.dll
 
 if exist QSearch.res del QSearch.res
 if exist QSearch.lib del QSearch.lib
@@ -35,4 +35,5 @@ if exist QSearchDlg.obj del QSearchDlg.obj
 if exist QSearchLng.obj del QSearchLng.obj
 if exist QSearchFindEx.obj del QSearchFindEx.obj
 if exist DialogSwitcher.obj del DialogSwitcher.obj
+if exist XMemStrFunc.obj del XMemStrFunc.obj
 @PAUSE

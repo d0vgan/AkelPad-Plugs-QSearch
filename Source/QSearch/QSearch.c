@@ -1,6 +1,7 @@
 #include "QSearch.h"
 #include "QSearchDlg.h"
 #include "DialogSwitcher.h"
+#include "XMemStrFunc.h"
 
 
 #define TEST_UNINIT 0
@@ -666,7 +667,9 @@ void Initialize(PLUGINDATA* pd)
 {
     if ( !g_Plugin.bInitialized )
     {
-        DOCK dk = { 0 };
+        DOCK dk;
+
+        x_zero_mem(&dk, sizeof(DOCK));
 
         g_Plugin.bOldWindows  = pd->bOldWindows;
         g_Plugin.bOldRichEdit = pd->bOldRichEdit;
@@ -1700,9 +1703,11 @@ void ReadFindHistoryA(void)
         HANDLE  hOptions;
         char    szKeyA[200];
 
+        hKey = NULL;
+        hOptions = NULL;
+
         if ( qsearchIsSavingHistoryToStdLocation() )
         {
-            hOptions = NULL;
             if ( qsearchIsSearchFlagsBeingSaved() ||
                  (qsearchIsFindHistoryEnabled() && qsearchIsFindHistoryBeingSaved()) )
             {
@@ -1850,9 +1855,11 @@ void ReadFindHistoryW(void)
         HANDLE  hOptions;
         wchar_t szKeyW[200];
 
+        hKey = NULL;
+        hOptions = NULL;
+
         if ( qsearchIsSavingHistoryToStdLocation() )
         {
-            hOptions = NULL;
             if ( qsearchIsSearchFlagsBeingSaved() ||
                  (qsearchIsFindHistoryEnabled() && qsearchIsFindHistoryBeingSaved()) )
             {
@@ -1998,9 +2005,10 @@ void SaveFindHistoryA(void)
     {
         HANDLE  hOptions;
 
+        hOptions = NULL;
+
         if ( qsearchIsSavingHistoryToStdLocation() )
         {
-            hOptions = NULL;
             if ( qsearchIsSearchFlagsBeingSaved() ||
                  (qsearchIsFindHistoryEnabled() && qsearchIsFindHistoryBeingSaved()) )
             {
@@ -2018,6 +2026,7 @@ void SaveFindHistoryA(void)
             HKEY  hKey;
 
             dwSearchFlags = 0;
+            hKey = NULL;
 
             hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
             if ( hDlgItm )
@@ -2060,6 +2069,8 @@ void SaveFindHistoryA(void)
             {
                 HKEY    hKey;
                 char    szKeyA[200];
+
+                hKey = NULL;
 
                 wsprintfA(szKeyA, "%s\\%s", QSEARCH_REG_HOMEA, QSEARCH_REG_FINDHISTORYA);
                 if ( qsearchIsSavingHistoryToStdLocation() ||
@@ -2129,9 +2140,10 @@ void SaveFindHistoryW(void)
     {
         HANDLE  hOptions;
 
+        hOptions = NULL;
+
         if ( qsearchIsSavingHistoryToStdLocation() )
         {
-            hOptions = NULL;
             if ( qsearchIsSearchFlagsBeingSaved() ||
                  (qsearchIsFindHistoryEnabled() && qsearchIsFindHistoryBeingSaved()) )
             {
@@ -2149,6 +2161,7 @@ void SaveFindHistoryW(void)
             HKEY  hKey;
 
             dwSearchFlags = 0;
+            hKey = NULL;
 
             hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
             if ( hDlgItm )
@@ -2191,6 +2204,8 @@ void SaveFindHistoryW(void)
             {
                 HKEY    hKey;
                 wchar_t szKeyW[200];
+
+                hKey = NULL;
 
                 wsprintfW(szKeyW, L"%s\\%s", QSEARCH_REG_HOMEW, QSEARCH_REG_FINDHISTORYW);
                 if ( qsearchIsSavingHistoryToStdLocation() ||

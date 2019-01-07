@@ -456,7 +456,7 @@ LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx)
             {
                 i = 0;
                 k = 0;
-                while ( 1 )
+                for ( ; ; )
                 {
                     ch = ((LPCSTR) cszTextW)[i++];
                     if ( ch == '\\' )
@@ -526,7 +526,7 @@ LPCWSTR getTextToSearch(LPCWSTR cszTextW, BOOL* pbSearchEx)
             {
                 i = 0;
                 k = 0;
-                while ( 1 )
+                for ( ; ; )
                 {
                     wch = cszTextW[i++];
                     if ( wch == L'\\' )

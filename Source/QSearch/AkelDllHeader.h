@@ -1,6 +1,12 @@
 #ifndef _akel_dll_header_h_
 #define _akel_dll_header_h_
 //---------------------------------------------------------------------------
+#ifdef _WIN64
+  #ifndef AKELPAD_X64
+    #define AKELPAD_X64
+  #endif
+#endif
+
 #ifdef AKELPAD_X64
   // types and structs
   #define INT_X INT_PTR
