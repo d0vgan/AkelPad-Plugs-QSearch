@@ -8,7 +8,7 @@
   #define MAKE_IDENTIFIER(a, b, c, d)  ((DWORD)MAKELONG(MAKEWORD(a, b), MAKEWORD(c, d)))
 #endif
 
-#define AKELDLL MAKE_IDENTIFIER(2, 1, 1, 0)
+#define AKELDLL MAKE_IDENTIFIER(2, 2, 0, 0)
 
 
 //// Defines
@@ -134,6 +134,7 @@
 #define OD_REOPEN              0x00000100          //Don't create new MDI window, use the exited one.
 #define OD_NOSCROLL            0x00000200          //Don't restore scroll position.
 #define OD_MULTIFILE           0x00000400          //More documents is on queue. Use MB_YESNOCANCEL instead of MB_OKCANCEL.
+#define OD_NOUPDATE            0x00000800          //Don't update file info.
 
 //Open document errors
 #define EOD_SUCCESS              0          //Success.
@@ -710,13 +711,13 @@
 #define FWF_TABNEXT        9  //Retrieve next tab item frame data. lParam is a frame data pointer.
 #define FWF_TABPREV        10 //Retrieve previous tab item frame data. lParam is a frame data pointer.
 
-//AKD_FRAMEACTIVATE, AKDN_FRAME_ACTIVATE flags
+//AKD_FRAMEACTIVATE, AKDN_FRAME_ACTIVATE, AKDN_FRAME_DEACTIVATE flags
 #define FWA_NOUPDATEORDER         0x00000001  //Don't update access order during activating.
 #define FWA_NOUPDATEEDIT          0x00000002  //For WMD_PMDI mode. Don't redraw edit control area during activating.
 #define FWA_NOVISUPDATE           0x00000004  //For WMD_PMDI mode. Don't make any visual updates during activating. Use it only if you later will activate back frame that has lost active status.
 #define FWA_NEXT                  0x00000010  //Activate next frame.
 #define FWA_PREV                  0x00000020  //Activate previous frame.
-                                              //AKDN_FRAME_ACTIVATE only flags:
+                                              //AKDN_FRAME_ACTIVATE, AKDN_FRAME_DEACTIVATE only flags:
 #define FWA_NOTIFY_CREATE         0x00000100  //Frame activating after creation.
 #define FWA_NOTIFY_BEFOREDESTROY  0x00000200  //Frame activating for destroying.
 #define FWA_NOTIFY_AFTERDESTROY   0x00000400  //Previous frame activating because current one has been destroyed.
@@ -1056,10 +1057,15 @@ typedef struct _FRAMEDATA {
   DWORD dwLineGap;                                    //Line gap.
   BOOL bShowURL;                                      //Show URL.
   wchar_t wszUrlPrefixes[URL_PREFIXES_SIZE];          //URL prefixes.
+  int nUrlPrefixesLen;                                //URL prefixes length.
   wchar_t wszUrlLeftDelimiters[URL_DELIMITERS_SIZE];  //URL left delimiters.
+  int nUrlLeftDelimitersLen;                          //URL left delimiters length.
   wchar_t wszUrlRightDelimiters[URL_DELIMITERS_SIZE]; //URL right delimiters.
+  int nUrlRightDelimitersLen;                         //URL right delimiters length.
   wchar_t wszWordDelimiters[WORD_DELIMITERS_SIZE];    //Word delimiters.
+  int nWordDelimitersLen;                             //Word delimiters length.
   wchar_t wszWrapDelimiters[WRAP_DELIMITERS_SIZE];    //Wrap delimiters.
+  int nWrapDelimitersLen;                             //Wrap delimiters length.
   wchar_t wszBkImageFile[MAX_PATH];                   //Background image file.
   int nBkImageAlpha;                                  //Alpha transparency value that ranges from 0 to 255.
   HBITMAP hBkImageBitmap;                             //Background image handle.
@@ -1319,6 +1325,7 @@ typedef struct {
   DWORD dwFlags;            //Open flags. See OD_* defines.
   int nCodePage;            //File code page, ignored if (dwFlags & OD_ADT_DETECTCODEPAGE).
   BOOL bBOM;                //File BOM, ignored if (dwFlags & OD_ADT_DETECTBOM).
+  AEHDOC hDoc;              //Edit document. Can be NULL.
 } OPENDOCUMENTA;
 
 typedef struct {
@@ -1327,19 +1334,22 @@ typedef struct {
   DWORD dwFlags;            //Open flags. See OD_* defines.
   int nCodePage;            //File code page, ignored if (dwFlags & OD_ADT_DETECTCODEPAGE).
   BOOL bBOM;                //File BOM, ignored if (dwFlags & OD_ADT_DETECTBOM).
+  AEHDOC hDoc;              //Edit document. Can be NULL.
 } OPENDOCUMENTW;
 
 typedef struct {
-  HWND hWnd;                 //Window to fill in, NULL for current edit window.
-  DWORD dwFlags;             //Open flags. See OD_* defines.
-  int nCodePage;             //File code page, ignored if (dwFlags & OD_ADT_DETECTCODEPAGE).
-  BOOL bBOM;                 //File BOM, ignored if (dwFlags & OD_ADT_DETECTBOM).
-  char szFile[MAX_PATH];     //File to open.
-  char szWorkDir[MAX_PATH];  //Set working directory before open, if (!*szWorkDir) then don't set.
+  HWND hWnd;                    //Edit window to fill in, NULL for current edit window.
+  AEHDOC hDoc;                  //Edit document. Can be NULL.
+  DWORD dwFlags;                //Open flags. See OD_* defines.
+  int nCodePage;                //File code page, ignored if (dwFlags & OD_ADT_DETECTCODEPAGE).
+  BOOL bBOM;                    //File BOM, ignored if (dwFlags & OD_ADT_DETECTBOM).
+  char szFile[MAX_PATH];        //File to open.
+  char szWorkDir[MAX_PATH];     //Set working directory before open, if (!*szWorkDir) then don't set.
 } OPENDOCUMENTPOSTA;
 
 typedef struct {
-  HWND hWnd;                    //Window to fill in, NULL for current edit window.
+  HWND hWnd;                    //Edit window to fill in, NULL for current edit window.
+  AEHDOC hDoc;                  //Edit document. Can be NULL.
   DWORD dwFlags;                //Open flags. See OD_* defines.
   int nCodePage;                //File code page, ignored if (dwFlags & OD_ADT_DETECTCODEPAGE).
   BOOL bBOM;                    //File BOM, ignored if (dwFlags & OD_ADT_DETECTBOM).
@@ -1352,6 +1362,7 @@ typedef struct {
   int nCodePage;         //File code page.
   BOOL bBOM;             //File BOM.
   DWORD dwFlags;         //See SD_* defines.
+  AEHDOC hDoc;           //Edit document. Can be NULL.
 } SAVEDOCUMENTA;
 
 typedef struct {
@@ -1359,6 +1370,7 @@ typedef struct {
   int nCodePage;         //File code page.
   BOOL bBOM;             //File BOM.
   DWORD dwFlags;         //See SD_* defines.
+  AEHDOC hDoc;           //Edit document. Can be NULL.
 } SAVEDOCUMENTW;
 
 typedef struct {
@@ -2241,6 +2253,8 @@ typedef struct {
 #define AKDN_INITDIALOGBEGIN       (WM_USER + 63)  //0x43F
 #define AKDN_INITDIALOGEND         (WM_USER + 64)  //0x440
 #define AKDN_HOTKEYGLOBAL          (WM_USER + 70)  //0x446
+#define AKDN_POSTDOCUMENT_START    (WM_USER + 81)  //0x451
+#define AKDN_POSTDOCUMENT_FINISH   (WM_USER + 82)  //0x452
 
 //SubClass
 #define AKD_GETMAINPROC            (WM_USER + 101)
@@ -2269,7 +2283,7 @@ typedef struct {
 
 //Text retrieval and modification
 #define AKD_WRITEFILECONTENT       (WM_USER + 141)
-#define AKD_DETECTSELCASE          (WM_USER + 143)
+#define AKD_DETECTCASE             (WM_USER + 143)
 #define AKD_CONVERTCASE            (WM_USER + 144)
 #define AKD_DETECTANSITEXT         (WM_USER + 146)
 #define AKD_DETECTUNITEXT          (WM_USER + 147)
@@ -2690,7 +2704,7 @@ _______________________
 
 Notification message, sends to the main procedure before document opened.
 
-(HWND)wParam            == edit window.
+(FRAMEDATA *)wParam     == pointer to a FRAMEDATA structure.
 (NOPENDOCUMENT *)lParam == pointer to a NOPENDOCUMENT structure.
 
 Return Value
@@ -2702,8 +2716,8 @@ ________________________
 
 Notification message, sends to the main procedure after document opened.
 
-(HWND)wParam == edit window.
-(int)lParam  == see EOD_* defines.
+(FRAMEDATA *)wParam == pointer to a FRAMEDATA structure.
+(int)lParam         == see EOD_* defines.
 
 Return Value
  Zero.
@@ -2714,7 +2728,7 @@ _______________________
 
 Notification message, sends to the main procedure before document saved.
 
-(HWND)wParam            == edit window.
+(FRAMEDATA *)wParam     == pointer to a FRAMEDATA structure.
 (NSAVEDOCUMENT *)lParam == pointer to a NSAVEDOCUMENT structure.
 
 Return Value
@@ -2726,8 +2740,8 @@ ________________________
 
 Notification message, sends to the main procedure after document saved.
 
-(HWND)wParam == edit window.
-(int)lParam  == see ESD_* defines.
+(FRAMEDATA *)wParam == pointer to a FRAMEDATA structure.
+(int)lParam         == see ESD_* defines.
 
 Return Value
  Zero.
@@ -2859,6 +2873,30 @@ AKDN_HOTKEYGLOBAL
 _________________
 
 Same as AKDN_HOTKEY, but sends to the main procedure before any other keyboard key processing.
+
+
+AKDN_POSTDOCUMENT_START
+_______________________
+
+Internal notification message, posts to the main procedure after processing AKD_OPENDOCUMENT and AKD_SAVEDOCUMENT.
+
+(FRAMEDATA *)wParam == pointer to a FRAMEDATA structure.
+(int)lParam         == notification message: AKDN_OPENDOCUMENT_FINISH or AKDN_SAVEDOCUMENT_FINISH.
+
+Return Value
+ Zero.
+
+
+AKDN_POSTDOCUMENT_FINISH
+________________________
+
+Notification message, sends to the main procedure after processing AKDN_POSTDOCUMENT_START and when posted and current frame are equal.
+
+(FRAMEDATA *)wParam == pointer to a FRAMEDATA structure.
+(int)lParam         == notification message: AKDN_OPENDOCUMENT_FINISH or AKDN_SAVEDOCUMENT_FINISH.
+
+Return Value
+ Zero.
 
 
 AKD_GETMAINPROC, AKD_GETEDITPROC, AKD_GETFRAMEPROC
@@ -3195,19 +3233,19 @@ Example:
 // }
 
 /*
-AKD_DETECTSELCASE
-_________________
+AKD_DETECTCASE
+______________
 
-Detect selection case.
+Detect text case.
 
-(HWND)wParam == edit window, NULL for current edit window.
-lParam       == not used.
+(HWND)wParam          == edit window, NULL for current edit window.
+(AECHARRANGE *)lParam == characters range to detect. If NULL, current selection will be used.
 
 Return Value
  See SCT_* defines.
 
 Example:
- SendMessage(pd->hMainWnd, AKD_DETECTSELCASE, (WPARAM)NULL, 0);
+ SendMessage(pd->hMainWnd, AKD_DETECTCASE, (WPARAM)NULL, (LPARAM)NULL);
 
 
 AKD_CONVERTCASE
@@ -3507,14 +3545,15 @@ Return Value
  See EOD_* defines.
 
 Example (Unicode):
-  OPENDOCUMENTW od;
+ OPENDOCUMENTW od;
 
-  od.pFile=L"C:\\MyFile.txt";
-  od.pWorkDir=NULL;
-  od.dwFlags=OD_ADT_BINARYERROR|OD_ADT_REGCODEPAGE;
-  od.nCodePage=0;
-  od.bBOM=0;
-  SendMessage(pd->hMainWnd, AKD_OPENDOCUMENTW, (WPARAM)NULL, (LPARAM)&od);
+ od.pFile=L"C:\\MyFile.txt";
+ od.pWorkDir=NULL;
+ od.dwFlags=OD_ADT_BINARYERROR|OD_ADT_REGCODEPAGE;
+ od.nCodePage=0;
+ od.bBOM=0;
+ od.hDoc=NULL;
+ SendMessage(pd->hMainWnd, AKD_OPENDOCUMENTW, (WPARAM)NULL, (LPARAM)&od);
 
 
 AKD_SAVEDOCUMENT, AKD_SAVEDOCUMENTA, AKD_SAVEDOCUMENTW
@@ -3535,6 +3574,7 @@ Example (Unicode):
  sd.nCodePage=65001;
  sd.bBOM=TRUE;
  sd.dwFlags=SD_UPDATE;
+ sd.hDoc=NULL;
  SendMessage(pd->hMainWnd, AKD_SAVEDOCUMENTW, (WPARAM)NULL, (LPARAM)&sd);
 
 
@@ -4658,6 +4698,7 @@ Example (Unicode):
    pmsd->sd.nCodePage=65001;
    pmsd->sd.bBOM=TRUE;
    pmsd->sd.dwFlags=SD_UPDATE;
+   pmsd->sd.hDoc=NULL;
 
    //Post message
    pmsd->pm.hWnd=pd->hMainWnd;
@@ -5641,6 +5682,7 @@ Example (Ansi):
   odp.dwFlags=OD_ADT_BINARYERROR|OD_ADT_REGCODEPAGE;
   odp.nCodePage=0;
   odp.bBOM=0;
+  odp.hDoc=NULL;
 
   cds.dwData=CD_OPENDOCUMENTA;
   cds.cbData=sizeof(OPENDOCUMENTPOSTA);

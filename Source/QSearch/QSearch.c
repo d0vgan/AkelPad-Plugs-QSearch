@@ -8,7 +8,7 @@
 
 #define AKEL_DLL_VERSION    AKELDLL
 #define EXE_MIN_VERSION_3X  MAKE_IDENTIFIER(-1, -1, -1, -1)
-#define EXE_MIN_VERSION_4X  MAKE_IDENTIFIER(4, 9, 1, 0)
+#define EXE_MIN_VERSION_4X  MAKE_IDENTIFIER(4, 9, 7, 0)
 #define PLUGIN_NAME         "QSearch"
 
 

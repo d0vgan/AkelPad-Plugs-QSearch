@@ -43,15 +43,53 @@ static wchar_t szLineBufW[MAX_LINE_SIZE];
 // QSearchFind_WholeWord:
 #define QSF_WW_DELIM     1
 #define QSF_WW_SPACE     2
-#define QSF_WW_PRE_SPACE 3
+
+
+typedef struct sStringWrapperW {
+    wchar_t* pszStringW;
+    int nSize; // size of a string buffer pointed by pszStringW, in characters
+    int nLen;  // current length of a string, in characters
+} tStringWrapperW;
+
+// tStringWrapperW useful functions
+static int tStringWrapperW_FindCh(const tStringWrapperW* pSelf, const wchar_t wch)
+{
+    const wchar_t* p;
+    const wchar_t* pEnd;
+
+    p = pSelf->pszStringW;
+    pEnd = p + pSelf->nLen;
+    for ( ; p < pEnd; ++p )
+    {
+        if ( *p == wch )
+            return 1;
+    }
+    return 0;
+}
+
+// word delimiters may contain '\0' character
+static void AemGetWordDelimiters(HWND hWndEdit, tStringWrapperW* pWordDelimiters)
+{
+    wchar_t* pszDelimitersW;
+    int nLen;
+
+    pszDelimitersW = pWordDelimiters->pszStringW;
+    pszDelimitersW[0] = 0;
+    nLen = (int) SendMessage( hWndEdit, AEM_GETWORDDELIMITERS, pWordDelimiters->nSize - 1, (LPARAM) pszDelimitersW );
+    if ( (nLen > 0) && (pszDelimitersW[nLen - 1] == 0) )
+        --nLen; // skip 2nd trailing '\0' if present
+    if ( (nLen > 0) && (pszDelimitersW[nLen - 1] == 0) )
+        --nLen; // skip 1st trailing '\0' if present
+    pWordDelimiters->nLen = nLen;
+}
 
 int is_wordbreakw(int whole_word, const wchar_t wch)
 {
     if ( whole_word == QSF_WW_DELIM )
     {
-        static wchar_t szDelimitersW[128] = { 0 };
-        static int     ok = 0;
-        const wchar_t* p;
+        static wchar_t szWordDelimitersW__[128] = { 0 };
+        static tStringWrapperW wordDelimiters = { szWordDelimitersW__, 128, 0 };
+        static int ok = 0;
 
         if ( !ok )
         {
@@ -66,9 +104,8 @@ int is_wordbreakw(int whole_word, const wchar_t wch)
                 SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
                 if ( ei.hWndEdit )
                 {
-                    szDelimitersW[0] = 0;
-                    SendMessage( ei.hWndEdit, AEM_GETWORDDELIMITERS, 127, (LPARAM) szDelimitersW );
-                    if ( szDelimitersW[0] != 0 )
+                    AemGetWordDelimiters(ei.hWndEdit, &wordDelimiters);
+                    if ( wordDelimiters.nLen > 0 )
                         ok = 1;
                 }
             }
@@ -78,15 +115,14 @@ int is_wordbreakw(int whole_word, const wchar_t wch)
 #endif
 
             if ( ok != 1 )
-                lstrcpyW(szDelimitersW, AES_WORDDELIMITERSW);
+            {
+                lstrcpyW(wordDelimiters.pszStringW, AES_WORDDELIMITERSW);
+                wordDelimiters.nLen = lstrlenW(wordDelimiters.pszStringW);
+            }
         }
 
-        p = szDelimitersW;
-        while ( *p )
-        {
-            if ( *(p++) == wch )
-                return 1;
-        }
+        if ( tStringWrapperW_FindCh(&wordDelimiters, wch) )
+            return 1;
     }
     else if ( whole_word == QSF_WW_SPACE )
     {
@@ -133,26 +169,42 @@ int match_mask(const char* mask, const char* str, char** last_pos, int whole_wor
         {
             if ( *mask == '*' ) // 0 or more characters
             {
+                if ( whole_word )
+                    whole_word = QSF_WW_DELIM;
                 ++mask;
                 while ( *mask == '*' ) // "**", "***", ...
                 {
                     if ( whole_word )
-                        whole_word = QSF_WW_PRE_SPACE;
+                        whole_word = QSF_WW_SPACE;
                     ++mask;
                 }
                 if ( *mask == 0 )
                 {
                     matched = 1;
+                    if ( whole_word )
+                    {
+                        if ( whole_word == QSF_WW_SPACE )
+                        {
+                            while ( (*str != 0) && 
+                                    (!is_wordbreak(QSF_WW_SPACE, *str)) &&
+                                    (!is_wordbreak(QSF_WW_DELIM, *str)) )
+                            {
+                                ++str;
+                            }
+                        }
+                        else
+                        {
+                            if ( (*str != 0) && 
+                                 (!is_wordbreak(QSF_WW_SPACE, *str)) &&
+                                 (!is_wordbreak(QSF_WW_DELIM, *str)) )
+                            {
+                                matched = 0;
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    if ( whole_word )
-                    {
-                        if ( whole_word == QSF_WW_PRE_SPACE )
-                            whole_word = QSF_WW_SPACE;
-                        else
-                            whole_word = QSF_WW_DELIM;
-                    }
                     matched = match_mask(mask, str, last_pos, whole_word);
                     while ( (matched == 0) && (*str != 0) )
                     {
@@ -244,26 +296,42 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
         {
             if ( *maskw == L'*' ) // 0 or more characters
             {
+                if ( whole_word )
+                    whole_word = QSF_WW_DELIM;
                 ++maskw;
                 while ( *maskw == L'*' ) // "**", "***", ...
                 {
                     if ( whole_word )
-                        whole_word = QSF_WW_PRE_SPACE;
+                        whole_word = QSF_WW_SPACE;
                     ++maskw;
                 }
                 if ( *maskw == 0 )
                 {
                     matched = 1;
+                    if ( whole_word )
+                    {
+                        if ( whole_word == QSF_WW_SPACE )
+                        {
+                            while ( (*strw != 0) && 
+                                    (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
+                                    (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
+                            {
+                                ++strw;
+                            }
+                        }
+                        else
+                        {
+                            if ( (*strw != 0) && 
+                                 (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
+                                 (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
+                            {
+                                matched = 0;
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    if ( whole_word )
-                    {
-                        if ( whole_word == QSF_WW_PRE_SPACE )
-                            whole_word = QSF_WW_SPACE;
-                        else
-                            whole_word = QSF_WW_DELIM;
-                    }
                     matched = match_maskw(maskw, strw, last_pos, whole_word);
                     while ( (matched == 0) && (*strw != 0) )
                     {
@@ -547,6 +615,7 @@ static int prepareFindMasksA(
   LPCSTR cszMaskEx, 
   char   outMasksA[MAX_LINES_TO_CHECK][MAX_MASK_SIZE], 
   /*int    outMasksLen[MAX_LINES_TO_CHECK],*/
+  int    nWholeWord,
   BOOL*  lpbWholeLastLine,
   BOOL*  lpbExactBeginning,
   BOOL*  lpbExactEnding)
@@ -611,7 +680,7 @@ static int prepareFindMasksA(
     }
     if ( n > 0 )
     {
-        if ( hasLastAsteriskA(outMasksA[nLines - 1], n) )
+        if ( (nWholeWord == 0) && hasLastAsteriskA(outMasksA[nLines - 1], n) )
         {
             *lpbWholeLastLine = FALSE; //TRUE;
         }
@@ -656,8 +725,11 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 
     pszLineA = (char *) szLineBufW;
 
+    bSearchUp = ((ptfA->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
+    nWholeWord = ((ptfA->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? QSF_WW_DELIM : 0;
+
     nLinesToCheck = prepareFindMasksA(ptfA->pFindIt, 
-      szMasksA, /*pnMasksLen,*/ &bWholeLastLine, &bExactBeginning, &bExactEnding);
+      szMasksA, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
         return 0; // error
 
@@ -674,8 +746,6 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
         }
     }
 
-    bSearchUp = ((ptfA->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
-    nWholeWord = ((ptfA->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? 1 : 0;
     pos1 = -1;
     nLine = bSearchUp ? (nLinesToCheck - 1) : 0;
     if ( (ptfA->dwFlags & FR_BEGINNING) != FR_BEGINNING )
@@ -745,6 +815,19 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                             {
                                 pos2 = cr.cpMax;
                                 pos2 -= (INT_X) SendMessage(hEd, EM_LINEINDEX, nLine, 0);
+                                if ( nWholeWord )
+                                {
+                                    for ( ; pos2 > 0; pos2-- )
+                                    {
+                                        if ( is_wordbreak(QSF_WW_SPACE, pszLineA[pos2]) ||
+                                             is_wordbreak(QSF_WW_DELIM, pszLineA[pos2]) )
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    if ( pos2 == 0 )
+                                        break;
+                                }
                                 pszLineA[pos2] = 0;
                                 --pos2;
                                 if ( n > 0 )  pos2 = 0; // after '\n', exact beginning
@@ -778,13 +861,16 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                         {
                             if ( n == 0 )
                             {
-                                while ( *pszMaskA == '*' )
+                                if ( nWholeWord == 0 )
                                 {
-                                    ++pszMaskA;
-                                    if ( *pszMaskA == 0 )
+                                    while ( *pszMaskA == '*' )
                                     {
-                                        --pszMaskA;
-                                        break;
+                                        ++pszMaskA;
+                                        if ( *pszMaskA == 0 )
+                                        {
+                                            --pszMaskA;
+                                            break;
+                                        }
                                     }
                                 }
                                 pos2 = (len > 0) ? (len - 1) : 0;
@@ -805,8 +891,9 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 
                 while ( (pos2 >= 0) && ((len > 0) ? (pos2 < len) : (pos2 <= len)) )
                 {
-                    if ( (match_mask(pszMaskA, pszLineA + pos2, &ptr, nWholeWord) > 0) && 
-                         ((!bExactBeginning) || (pos2 == 0)) )
+                    if ( ((!bExactBeginning) || (pos2 == 0)) &&
+                         ((nWholeWord == 0) || (pos2 == 0) || is_wordbreak(nWholeWord, pszLineA[pos2 - 1])) &&
+                         (match_mask(pszMaskA, pszLineA + pos2, &ptr, nWholeWord) > 0) )
                     {
                         if ( pos1 < 0 )
                         {
@@ -951,6 +1038,7 @@ static int prepareFindMasksW(
   LPCWSTR cszMaskEx, 
   wchar_t outMasksW[MAX_LINES_TO_CHECK][MAX_MASK_SIZE], 
   /*int     outMasksLen[MAX_LINES_TO_CHECK],*/
+  int     nWholeWord,
   BOOL*   lpbWholeLastLine,
   BOOL*   lpbExactBeginning,
   BOOL*   lpbExactEnding)
@@ -1015,7 +1103,7 @@ static int prepareFindMasksW(
     }
     if ( n > 0 )
     {
-        if ( hasLastAsteriskW(outMasksW[nLines - 1], n) )
+        if ( (nWholeWord == 0) && hasLastAsteriskW(outMasksW[nLines - 1], n) )
         {
             *lpbWholeLastLine = FALSE; //TRUE;
         }
@@ -1060,8 +1148,11 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
     pszLineW = (wchar_t *) szLineBufW;
 
+    bSearchUp = ((ptfW->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
+    nWholeWord = ((ptfW->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? QSF_WW_DELIM : 0;
+
     nLinesToCheck = prepareFindMasksW(ptfW->pFindIt, 
-      szMasksW, /*pnMasksLen,*/ &bWholeLastLine, &bExactBeginning, &bExactEnding);
+      szMasksW, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
         return 0; // error
 
@@ -1078,8 +1169,6 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         }
     }
 
-    bSearchUp = ((ptfW->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
-    nWholeWord = ((ptfW->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? 1 : 0;
     pos1 = -1;
     nLine = bSearchUp ? (nLinesToCheck - 1) : 0;
     if ( (ptfW->dwFlags & FR_BEGINNING) != FR_BEGINNING )
@@ -1149,6 +1238,19 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                             {
                                 pos2 = cr.cpMax;
                                 pos2 -= (INT_X) SendMessage(hEd, EM_LINEINDEX, nLine, 0);
+                                if ( nWholeWord )
+                                {
+                                    for ( ; pos2 > 0; pos2-- )
+                                    {
+                                        if ( is_wordbreakw(QSF_WW_SPACE, pszLineW[pos2]) ||
+                                             is_wordbreakw(QSF_WW_DELIM, pszLineW[pos2]) )
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    if ( pos2 == 0 )
+                                        break;
+                                }
                                 pszLineW[pos2] = 0;
                                 --pos2;
                                 if ( n > 0 )  pos2 = 0; // after '\n', exact beginning
@@ -1182,13 +1284,16 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                         {
                             if ( n == 0 )
                             {
-                                while ( *pszMaskW == L'*' )
+                                if ( nWholeWord == 0 )
                                 {
-                                    ++pszMaskW;
-                                    if ( *pszMaskW == 0 )
+                                    while ( *pszMaskW == L'*' )
                                     {
-                                        --pszMaskW;
-                                        break;
+                                        ++pszMaskW;
+                                        if ( *pszMaskW == 0 )
+                                        {
+                                            --pszMaskW;
+                                            break;
+                                        }
                                     }
                                 }
                                 pos2 = (len > 0) ? (len - 1) : 0;
@@ -1209,8 +1314,9 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
                 while ( (pos2 >= 0) && ((len > 0) ? (pos2 < len) : (pos2 <= len)) )
                 {
-                    if ( (match_maskw(pszMaskW, pszLineW + pos2, &ptr, nWholeWord) > 0) &&
-                         ((!bExactBeginning) || (pos2 == 0)) )
+                    if ( ((!bExactBeginning) || (pos2 == 0)) &&
+                         ((nWholeWord == 0) || (pos2 == 0) || is_wordbreakw(nWholeWord, pszLineW[pos2 - 1])) &&
+                         (match_maskw(pszMaskW, pszLineW + pos2, &ptr, nWholeWord) > 0) )
                     {
                         if ( pos1 < 0 )
                         {

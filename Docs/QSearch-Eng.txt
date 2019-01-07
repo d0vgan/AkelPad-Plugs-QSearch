@@ -334,6 +334,11 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.4 (December 2015)
+ * AkelPad 4.9.7+
+ + supports '\0' symbol inside of AEM_GETWORDDELIMITERS string
+ - fixed: "Whole word" while searching with special character '*'
+
 v.6.3 (September 2015)
  + With DialogSwitcher enabled, Ctrl+F and Crtl+H from the editor window
    can pick up the editor window's selected text.
@@ -567,7 +572,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Sep 2015, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Dec 2015, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);

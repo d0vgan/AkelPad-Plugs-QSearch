@@ -1333,12 +1333,13 @@ typedef struct {
   CHARRANGE64 crMarkRange;
 } AEMARKRANGEMATCH;
 
-typedef struct _AEQUOTEMATCH {
-  struct _AEQUOTEMATCH *next;
-  struct _AEQUOTEMATCH *prev;
+typedef struct _AEQUOTEMATCHITEM {
+  struct _AEQUOTEMATCHITEM *next;
+  struct _AEQUOTEMATCHITEM *prev;
   AEQUOTEITEMW *lpQuote;
   AECHARRANGE crQuoteStart;
   AECHARRANGE crQuoteEnd;
+  INT_PTR nQuoteLen;
 } AEQUOTEMATCHITEM;
 
 typedef struct {
@@ -1350,6 +1351,7 @@ typedef struct {
   AEQUOTEITEMW *lpQuote;
   AECHARRANGE crQuoteStart;
   AECHARRANGE crQuoteEnd;
+  INT_PTR nQuoteLen;
   AECHARINDEX ciFindFirst;
   AECHARINDEX ciChildScan;
   AESTACKQUOTEMATCH hParentStack;
@@ -1364,6 +1366,17 @@ typedef struct {
   AECHARRANGE crDelim2;
 } AEWORDMATCH;
 
+typedef struct _AEACTIVETHEMEITEM {
+  struct _AEACTIVETHEMEITEM *next;
+  struct _AEACTIVETHEMEITEM *prev;
+  AEHTHEME hActiveTheme;
+} AEACTIVETHEMEITEM;
+
+typedef struct {
+  AEACTIVETHEMEITEM *first;
+  AEACTIVETHEMEITEM *last;
+} AESTACKACTIVETHEME;
+
 typedef struct {
   AEFOLD *lpFold;
   CHARRANGE64 crFoldStart;
@@ -1372,10 +1385,11 @@ typedef struct {
   AECHARINDEX ciFoldStartMax;
   AEHDOC hDoc;
   AEHTHEME hActiveThemeBegin;
-  AEHTHEME hActiveThemePrev;
+  AESTACKACTIVETHEME hParentStack;
 } AEFOLDMATCH;
 
 typedef struct {
+  DWORD cb;              //Size of the structure.
   DWORD dwDefaultText;   //Text color without highlighting.
   DWORD dwDefaultBk;     //Background color without highlighting.
   DWORD dwActiveText;    //Text color with highlighting.
@@ -4670,7 +4684,7 @@ Retrieve word break delimiters.
 (wchar_t *)lParam == pointer to a buffer that receives delimiter characters.
 
 Return Value
- Number of characters copied, not including the terminating NULL character.
+ Number of characters copied, including the terminating two NULL characters.
 
 Example:
  wchar_t wszDelimiters[128];
@@ -4684,13 +4698,13 @@ _____________________
 Set word break delimiters.
 
 wParam            == not used.
-(wchar_t *)lParam == string that specifies delimiter characters. If NULL, then default delimiters will be used.
+(wchar_t *)lParam == two null-terminated string that specifies delimiter characters. If NULL, then default delimiters will be used.
 
 Return Value
  Zero.
 
 Example:
- wchar_t wszDelimiters[128]=L" \t\n[](){}<>";
+ wchar_t wszDelimiters[128]=L" \t\n[](){}<>\0\0";
 
  SendMessage(hWndEdit, AEM_SETWORDDELIMITERS, 0, (LPARAM)wszDelimiters);
 
@@ -4704,7 +4718,7 @@ Retrieve word wrapping delimiters.
 (wchar_t *)lParam == pointer to a buffer that receives delimiter characters.
 
 Return Value
- Number of characters copied, not including the terminating NULL character.
+ Number of characters copied, including the terminating two NULL characters.
 
 Example:
  wchar_t wszDelimiters[128];
@@ -4718,13 +4732,13 @@ _____________________
 Set delimiters for word wrapping.
 
 wParam            == not used.
-(wchar_t *)lParam == string that specifies delimiter characters. If NULL, then default delimiters will be used.
+(wchar_t *)lParam == two null-terminated string that specifies delimiter characters. If NULL, then default delimiters will be used.
 
 Return Value
  Zero.
 
 Example:
- wchar_t wszDelimiters[128]=L" \t\n[](){}<>";
+ wchar_t wszDelimiters[128]=L" \t\n[](){}<>\0\0";
 
  SendMessage(hWndEdit, AEM_SETWRAPDELIMITERS, 0, (LPARAM)wszDelimiters);
 
@@ -4738,7 +4752,7 @@ Retrieve URL left delimiters.
 (wchar_t *)lParam == pointer to a buffer that receives delimiter characters.
 
 Return Value
- Number of characters copied, not including the terminating NULL character.
+ Number of characters copied, including the terminating two NULL characters.
 
 Example:
  wchar_t wszDelimiters[128];
@@ -4752,13 +4766,13 @@ ________________________
 Set left delimiters for URL detection.
 
 wParam            == not used.
-(wchar_t *)lParam == string that specifies delimiter characters. If NULL, then default delimiters will be used.
+(wchar_t *)lParam == two null-terminated string that specifies delimiter characters. If NULL, then default delimiters will be used.
 
 Return Value
  Zero.
 
 Example:
- wchar_t wszDelimiters[128]=L" \t\n'`\"(<{[=";
+ wchar_t wszDelimiters[128]=L" \t\n'`\"(<{[=\0\0";
 
  SendMessage(hWndEdit, AEM_SETURLLEFTDELIMITERS, 0, (LPARAM)wszDelimiters);
 
@@ -4772,7 +4786,7 @@ Retrieve URL right delimiters.
 (wchar_t *)lParam == pointer to a buffer that receives delimiter characters.
 
 Return Value
- Number of characters copied, not including the terminating NULL character.
+ Number of characters copied, including the terminating two NULL characters.
 
 Example:
  wchar_t wszDelimiters[128];
@@ -4786,13 +4800,13 @@ ________________________
 Set right delimiters for URL detection.
 
 wParam            == not used.
-(wchar_t *)lParam == string that specifies delimiter characters. If NULL, then default delimiters will be used.
+(wchar_t *)lParam == two null-terminated string that specifies delimiter characters. If NULL, then default delimiters will be used.
 
 Return Value
  Zero.
 
 Example:
- wchar_t wszDelimiters[128]=L" \t\n'`\")>}]";
+ wchar_t wszDelimiters[128]=L" \t\n'`\")>}]\0\0";
 
  SendMessage(hWndEdit, AEM_SETURLRIGHTDELIMITERS, 0, (LPARAM)wszDelimiters);
 
@@ -4806,7 +4820,7 @@ Retrieve URL prefixes.
 (wchar_t *)lParam == pointer to a buffer that receives pairs of null-terminated prefixes strings. The last string terminated by two NULL characters.
 
 Return Value
- Number of characters copied, including two NULL terminated characters.
+ Number of characters copied, including the terminating two NULL characters.
 
 Example:
  wchar_t wszPrefixes[128];
