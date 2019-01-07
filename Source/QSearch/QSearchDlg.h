@@ -44,9 +44,10 @@
 
 #define  QS_FF_NOPICKUPSEL  0x0001 // do not pick up selection
 
-#define  QS_SO_UNKNOWN      0
-#define  QS_SO_QSEARCH      1
-#define  QS_SO_EDITOR       2
+#define  QS_SO_UNKNOWN        0
+#define  QS_SO_QSEARCH        1
+#define  QS_SO_EDITOR         2
+#define  QS_SO_QSEARCH_FORCED 3
 
 #define  QS_SF_CANPICKUPSELTEXT  0x0001
 #define  QS_SF_DLGSWITCH         0x1000

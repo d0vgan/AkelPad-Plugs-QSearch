@@ -146,6 +146,17 @@ BOOL qsearchIsSavingHistoryToStdLocation(void)
     }
 }*/
 
+static UINT qs_Get_SO_QSEARCH()
+{
+    UINT uSearchOrigin;
+    if ( (g_Options.dwFlags[OPTF_EDITOR_AUTOFOCUS] & 0x01) &&
+         (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01) )
+        uSearchOrigin = QS_SO_QSEARCH_FORCED;
+    else
+        uSearchOrigin = QS_SO_QSEARCH;
+    return uSearchOrigin;
+}
+
 static void qsdlgShowHideWholeWordCheckBox(HWND hDlg)
 {
     HWND    hChWholeWord;
@@ -807,7 +818,7 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam)
                     SetFocus(hEdit);
                     qs_bForceFindFirst = TRUE;
                     qs_bEditTextChanged = TRUE;
-                    g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+                    g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH();
                 }
                 else
                 {
@@ -867,7 +878,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                                     --iItem; // last item
                             }
                             SendMessage(hCombo, CB_SETCURSEL, iItem, 0);
-                            g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+                            g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH();
                         }
                     }
                 }
@@ -936,7 +947,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                         SetFocus(hEdit);
                         qs_bForceFindFirst = TRUE;
                         qs_bEditTextChanged = TRUE;
-                        g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+                        g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH();
                     }
                     else
                     {
@@ -1556,7 +1567,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     case CBN_SELCHANGE:
                         qs_bEditTextChanged = TRUE;
                         qs_bForceFindFirst = TRUE;
-                        g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+                        g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH();
                         qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
                         break;
                     case CBN_DROPDOWN:

@@ -841,7 +841,10 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                     SendMessage( hWnd, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                                     if ( cr.cpMin != cr.cpMax )
                                     {
-                                        g_QSearchDlg.uSearchOrigin = QS_SO_EDITOR;
+                                        if ( g_QSearchDlg.uSearchOrigin == QS_SO_QSEARCH_FORCED )
+                                            g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+                                        else
+                                            g_QSearchDlg.uSearchOrigin = QS_SO_EDITOR;
                                     }
                                 }
                             }

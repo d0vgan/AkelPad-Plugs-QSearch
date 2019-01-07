@@ -350,6 +350,13 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.7 (July 2016)
+ + changed: when "editor_autofocus" sets focus to the editor window right after
+   something was selected in QSearch'es find history (the drop-down list), the
+   text selected in the drop-down list will be used for the search even if the
+   "srch_pickup_selection" is enabled. (Previously a text selected in the editor
+   was searched instead of the drop-down list's text in this case.)
+
 v.6.6 (March 2016)
  + added: 'srch_regexp_dot_newline'
 
@@ -594,7 +601,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Mar 2016, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Jul 2016, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
