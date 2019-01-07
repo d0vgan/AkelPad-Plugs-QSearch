@@ -22,24 +22,24 @@
 #define MSG_UPDATE_LANGMODULE           57
 #define MSG_HOTKEY_EXISTS               58
 #define MSG_CANNOT_OPEN_FILE            59
-#define MSG_WRONG_STRING                60
-#define MSG_LONG_FILELIST               61
-#define MSG_DOCUMENT_CHANGED            62
-#define MSG_FILE_DOES_NOT_EXIST         63
-#define MSG_RECENTFILES_DELETED         64
-#define MSG_SEARCH_ENDED                65
-#define MSG_SEARCH_CYCLEPROMPT          66
-#define MSG_REPLACE_COUNT               67
-#define MSG_REPLACE_COUNT_ALLFILES      68
-#define MSG_FILE_WILL_BE_REOPENED       69
-#define MSG_FILE_CHANGED                70
-#define MSG_CP_UNIMPLEMENTED            71
-#define MSG_CP_MISMATCH                 72
-#define MSG_ACCESSDENIED                73
-#define MSG_RESTART_PROGRAM             74
-#define MSG_SAVEIN_READONLY             75
-#define MSG_OVERWRITEPROMPT             76
-#define MSG_DOCUMENTSLIMIT              77
+#define MSG_WRONG_STRING                61
+#define MSG_LONG_FILELIST               62
+#define MSG_DOCUMENT_CHANGED            63
+#define MSG_FILE_DOES_NOT_EXIST         64
+#define MSG_RECENTFILES_DELETED         65
+#define MSG_SEARCH_ENDED                66
+#define MSG_SEARCH_CYCLEPROMPT          67
+#define MSG_REPLACE_COUNT               68
+#define MSG_REPLACE_COUNT_ALLFILES      69
+#define MSG_FILE_WILL_BE_REOPENED       70
+#define MSG_FILE_CHANGED                71
+#define MSG_CP_UNIMPLEMENTED            72
+#define MSG_CP_MISMATCH                 73
+#define MSG_ACCESSDENIED                74
+#define MSG_RESTART_PROGRAM             75
+#define MSG_SAVEIN_READONLY             76
+#define MSG_OVERWRITEPROMPT             77
+#define MSG_DOCUMENTSLIMIT              78
 #define STR_DOCNAME                     101
 #define STR_MODIFIED                    102
 #define STR_READONLY                    103
@@ -193,20 +193,23 @@
 #define IDC_GOTO_NUMBER                 3101
 #define IDC_GOTO_LINE                   3102
 #define IDC_GOTO_OFFSET                 3103
-#define IDC_RECODE_CODEPAGEFROM_LIST    3151
-#define IDC_RECODE_CODEPAGETO_LIST      3152
-#define IDC_RECODE_AUTODETECT           3153
-#define IDC_RECODE_PREVIEW              3154
+#define IDC_RECODE_CODEPAGEFROM_LABEL   3151
+#define IDC_RECODE_CODEPAGEFROM_LIST    3152
+#define IDC_RECODE_CODEPAGETO_LABEL     3153
+#define IDC_RECODE_CODEPAGETO_LIST      3154
+#define IDC_RECODE_AUTODETECT           3155
+#define IDC_RECODE_PREVIEW              3156
 #define IDC_COLORS_LIST                 3201
-#define IDC_COLORS_THEME_NAME           3202
-#define IDC_COLORS_THEME_SAVE           3203
-#define IDC_COLORS_THEME_DELETE         3204
-#define IDC_COLORS_BKIMAGEFILE_LABEL    3205
-#define IDC_COLORS_BKIMAGEFILE_EDIT     3206
-#define IDC_COLORS_BKIMAGEFILE_BROWSE   3207
-#define IDC_COLORS_BKIMAGEALPHA_LABEL   3208
-#define IDC_COLORS_BKIMAGEALPHA_EDIT    3209
-#define IDC_COLORS_BKIMAGEALPHA_SPIN    3210
+#define IDC_COLORS_THEMENAME_LABEL      3202
+#define IDC_COLORS_THEMENAME_COMBO      3203
+#define IDC_COLORS_THEMESAVE            3204
+#define IDC_COLORS_THEMEDELETE          3205
+#define IDC_COLORS_BKIMAGEFILE_LABEL    3206
+#define IDC_COLORS_BKIMAGEFILE_EDIT     3207
+#define IDC_COLORS_BKIMAGEFILE_BROWSE   3208
+#define IDC_COLORS_BKIMAGEALPHA_LABEL   3209
+#define IDC_COLORS_BKIMAGEALPHA_EDIT    3210
+#define IDC_COLORS_BKIMAGEALPHA_SPIN    3211
 #define IDC_PLUGINS_LIST                3251
 #define IDC_PLUGINS_HOTKEY              3252
 #define IDC_PLUGINS_ASSIGN              3253
@@ -306,9 +309,11 @@
 #define IDC_OPTIONS_SAVEIN_READONLY_MSG 3705
 #define IDC_OPTIONS_DEFAULT_SAVE_EXT    3706
 #define IDC_OPTIONS_REPLACEALL_CLOSE    3707
-#define IDC_OPTIONS_INSELIFSEL          3708
-#define IDC_OPTIONS_CYCLESEARCH         3709
-#define IDC_OPTIONS_CYCLESEARCHPROMPT   3710
+#define IDC_OPTIONS_REPLACEALL_NOMSG    3708
+#define IDC_OPTIONS_INSELIFSEL          3709
+#define IDC_OPTIONS_CYCLESEARCH         3710
+#define IDC_OPTIONS_CYCLESEARCHPROMPT   3711
+#define IDC_OPTIONS_MODELESSSAVEPOS     3712
 #define IDC_ABOUT_ICON                  3901
 #define IDC_ABOUT_VERSION               3902
 #define IDC_ABOUT_HOMEPAGE              3903
@@ -334,7 +339,7 @@
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        11001

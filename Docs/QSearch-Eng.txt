@@ -334,6 +334,14 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.3 (September 2015)
+ + With DialogSwitcher enabled, Ctrl+F and Crtl+H from the editor window
+   can pick up the editor window's selected text.
+   (Whereas Ctrl+F and Crtl+H from the Find/Replace dialog keeps the
+   dialog's previous text.)
+ * AkelPad 4.9.6+
+ * 8th anniversary of QSearch :)
+
 v.6.2 (March 2015)
  - fixed: AkelPad version was detected incorrectly
 
@@ -559,7 +567,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Mar 2015, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Sep 2015, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);

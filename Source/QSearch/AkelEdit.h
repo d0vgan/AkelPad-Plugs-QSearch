@@ -160,6 +160,13 @@
 #define AEPTO_IGNORE    -1  //Character RichEdit offset is not used in AEPOINT.
 #define AEPTO_CALC      -2  //Character RichEdit offset will calculated automatically by AEM_ADDPOINT.
 
+//AEM_GETFOLDCOUNT types
+#define AEFC_ALL              0  //All folds.
+#define AEFC_COLLAPSED        1  //Collapsed folds.
+#define AEFC_COLORED          2  //Colored folds.
+#define AEFC_WITHID           3  //Folds with ID.
+#define AEFC_WITHTHEME        4  //Folds with highlight theme.
+
 //AEM_COLLAPSELINE and AEM_COLLAPSEFOLD flags
 #define AECF_EXPAND           0x00000000  //Expand fold (default).
 #define AECF_COLLAPSE         0x00000001  //Collapse fold.
@@ -387,6 +394,27 @@
 #define AEDD_GETDRAGWINDOW   1  //Return dragging window handle.
 #define AEDD_STOPDRAG        2  //Set stop dragging operation flag.
 
+//AEM_URLVISIT operations
+#define AEUV_STACK         1  //Retrieve URL visit stack.
+                              //lParam                    == not used.
+                              //(AESTACKURLVISIT *)Return == pointer to an URL visit stack.
+#define AEUV_GETBYRANGE    2  //Retrieve URL visit item by characters range.
+                              //(AECHARRANGE *)lParam     == URL range.
+                              //(AEURLVISIT *)Return      == pointer to an URL visit item.
+#define AEUV_GETBYTEXT     3  //Retrieve URL visit item by text.
+                              //(const wchar_t *)lParam   == URL string.
+                              //(AEURLVISIT *)Return      == pointer to an URL visit item.
+#define AEUV_ADD           4  //Add URL visit item.
+                              //(AECHARRANGE *)lParam     == URL range. Can be NULL.
+                              //(AEURLVISIT *)Return      == pointer to an URL visit item.
+#define AEUV_DEL           5  //Delete URL visit item.
+                              //(AEURLVISIT *)lParam      == pointer to an URL visit item.
+                              //Return                    == zero.
+#define AEUV_FREE          6  //Free URL visit stack.
+                              //lParam                    == not used.
+                              //Return                    == zero.
+
+
 //AEM_SETCOLORS flags
 #define AECLR_DEFAULT          0x00000001  //Use default system colors for the specified flags, all members of the AECOLORS structure are ignored.
 #define AECLR_CARET            0x00000002  //Sets caret color. crCaret member is valid.
@@ -436,6 +464,16 @@
 #define AEPRN_COLOREDBACKGROUND         0x200  //Print on colored background.
 #define AEPRN_COLOREDSELECTION          0x400  //Print text selection.
 
+//AEM_HLFINDTHEME type
+#define AEHLFT_CURRENT 0  //Current theme handle.
+                          //lParam == not used.
+#define AEHLFT_BYNAMEA 1  //Find by ansi theme name.
+                          //(char *)lParam == ansi theme name to retrieve. If NULL, active theme handle will be returned.
+#define AEHLFT_BYNAMEW 2  //Find by unicode theme name.
+                          //(wchar_t *)lParam == unicode theme name to retrieve. If NULL, active theme handle will be returned.
+#define AEHLFT_BYFOLD  3  //Find theme at specified location (AEFINDFOLD.dwFindIt). If no folds found with own theme (AEFOLD.hRuleTheme), then current theme handle returns.
+                          //(AEFINDFOLD *)lParam == pointer to a AEFINDFOLD structure.
+
 //Highlight options
 #define AEHLO_IGNOREFONTNORMAL       0x00000001  //Use AEHLS_NONE font style, if font style to change is AEHLS_FONTNORMAL.
 #define AEHLO_IGNOREFONTBOLD         0x00000002  //Use AEHLS_FONTNORMAL font style, if font style to change is AEHLS_FONTBOLD.
@@ -480,6 +518,7 @@
                                                  //    AEQUOTEITEM.pQuoteEnd    \0=(0,\1,0)
                                                  //Can be used in AEMARKTEXTITEM.dwFlags.
                                                  //  AEMARKTEXTITEM.pMarkText is a regular exression pattern.
+#define AEHLF_STYLED                 0x80000000  //Don't use it. For internal code only.
 
 //Highlight font style
 #define AEHLS_NONE                   0  //Current style.
@@ -514,6 +553,10 @@
 //AEREGROUPCOLOR flags
 #define AEREGCF_BACKREFCOLORTEXT  0x00000001  //AEREGROUPCOLOR.crText is backreference index for text color in format #RRGGBB or RRGGBB.
 #define AEREGCF_BACKREFCOLORBK    0x00000002  //AEREGROUPCOLOR.crBk is backreference index for background color in format #RRGGBB or RRGGBB.
+
+//Fold flags
+#define AEFOLDF_COLLAPSED    0x00000001  //Fold is collapsed.
+#define AEFOLDF_STYLED       0x80000000  //Don't use it. For internal code only.
 
 //AEM_FINDFOLD flags
 #define AEFF_FINDOFFSET      0x00000001  //AEFINDFOLD.dwFindIt is RichEdit offset.
@@ -658,6 +701,16 @@
 #define AEIRM_UNMODIFIED      1
 #define AEIRM_MODIFIEDUNSAVED 2
 #define AEIRM_MODIFIEDSAVED   3
+
+//AEM_GETUNDOPOS flags
+#define AEGUP_CURRENT         0x00
+#define AEGUP_NEXT            0x01
+#define AEGUP_PREV            0x02
+#define AEGUP_FIRST           0x04 //Always return -1.
+#define AEGUP_LAST            0x08 //Always return -1.
+#define AEGUP_NOUNDO          0x10 //Return -1 if undo item located in undo.
+#define AEGUP_NOREDO          0x20 //Return -1 if undo item located in redo.
+#define AEGUP_SAVED           0x40 //Always return -1.
 
 #ifndef FR_DOWN
   #define FR_DOWN 0x00000001
@@ -887,10 +940,13 @@ typedef struct _AEFOLD {
   struct _AEFOLD *lastChild;  //Pointer to the last child AEFOLD structure.
   AEPOINT *lpMinPoint;        //Minimum line point.
   AEPOINT *lpMaxPoint;        //Maximum line point.
-  BOOL bCollapse;             //Collapse state.
+  DWORD dwFlags;              //See AEFOLDF_* defines.
   DWORD dwFontStyle;          //See AEHLS_* defines.
   COLORREF crText;            //Text color. If -1, then don't set.
   COLORREF crBk;              //Background color. If -1, then don't set.
+  int nParentID;              //Parent rule identifier.
+  int nRuleID;                //Rule identifier.
+  AEHTHEME hRuleTheme;        //Rule highlight theme.
   UINT_PTR dwUserData;        //User data.
 } AEFOLD;
 
@@ -1088,6 +1144,21 @@ typedef struct {
   LRESULT lResult; //Result after window message returns.
 } AESENDMESSAGE;
 
+typedef struct _AEURLVISIT {
+  struct _AEURLVISIT *next;
+  struct _AEURLVISIT *prev;
+  wchar_t *pUrlText;    //URL string.
+  INT_PTR nUrlTextLen;  //URL string length.
+  int nVisitCount;      //Count of visits.
+  BOOL bStatic;         //TRUE  Control don't delete item with zero visits.
+                        //FALSE Control could automatically delete this item with zero visits.
+} AEURLVISIT;
+
+typedef struct {
+  AEURLVISIT *first;
+  AEURLVISIT *last;
+} AESTACKURLVISIT;
+
 typedef struct {
   DWORD dwFlags;          //[in]     See AEPRN_* defines.
   HDC hPrinterDC;         //[in]     Printer device context.
@@ -1114,6 +1185,7 @@ typedef struct _AEDELIMITEMA {
   DWORD dwFontStyle;         //See AEHLS_* defines.
   COLORREF crText;           //Delimiter text color. If -1, then don't set.
   COLORREF crBk;             //Delimiter background color. If -1, then don't set.
+  int nParentID;             //Parent rule identifier.
 } AEDELIMITEMA;
 
 typedef struct _AEDELIMITEMW {
@@ -1126,6 +1198,7 @@ typedef struct _AEDELIMITEMW {
   DWORD dwFontStyle;         //See AEHLS_* defines.
   COLORREF crText;           //Delimiter text color. If -1, then don't set.
   COLORREF crBk;             //Delimiter background color. If -1, then don't set.
+  int nParentID;             //Parent rule identifier.
 } AEDELIMITEMW;
 
 typedef struct _AEWORDITEMA {
@@ -1138,6 +1211,7 @@ typedef struct _AEWORDITEMA {
   DWORD dwFontStyle;         //See AEHLS_* defines.
   COLORREF crText;           //Word text color. If -1, then don't set.
   COLORREF crBk;             //Word background color. If -1, then don't set.
+  int nParentID;             //Parent rule identifier.
 } AEWORDITEMA;
 
 typedef struct _AEWORDITEMW {
@@ -1150,27 +1224,30 @@ typedef struct _AEWORDITEMW {
   DWORD dwFontStyle;         //See AEHLS_* defines.
   COLORREF crText;           //Word text color. If -1, then don't set.
   COLORREF crBk;             //Word background color. If -1, then don't set.
+  int nParentID;             //Parent rule identifier.
 } AEWORDITEMW;
 
 typedef struct _AEQUOTEITEMA {
   struct _AEQUOTEITEMA *next;
   struct _AEQUOTEITEMA *prev;
-  int nIndex;                   //Reserved. Quote start items are automatically grouped in standalone stack, if following members are equal: pQuoteStart, chEscape and dwFlags with AEHLF_QUOTESTART_ISDELIMITER, AEHLF_ATLINESTART, AEHLF_QUOTESTART_ISWORD.
-  const char *pQuoteStart;      //Quote start string.
-  int nQuoteStartLen;           //Quote start string length.
-  const char *pQuoteEnd;        //Quote end string. If NULL, line end used as quote end.
-  int nQuoteEndLen;             //Quote end string length.
-  char chEscape;                //Escape character. If it precedes quote string then quote ignored.
-  const char *pQuoteInclude;    //Quote include string.
-  int nQuoteIncludeLen;         //Quote include string length.
-  const char *pQuoteExclude;    //Quote exclude string.
-  int nQuoteExcludeLen;         //Quote exclude string length.
-  DWORD dwFlags;                //See AEHLF_* defines.
-  DWORD dwFontStyle;            //See AEHLS_* defines.
-  COLORREF crText;              //Quote text color. If -1, then don't set.
-  COLORREF crBk;                //Quote background color. If -1, then don't set.
-  void *lpQuoteStart;           //Don't use it. For internal code only.
-  INT_PTR nCompileErrorOffset;  //Contain pQuoteStart offset, if error occurred during compile regular exression pattern.
+  int nIndex;                    //Reserved. Quote start items are automatically grouped in standalone stack, if following members are equal: pQuoteStart, chEscape and dwFlags with AEHLF_QUOTESTART_ISDELIMITER, AEHLF_ATLINESTART, AEHLF_QUOTESTART_ISWORD.
+  const char *pQuoteStart;       //Quote start string.
+  int nQuoteStartLen;            //Quote start string length.
+  const char *pQuoteEnd;         //Quote end string. If NULL, line end used as quote end.
+  int nQuoteEndLen;              //Quote end string length.
+  char chEscape;                 //Escape character. If it precedes quote string then quote ignored.
+  const char *pQuoteInclude;     //Quote include string.
+  int nQuoteIncludeLen;          //Quote include string length.
+  const char *pQuoteExclude;     //Quote exclude string.
+  int nQuoteExcludeLen;          //Quote exclude string length.
+  DWORD dwFlags;                 //See AEHLF_* defines.
+  DWORD dwFontStyle;             //See AEHLS_* defines.
+  COLORREF crText;               //Quote text color. If -1, then don't set.
+  COLORREF crBk;                 //Quote background color. If -1, then don't set.
+  void *lpQuoteStart;            //Don't use it. For internal code only.
+  int nParentID;                 //Parent rule identifier.
+  int nRuleID;                   //Rule identifier.
+  INT_PTR nCompileErrorOffset;   //Contain pQuoteStart offset, if error occurred during compile regular exression pattern.
 } AEQUOTEITEMA;
 
 typedef struct _AEQUOTEITEMW {
@@ -1190,6 +1267,8 @@ typedef struct _AEQUOTEITEMW {
   DWORD dwFontStyle;             //See AEHLS_* defines.
   COLORREF crText;               //Quote text color. If -1, then don't set.
   COLORREF crBk;                 //Quote background color. If -1, then don't set.
+  int nParentID;                 //Parent rule identifier.
+  int nRuleID;                   //Rule identifier.
   void *lpQuoteStart;            //Don't use it. For internal code only.
   union {
     void *lpREGroupStack;        //Don't use it. For internal code only.
@@ -1254,10 +1333,26 @@ typedef struct {
   CHARRANGE64 crMarkRange;
 } AEMARKRANGEMATCH;
 
+typedef struct _AEQUOTEMATCH {
+  struct _AEQUOTEMATCH *next;
+  struct _AEQUOTEMATCH *prev;
+  AEQUOTEITEMW *lpQuote;
+  AECHARRANGE crQuoteStart;
+  AECHARRANGE crQuoteEnd;
+} AEQUOTEMATCHITEM;
+
+typedef struct {
+  AEQUOTEMATCHITEM *first;
+  AEQUOTEMATCHITEM *last;
+} AESTACKQUOTEMATCH;
+
 typedef struct {
   AEQUOTEITEMW *lpQuote;
   AECHARRANGE crQuoteStart;
   AECHARRANGE crQuoteEnd;
+  AECHARINDEX ciFindFirst;
+  AECHARINDEX ciChildScan;
+  AESTACKQUOTEMATCH hParentStack;
 } AEQUOTEMATCH;
 
 typedef struct {
@@ -1270,8 +1365,14 @@ typedef struct {
 } AEWORDMATCH;
 
 typedef struct {
-  CHARRANGE64 crFold;
   AEFOLD *lpFold;
+  CHARRANGE64 crFoldStart;
+  CHARRANGE64 crFoldEnd;
+  INT_PTR nFoldStartMax;
+  AECHARINDEX ciFoldStartMax;
+  AEHDOC hDoc;
+  AEHTHEME hActiveThemeBegin;
+  AEHTHEME hActiveThemePrev;
 } AEFOLDMATCH;
 
 typedef struct {
@@ -1558,6 +1659,7 @@ typedef struct {
 #define AEM_ISRANGEMODIFIED       (WM_USER + 2065)
 #define AEM_DETACHUNDO            (WM_USER + 2066)
 #define AEM_ATTACHUNDO            (WM_USER + 2067)
+#define AEM_GETUNDOPOS            (WM_USER + 2068)
 
 //Text coordinates
 #define AEM_EXGETSEL              (WM_USER + 2099)
@@ -1584,6 +1686,7 @@ typedef struct {
 #define AEM_INDEXTOCOLUMN         (WM_USER + 2123)
 #define AEM_COLUMNTOINDEX         (WM_USER + 2124)
 #define AEM_INDEXINURL            (WM_USER + 2125)
+#define AEM_URLVISIT              (WM_USER + 2126)
 #define AEM_ADDPOINT              (WM_USER + 2141)
 #define AEM_DELPOINT              (WM_USER + 2142)
 #define AEM_GETPOINTSTACK         (WM_USER + 2143)
@@ -1687,6 +1790,8 @@ typedef struct {
 #define AEM_COLLAPSELINE          (WM_USER + 2390)
 #define AEM_COLLAPSEFOLD          (WM_USER + 2391)
 #define AEM_UPDATEFOLD            (WM_USER + 2392)
+#define AEM_GETFOLDHIDEOFFSET     (WM_USER + 2393)
+#define AEM_SETFOLDHIDEOFFSET     (WM_USER + 2394)
 
 //Document
 #define AEM_CREATEDOCUMENT        (WM_USER + 2401)
@@ -1711,8 +1816,7 @@ typedef struct {
 //Highlight
 #define AEM_HLCREATETHEMEA        (WM_USER + 2501)
 #define AEM_HLCREATETHEMEW        (WM_USER + 2502)
-#define AEM_HLGETTHEMEA           (WM_USER + 2503)
-#define AEM_HLGETTHEMEW           (WM_USER + 2504)
+#define AEM_HLFINDTHEME           (WM_USER + 2504)
 #define AEM_HLGETTHEMENAMEA       (WM_USER + 2505)
 #define AEM_HLGETTHEMENAMEW       (WM_USER + 2506)
 #define AEM_HLGETTHEMESTACK       (WM_USER + 2507)
@@ -2209,7 +2313,7 @@ Return Value
  If a nonzero value, the control does not handle the mouse message.
 
 Remarks
- To receive AEN_LINK notifications, specify AENM_LINK in the mask sent with the AEM_SETEVENTMASK message and turn on URL detection with the AEM_SETDETECTURL message.
+ To receive AEN_LINK notifications, specify AENM_LINK in the mask sent with the AEM_SETEVENTMASK message and turn on URL detection with AECOE_DETECTURL flag.
 
 
 AEN_MARKER
@@ -3172,6 +3276,25 @@ Example:
  See AEM_DETACHUNDO example.
 
 
+AEM_GETUNDOPOS
+______________
+
+Retrieve RichEdit offset of undo item.
+
+(DWORD)wParam    == see AEGUP_* defines.
+(HANDLE *)lParam == pointer to a undo item handle.
+
+Return Value
+ RichEdit offset of undo item. -1 if error.
+
+Example (go to the previous undo position):
+ HANDLE hUndoItem=NULL;
+ INT_PTR nOffset=SendMessage(hWndEdit, AEM_GETUNDOPOS, AEGUP_PREV, (LPARAM)&hUndoItem);
+
+ if (nOffset != -1)
+   SendMessage(hWndEdit, EM_SETSEL, nOffset, nOffset);
+
+
 AEM_EXGETSEL
 ____________
 
@@ -3651,6 +3774,34 @@ Example:
 
  SendMessage(hWndEdit, AEM_GETINDEX, AEGI_CARETCHAR, (LPARAM)&ciCaret);
  SendMessage(hWndEdit, AEM_INDEXINURL, (WPARAM)&ciCaret, (LPARAM)&crUrl);
+
+
+AEM_URLVISIT
+____________
+
+URL visit operations.
+
+(int)wParam  == see AEUV_* defines.
+(void)lParam == depend of AEUV_* define.
+
+Return Value
+ Depend of AEUV_* define.
+
+Example:
+ AECHARINDEX ciCaret;
+ AECHARRANGE crUrl;
+ AEURLVISIT *lpUrlVisit;
+
+ SendMessage(hWndEdit, AEM_GETINDEX, AEGI_CARETCHAR, (LPARAM)&ciCaret);
+ if (SendMessage(hWndEdit, AEM_INDEXINURL, (WPARAM)&ciCaret, (LPARAM)&crUrl))
+ {
+   if (lpUrlVisit=(AEURLVISIT *)SendMessage(hWndEdit, AEM_URLVISIT, AEUV_GET, (LPARAM)&crUrl))
+   {
+     //Reset count of visits. Control could automatically delete item with zero visits.
+     lpUrlVisit->nVisitCount=0;
+     InvalidateRect(hWndEdit, NULL, FALSE);
+   }
+ }
 
 
 AEM_ADDPOINT
@@ -5193,14 +5344,14 @@ ________________
 
 Retrieve folds count.
 
-wParam == not used.
-lParam == not used.
+(int)wParam == see AEFC_* defines.
+lParam      == not used.
 
 Return Value
  Number of folds.
 
 Example:
-  SendMessage(hWndEdit, AEM_GETFOLDCOUNT, 0, 0);
+  SendMessage(hWndEdit, AEM_GETFOLDCOUNT, AEFC_ALL, 0);
 
 
 AEM_ADDFOLD
@@ -5224,7 +5375,7 @@ Example:
  SendMessage(hWndEdit, AEM_EXGETSEL, (WPARAM)&pointMin.ciPoint, (LPARAM)&pointMax.ciPoint);
  fold.lpMinPoint=&pointMin;
  fold.lpMaxPoint=&pointMax;
- fold.bCollapse=FALSE;
+ fold.dwFlags=0;
  fold.dwFontStyle=AEHLS_NONE;
  fold.crText=RGB(0xFF, 0x00, 0x00);
  fold.crBk=(DWORD)-1;
@@ -5390,6 +5541,40 @@ Example:
  SendMessage(hWndEdit, AEM_DELETEFOLD, (WPARAM)lpFold1, FALSE);
  SendMessage(hWndEdit, AEM_COLLAPSEFOLD, (WPARAM)lpFold2, AECF_EXPAND|AECF_NOUPDATE);
  SendMessage(hWndEdit, AEM_UPDATEFOLD, 0, nFirstVisibleLine);
+
+
+AEM_GETFOLDHIDEOFFSET
+_____________________
+
+Retrieve folding hide line offsets.
+
+wParam == not used.
+lParam == not used.
+
+Return Value
+ The low-order word contains the fold begin line offset to hide.
+ The high-order word contains the fold end line offset to hide.
+
+Example:
+ DWORD dwHideLineOffsets=SendMessage(hWndEdit, AEM_GETFOLDHIDEOFFSET, 0, 0);
+ int nHideMinLineOffset=(short)LOWORD(dwHideLineOffsets);
+ int nHideMaxLineOffset=(short)HIWORD(dwHideLineOffsets);
+
+
+AEM_SETFOLDHIDEOFFSET
+_____________________
+
+Set folding hide line offsets.
+
+(DWORD)wParam == the low-order word contains the fold begin line offset to hide. Must be >= 1. Default is 1.
+                 the high-order word contains the fold end line offset to hide. Must be <= 0. Default is -1.
+lParam        == not used.
+
+Return Value
+ Zero.
+
+Example:
+ SendMessage(hWndEdit, AEM_SETFOLDHIDEOFFSET, MAKELONG(1, 0), 0);
 
 
 AEM_CREATEDOCUMENT
@@ -5859,34 +6044,19 @@ Example:
  }
 
 
-AEM_HLGETTHEMEA
+AEM_HLFINDTHEME
 _______________
 
-Retrieve highlight theme handle.
+Find highlight theme handle.
 
-wParam         == not used.
-(char *)lParam == ansi theme name to retrieve. If NULL, active theme handle will be returned.
+(int)wParam  == see AEHLFT_* defines.
+(void)lParam == depend of AEHLFT_* define.
 
 Return Value
  Theme handle.
 
 Example:
- AEHTHEME hTheme=(AEHTHEME)SendMessage(hWndEdit, AEM_HLGETTHEMEA, 0, (LPARAM)"MyTheme");
-
-
-AEM_HLGETTHEMEW
-_______________
-
-Retrieve highlight theme handle.
-
-wParam            == not used.
-(wchar_t *)lParam == unicode theme name to retrieve. If NULL, active theme handle will be returned.
-
-Return Value
- Theme handle.
-
-Example:
- AEHTHEME hTheme=(AEHTHEME)SendMessage(hWndEdit, AEM_HLGETTHEMEW, 0, (LPARAM)L"MyTheme");
+ AEHTHEME hTheme=(AEHTHEME)SendMessage(hWndEdit, AEM_HLFINDTHEME, AEHLFT_BYNAMEW, (LPARAM)L"MyTheme");
 
 
 AEM_HLGETTHEMENAMEA

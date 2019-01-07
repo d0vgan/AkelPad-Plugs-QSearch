@@ -13,6 +13,11 @@
 #define  DLGTYPE_REPLACE         3
 #define  DLGTYPE_GOTO            4
 #define  DLGTYPE_UNKNOWN         5
+#define  WNDTYPE_MAINEDIT       10
+
+
+#define SysMemAlloc(sizeInBytes) (void *) GlobalAlloc( GMEM_FIXED, (sizeInBytes) )
+#define SysMemFree(ptr)          GlobalFree( (HGLOBAL) (ptr) )
 
 
 // extern vars
@@ -199,7 +204,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
             int nAccels = CopyAcceleratorTableA(hAccelTable, NULL, 0);
             if ( nAccels > 0 )
             {
-                ACCEL* pAccels = (ACCEL *) GlobalAlloc( GMEM_FIXED, nAccels*sizeof(ACCEL) );
+                ACCEL* pAccels = (ACCEL *) SysMemAlloc( nAccels*sizeof(ACCEL) );
                 if ( pAccels )
                 {
                     if ( CopyAcceleratorTableA(hAccelTable, pAccels, nAccels) == nAccels )
@@ -221,7 +226,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
                             }
                         }
                     }
-                    GlobalFree( (HGLOBAL) pAccels );
+                    SysMemFree( pAccels );
                 }
             }
             /*DestroyAcceleratorTable(hAccelTable);*/
@@ -235,7 +240,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
             int nAccels = CopyAcceleratorTableW(hAccelTable, NULL, 0);
             if ( nAccels > 0 )
             {
-                ACCEL* pAccels = (ACCEL *) GlobalAlloc( GMEM_FIXED, nAccels*sizeof(ACCEL) );
+                ACCEL* pAccels = (ACCEL *) SysMemAlloc( nAccels*sizeof(ACCEL) );
                 if ( pAccels )
                 {
                     if ( CopyAcceleratorTableW(hAccelTable, pAccels, nAccels) == nAccels )
@@ -257,7 +262,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
                             }
                         }
                     }
-                    GlobalFree( (HGLOBAL) pAccels );
+                    SysMemFree( pAccels );
                 }
             }
             /*DestroyAcceleratorTable(hAccelTable);*/
@@ -328,6 +333,102 @@ void dlgswtchUnsetHookProc(void)
     }
 }
 
+#define MAX_FIND_TEXT_TO_CHECK 16384
+static BOOL isFindTextPickedUpFromMainEdit(HWND hFindTextWnd, HWND hMainEditWnd)
+{
+    CHARRANGE_X cr = { 0, 0 };
+
+    SendMessage( hMainEditWnd, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+    if ( cr.cpMin != cr.cpMax )
+    {
+        INT_X x;
+        INT_X nSelTextLen;
+
+        if ( cr.cpMin > cr.cpMax )
+        {
+            x = cr.cpMin;
+            cr.cpMin = cr.cpMax;
+            cr.cpMax = x;
+        }
+        
+        nSelTextLen = cr.cpMax - cr.cpMin;
+        if ( nSelTextLen > MAX_FIND_TEXT_TO_CHECK - 1 )
+        {
+            nSelTextLen = MAX_FIND_TEXT_TO_CHECK - 1;
+            cr.cpMax = cr.cpMin + nSelTextLen;
+        }
+
+        if ( ds_bOldWindows )
+        {
+            x = (INT_X) SendMessageA( hFindTextWnd, WM_GETTEXTLENGTH, 0, 0 );
+            if ( x == nSelTextLen )
+            {
+                BOOL         bResult;
+                char*        pFindTextA;
+                TEXTRANGEA_X trA;
+
+                bResult = FALSE;
+                pFindTextA = (char *) SysMemAlloc( nSelTextLen + 1 );
+                if ( pFindTextA )
+                {
+                    trA.chrg.cpMin = cr.cpMin;
+                    trA.chrg.cpMax = cr.cpMax;
+                    trA.lpstrText = (char *) SysMemAlloc( nSelTextLen + 1 );
+                    if ( trA.lpstrText )
+                    {
+                        trA.lpstrText[0] = 0;
+                        SendMessageA( hMainEditWnd, EM_GETTEXTRANGE_X, 0, (LPARAM) &trA );
+                        pFindTextA[0] = 0;
+                        SendMessageA( hFindTextWnd, WM_GETTEXT, nSelTextLen + 1, (LPARAM) pFindTextA );
+                        if ( lstrcmpA(trA.lpstrText, pFindTextA) == 0 )
+                        {
+                            bResult = TRUE;
+                        }
+                        SysMemFree( trA.lpstrText );
+                    }
+                    SysMemFree( pFindTextA );
+                }
+                return bResult;
+            }
+        }
+        else
+        {
+            x = (INT_X) SendMessageW( hFindTextWnd, WM_GETTEXTLENGTH, 0, 0 );
+            if ( x == nSelTextLen )
+            {
+                BOOL         bResult;
+                wchar_t*     pFindTextW;
+                TEXTRANGEW_X trW;
+
+                bResult = FALSE;
+                pFindTextW = (wchar_t *) SysMemAlloc( (nSelTextLen + 1)*sizeof(wchar_t) );
+                if ( pFindTextW )
+                {
+                    trW.chrg.cpMin = cr.cpMin;
+                    trW.chrg.cpMax = cr.cpMax;
+                    trW.lpstrText = (wchar_t *) SysMemAlloc( (nSelTextLen + 1)*sizeof(wchar_t) );
+                    if ( trW.lpstrText )
+                    {
+                        trW.lpstrText[0] = 0;
+                        SendMessageW( hMainEditWnd, EM_GETTEXTRANGE_X, 0, (LPARAM) &trW );
+                        pFindTextW[0] = 0;
+                        SendMessageW( hFindTextWnd, WM_GETTEXT, nSelTextLen + 1, (LPARAM) pFindTextW );
+                        if ( lstrcmpW(trW.lpstrText, pFindTextW) == 0 )
+                        {
+                            bResult = TRUE;
+                        }
+                        SysMemFree( trW.lpstrText );
+                    }
+                    SysMemFree( pFindTextW );
+                }
+                return bResult;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
 BOOL dlgswtchDoSwitch(int nAccelIndex)
 {
     //wchar_t  szText[MAX_TEXT_SIZE];
@@ -344,6 +445,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
     BOOL     bModelessDlgIsFocused;
     int      nCurrentDlgType;
     int      nSwitchDlgType;
+    int      nFocusedWndType;
 
     nSwitchDlgType = DLGTYPE_NONE;
     if ( (nAccelIndex >= 0) && (nAccelIndex < ds_nDlgAccelKeys) )
@@ -371,6 +473,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
     if ( nSwitchDlgType == DLGTYPE_NONE )
         return FALSE;
 
+    nFocusedWndType = DLGTYPE_NONE;
     nCurrentDlgType = DLGTYPE_NONE;
     bModelessDlgIsFocused = FALSE;
     bQSearchDlgIsFocused = FALSE;
@@ -391,12 +494,18 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             nCurrentDlgType = DLGTYPE_UNKNOWN;
 
         if ( (hModelessDlg == hFocusedWnd) || IsChild(hModelessDlg, hFocusedWnd) )
+        {
             bModelessDlgIsFocused = TRUE;
+            nFocusedWndType = nCurrentDlgType;
+        }
     }
     if ( bQSearchDlgIsVisible )
     {
         if ( (g_QSearchDlg.hDlg == hFocusedWnd) || IsChild(g_QSearchDlg.hDlg, hFocusedWnd) )
+        {
             bQSearchDlgIsFocused = TRUE;
+            nFocusedWndType = DLGTYPE_QSEARCH;
+        }
 
         if ( nCurrentDlgType == DLGTYPE_NONE )
             nCurrentDlgType = DLGTYPE_QSEARCH;
@@ -409,6 +518,12 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
     {
         if ( ei.hWndEdit != hFocusedWnd )
             return FALSE;
+    }
+
+    if ( nFocusedWndType == DLGTYPE_NONE )
+    {
+        if ( ei.hWndEdit == hFocusedWnd )
+            nFocusedWndType = WNDTYPE_MAINEDIT;
     }
 
     if ( (nCurrentDlgType == DLGTYPE_NONE) ||  
@@ -460,12 +575,12 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
         if ( ds_bOldWindows )
         {
             pszTextW = NULL;
-            pszTextA = (char *) GlobalAlloc(GMEM_FIXED, nTextLen + 1);
+            pszTextA = (char *) SysMemAlloc( nTextLen + 1 );
         }
         else
         {
             pszTextA = NULL;
-            pszTextW = (wchar_t *) GlobalAlloc(GMEM_FIXED, (nTextLen + 1)*sizeof(wchar_t));
+            pszTextW = (wchar_t *) SysMemAlloc( (nTextLen + 1)*sizeof(wchar_t) );
         }
     }
     else
@@ -492,7 +607,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                         if ( nTextLen > 0 )
                         {
                             ++nTextLen;
-                            pszTextA = (char *) GlobalAlloc(GMEM_FIXED, nTextLen + 1);
+                            pszTextA = (char *) SysMemAlloc( nTextLen + 1 );
                         }
                     }
                     if ( pszTextA )
@@ -509,7 +624,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                         if ( nTextLen > 0 )
                         {
                             ++nTextLen;
-                            pszTextW = (wchar_t *) GlobalAlloc(GMEM_FIXED, (nTextLen + 1)*sizeof(wchar_t));
+                            pszTextW = (wchar_t *) SysMemAlloc( (nTextLen + 1)*sizeof(wchar_t) );
                         }
                     }
                     if ( pszTextW )
@@ -584,15 +699,23 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                 HWND hFindTextWnd = GetDlgItem(hModelessDlg, IDC_SEARCH_FIND);
                 if ( ds_bOldWindows )
                 {
-                    if ( pszTextA && pszTextA[0] )
-                        SendMessageA( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextA );
-                    SendMessageA( hFindTextWnd, CB_SETEDITSEL, 0, 0xFFFF0000L );
+                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) || 
+                         (!isFindTextPickedUpFromMainEdit(hFindTextWnd, ei.hWndEdit)) )
+                    {
+                        if ( pszTextA && pszTextA[0] )
+                            SendMessageA( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextA );
+                        SendMessageA( hFindTextWnd, CB_SETEDITSEL, 0, 0xFFFF0000L );
+                    }
                 }
                 else
                 {
-                    if ( pszTextW && pszTextW[0] )
-                        SendMessageW( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextW );
-                    SendMessageW( hFindTextWnd, CB_SETEDITSEL, 0, 0xFFFF0000L );
+                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) || 
+                         (!isFindTextPickedUpFromMainEdit(hFindTextWnd, ei.hWndEdit)) )
+                    {
+                        if ( pszTextW && pszTextW[0] )
+                            SendMessageW( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextW );
+                        SendMessageW( hFindTextWnd, CB_SETEDITSEL, 0, 0xFFFF0000L );
+                    }
                 }
             }
             break;
@@ -655,12 +778,12 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
     if ( ds_bOldWindows )
     {
         if ( pszTextA )
-            GlobalFree( (HGLOBAL) pszTextA );
+            SysMemFree( pszTextA );
     }
     else
     {
         if ( pszTextW )
-            GlobalFree( (HGLOBAL) pszTextW );
+            SysMemFree( pszTextW );
     }
 
     SendMessage(ei.hWndEdit, WM_SETREDRAW, TRUE, 0);

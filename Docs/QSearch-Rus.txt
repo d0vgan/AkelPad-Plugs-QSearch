@@ -351,6 +351,14 @@ SelFindNext или SelFindPrev. ¬ результате выделение переходит к
 --------
 »стори€:
 --------
+v.6.3 (—ент€брь 2015)
+ + ѕри активном DialogSwitcher нажатие Ctrl+F и Crtl+H в главном окне
+   редактировани€ позвол€ет подхватить выделенный в этом окне текст.
+   (¬ то врем€ как нажатие Ctrl+F и Crtl+H в диалоге поиска/замены
+   оставл€ет в диалоге тот текст, который был.)
+ * AkelPad 4.9.6+
+ * восьма€ годовщина QSearch :)
+
 v.6.2 (ћарт 2015)
  - исправлено: неверно определ€лась верси€ AkelPad
 
@@ -578,7 +586,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Mar 2015, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Sep 2015, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Ётот плагин €вл€етс€ бесплатным (бесплатным как дл€ частного, так и дл€
