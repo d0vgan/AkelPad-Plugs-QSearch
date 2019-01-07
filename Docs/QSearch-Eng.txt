@@ -334,6 +334,9 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.6.2 (March 2015)
+ - fixed: AkelPad version was detected incorrectly
+
 v.6.1 (March 2015)
  - fixed: sometimes "Highlight all" was unnecessary called
  + license info added (see below)

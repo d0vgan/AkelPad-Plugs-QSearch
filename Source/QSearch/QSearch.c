@@ -2225,6 +2225,22 @@ void SaveFindHistoryW(void)
     }
 }
 
+#if AKELPAD_RUNTIME_VERSION_CHECK
+// from AkelPad's "Edit.c"
+int VersionCompare(DWORD dwVersion1, DWORD dwVersion2)
+{
+    if (LOBYTE(dwVersion1) != LOBYTE(dwVersion2))
+        return LOBYTE(dwVersion1) - LOBYTE(dwVersion2);
+    if (HIBYTE(dwVersion1) != HIBYTE(dwVersion2))
+        return HIBYTE(dwVersion1) - HIBYTE(dwVersion2);
+    if (LOBYTE(HIWORD(dwVersion1)) != LOBYTE(HIWORD(dwVersion2)))
+        return LOBYTE(HIWORD(dwVersion1)) - LOBYTE(HIWORD(dwVersion2));
+    if (HIBYTE(HIWORD(dwVersion1)) != HIBYTE(HIWORD(dwVersion2)))
+        return HIBYTE(HIWORD(dwVersion1)) - HIBYTE(HIWORD(dwVersion2));
+    return 0;
+}
+#endif
+
 // debug helper
 #ifdef _DEBUG
 void Debug_Output(const char* szFormat, ...)

@@ -7,6 +7,10 @@
 #include "AkelDllHeader.h"
 #include "QSearch_defs.h"
 
+// When EXE_MIN_VERSION_4X is set to (4, 9, 1, 0)
+// there's no sense to check for (4, 8, 8, 0) in runtime
+#define AKELPAD_RUNTIME_VERSION_CHECK 0
+
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> plugin state >>>>>>>>>>>>>>>>>>>>>>>> */
     typedef struct tPluginState {
@@ -65,6 +69,10 @@ void  ReadFindHistoryA(void);
 void  ReadFindHistoryW(void);
 void  SaveFindHistoryA(void);
 void  SaveFindHistoryW(void);
+
+#if AKELPAD_RUNTIME_VERSION_CHECK
+int VersionCompare(DWORD dwVersion1, DWORD dwVersion2);
+#endif
 
 // debug helper
 #ifdef _DEBUG

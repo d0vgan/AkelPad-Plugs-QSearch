@@ -3310,7 +3310,9 @@ void qsearchDoTryHighlightAll(HWND hDlg)
                     if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
                         hlParams.dwMarkFlags |= MARKFLAG_WHOLEWORD;
 
-                    if ( getProgramVersion(&g_Plugin) >= MAKE_IDENTIFIER(4, 8, 8, 0) )
+#if AKELPAD_RUNTIME_VERSION_CHECK
+                    if ( VersionCompare(getProgramVersion(&g_Plugin), MAKE_IDENTIFIER(4, 8, 8, 0)) >= 0 )
+#endif
                     {
                         if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] )
                         {
