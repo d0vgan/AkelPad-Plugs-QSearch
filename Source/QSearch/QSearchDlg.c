@@ -188,12 +188,7 @@ static DWORD   qs_dwHotKey = 0;
 // There is a single reason for so many helpers.
 // The reason is: Flexibility.
 
-typedef struct sDynamicBuffer {
-    void* ptr;
-    UINT_PTR nBytesAllocated;
-} tDynamicBuffer;
-
-typedef void (*tShowFindResults_Init)(void);
+typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf);
 typedef void (*tShowFindResults_AddOccurrence)(const wchar_t* cszOccurrence);
 typedef void (*tShowFindResults_Done)(unsigned int nOccurrences);
 
@@ -211,8 +206,11 @@ static void LogOutput_AddText(const wchar_t* cszText)
     CallLogOutput( &loParams );
 }
 
-static void qsShowFindResults_LogOutput_Init(void)
+static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf)
 {
+    wchar_t* pszText;
+    const wchar_t* cszTextFormat;
+    UINT_PTR nBytesToAllocate;
     DLLECLOG_OUTPUT_1 loParams;
 
     loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_1);
@@ -227,6 +225,19 @@ static void qsShowFindResults_LogOutput_Init(void)
     loParams.pszAlias = NULL;
 
     CallLogOutput( &loParams );
+
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
+
+    nBytesToAllocate = lstrlenW(cszTextFormat);
+    nBytesToAllocate += lstrlenW(cszFindWhat);
+    nBytesToAllocate *= sizeof(wchar_t);
+
+    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
+        return; // failed to allocate the memory
+
+    pszText = (wchar_t *) pBuf->ptr;
+    wsprintfW(pszText, cszTextFormat, cszFindWhat);
+    LogOutput_AddText(pszText);
 }
 
 static void qsShowFindResults_LogOutput_AddOccurrence(const wchar_t* cszOccurrence)
@@ -236,9 +247,13 @@ static void qsShowFindResults_LogOutput_AddOccurrence(const wchar_t* cszOccurren
 
 static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences)
 {
-    wchar_t szOccurrences[64];
-    wsprintfW(szOccurrences, L"%u occurrence(s) found.", nOccurrences);
-    LogOutput_AddText(szOccurrences);
+    wchar_t szText[128];
+    const wchar_t* cszTextFormat;
+
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
+
+    wsprintfW(szText, cszTextFormat, nOccurrences);
+    LogOutput_AddText(szText);
 }
 
 typedef struct sShowFindResults {
@@ -254,36 +269,28 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     wchar_t* pStr;
     UINT_PTR nBytesToAllocate;
     INT_X nLinePos;
-    INT_X nLineStartPos;
     int nUnwrappedLine;
+    AECHARINDEX ci;
 
     nBytesToAllocate = (lstrlenW(cszFindResult) + 32) * sizeof(wchar_t);
-    if ( pBuf->nBytesAllocated < nBytesToAllocate )
-    {
-        if ( pBuf->ptr )
-            SysMemFree( pBuf->ptr );
 
-        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
-        pBuf->ptr = SysMemAlloc( nBytesToAllocate );
-        if ( pBuf->ptr )
-            pBuf->nBytesAllocated = nBytesToAllocate;
-        else
+    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
             return; // failed to allocate the memory
-    }
 
-    nLinePos = (INT_X) SendMessage(hWndEdit, AEM_INDEXTORICHOFFSET, 0, (LPARAM) &pcrFound->ciMin);
     if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-        nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) pcrFound->ciMin.nLine, 0);
+        nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
     else
         nUnwrappedLine = pcrFound->ciMin.nLine;
-    nLineStartPos = (INT_X) SendMessage(hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0);
+    
+    x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
+    nLinePos = AEC_WrapLineBegin(&ci);
 
     // the output string:
-    pStr = pBuf->ptr;
-    pStr += wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos - nLineStartPos + 1) );
+    pStr = (wchar_t *) pBuf->ptr;
+    pStr += wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
     lstrcpyW( pStr, cszFindResult );
 
-    pfnAddOccurrence(pBuf->ptr);
+    pfnAddOccurrence( (const wchar_t *) pBuf->ptr );
 }
 
 #define QSFRM_LINE       1 // number of lines
@@ -402,18 +409,10 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
         return; // no text to retrieve
 
     nBytesToAllocate = tr.dwBufferMax * sizeof(wchar_t);
-    if ( pBuf->nBytesAllocated < nBytesToAllocate )
-    {
-        if ( pBuf->ptr )
-            SysMemFree( pBuf->ptr );
 
-        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
-        pBuf->ptr = SysMemAlloc( nBytesToAllocate );
-        if ( pBuf->ptr )
-            pBuf->nBytesAllocated = nBytesToAllocate;
-        else
+    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
             return; // failed to allocate the memory
-    }
+
     tr.pBuffer = (wchar_t *) pBuf->ptr;
     tr.pBuffer[0] = 0;
     SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
@@ -3808,7 +3807,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             nMatches = 0;
 
-            pFindAll->ShowFindResults.pfnInit();
+            pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf);
             
             while ( SendMessageW(ei.hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
             {
@@ -3818,20 +3817,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                     pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, pFindAll->ShowFindResults.pfnAddOccurrence);
 
                 x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMin, sizeof(AECHARINDEX) );
-                AEC_IndexInc( &aeftW.crSearch.ciMin );
+                AEC_NextChar( &aeftW.crSearch.ciMin );
             }
 
-            if ( pFindAll->buf.ptr )
-            {
-                SysMemFree( pFindAll->buf.ptr );
-                x_zero_mem( &pFindAll->buf, sizeof(tDynamicBuffer) );
-            }
-
-            if ( pFindAll->buf2.ptr )
-            {
-                SysMemFree( pFindAll->buf2.ptr );
-                x_zero_mem( &pFindAll->buf2, sizeof(tDynamicBuffer) );
-            }
+            tDynamicBuffer_Free(&pFindAll->buf);
+            tDynamicBuffer_Free(&pFindAll->buf2);
 
             pFindAll->ShowFindResults.pfnDone(nMatches);
 

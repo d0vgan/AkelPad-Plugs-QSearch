@@ -25,5 +25,15 @@ void  x_mem_free(void* ptr);
 BOOL x_wstr_startswith(const WCHAR* str, const WCHAR* substr);
 BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSubstrLen);
 
+// tDynamicBuffer
+typedef struct sDynamicBuffer {
+    void* ptr;
+    UINT_PTR nBytesAllocated;
+} tDynamicBuffer;
+
+void tDynamicBuffer_Init(tDynamicBuffer* pBuf);
+void tDynamicBuffer_Free(tDynamicBuffer* pBuf);
+int  tDynamicBuffer_Reserve(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
+
 //---------------------------------------------------------------------------
 #endif

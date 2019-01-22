@@ -650,3 +650,39 @@ const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
             return L"";
     }
 }
+
+const wchar_t* qsearchGetStringW(unsigned int uStringID)
+{
+    unsigned int uInternalLng = getInternalLng();
+
+    switch (uStringID)
+    {
+        case QS_STRID_FINDALL_SEARCHINGFOR:
+        {
+            const wchar_t* szFindAllSearchingForW[INLNG_COUNT] = {
+                /* eng */
+                L"Searching for \"%s\" ...",
+                /* rus */
+                L"\x0418\x0449\x0435\x043C \"%s\" ...",
+                /* ukr */
+                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E \"%s\" ..."
+            };
+            return szFindAllSearchingForW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OCCURRENCESFOUND:
+        {
+            const wchar_t* szFindAllOccurrencesFoundW[INLNG_COUNT] = {
+                /* eng */
+                L"%u occurrence(s) found.",
+                /* rus */
+                L"%u \x043D\x0430\x0439\x0434\x0435\x043D\x043E.",
+                /* ukr */
+                L"%u \x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E."
+            };
+            return szFindAllOccurrencesFoundW[uInternalLng];
+        }
+    };
+
+    return L"";
+}

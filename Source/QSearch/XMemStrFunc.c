@@ -156,3 +156,36 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
 
     return TRUE;
 }
+
+// tDynamicBuffer
+void tDynamicBuffer_Init(tDynamicBuffer* pBuf)
+{
+    x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
+}
+
+void tDynamicBuffer_Free(tDynamicBuffer* pBuf)
+{
+    if ( pBuf->ptr )
+    {
+        SysMemFree( pBuf->ptr );
+        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
+    }
+}
+
+int tDynamicBuffer_Reserve(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
+{
+    if ( pBuf->nBytesAllocated < nBytesToAllocate )
+    {
+        if ( pBuf->ptr )
+            SysMemFree( pBuf->ptr );
+
+        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
+        pBuf->ptr = SysMemAlloc( nBytesToAllocate );
+        if ( pBuf->ptr )
+            pBuf->nBytesAllocated = nBytesToAllocate;
+        else
+            return 0; // failed to allocate the memory
+    }
+
+    return 1; // OK
+}
