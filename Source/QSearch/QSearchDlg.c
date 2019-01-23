@@ -3473,114 +3473,94 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         {
             adjustIncompleteRegExA(szFindTextA, dwOptFlags);
         }
-        tfA.dwFlags = dwSearchFlags;
-        tfA.pFindIt = szFindTextA;
-        tfA.nFindItLen = -1;
-        srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
-        if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
-        {
-            if ( !bSearchEx )
-            {
-                iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
-                  AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
-            }
-            else
-            {
-                iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
-            }
-        }
-        if ( iFindResult < 0 )
-        {
-            BOOL bContinueSearch = FALSE;
 
-            if ( (dwSearchFlags & FRF_REGEXP) && (iFindResult <= -100) )
+        if ( !pFindAll )
+        {
+            tfA.dwFlags = dwSearchFlags;
+            tfA.pFindIt = szFindTextA;
+            tfA.nFindItLen = -1;
+            srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
+            if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
             {
-                // RegExp syntax error
-                bNotRegExp = TRUE;
-                bNotFound = TRUE;
-                bEOF = TRUE;
-                qs_nEditEOF = 0;
-            }
-            else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
-            {
-                bNotFound = TRUE;
-                bEOF = TRUE;
-                qs_nEditEOF = srchEOF;
-            }
-            else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) && 
-                      ((qs_nEditEOF & srchEOF) == 0) && 
-                      (dwParams & QSEARCH_NEXT) )
-            {
-                HWND hWndFocused = GetFocus();
-
-                qs_nEditEOF = srchEOF;
-                if ( MessageBoxA( 
-                       g_Plugin.hMainWnd, 
-                       qsearchGetHintA(IDS_EOFREACHED),
-                       "AkelPad (QSearch)",
-                       MB_OKCANCEL | MB_ICONQUESTION | MB_DEFBUTTON1
-                       ) == IDOK )
+                if ( !bSearchEx )
                 {
-                    bContinueSearch = TRUE;
+                    iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
+                      AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
                 }
                 else
                 {
-                    // When a Find Button loses focus, the value of qs_nEditEOF resets to 0.
-                    // So we need to set the value of qs_nEditEOF here again.
-                    qs_nEditEOF = srchEOF; 
+                    iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
                 }
-
-                if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
-                    SetFocus(hEdit);
-                else
-                    SetFocus(ei.hWndEdit);
             }
-            else
+            if ( iFindResult < 0 )
             {
-                bContinueSearch = TRUE;
-            }
+                BOOL bContinueSearch = FALSE;
 
-            if ( bContinueSearch )
-            {
-                bEOF = TRUE;
-
-                if ( (dwSearchFlags & FR_UP) == FR_UP )
+                if ( (dwSearchFlags & FRF_REGEXP) && (iFindResult <= -100) )
                 {
-                    INT_X       pos = 0;
-                    CHARRANGE_X cr = {0, 0};
+                    // RegExp syntax error
+                    bNotRegExp = TRUE;
+                    bNotFound = TRUE;
+                    bEOF = TRUE;
+                    qs_nEditEOF = 0;
+                }
+                else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
+                {
+                    bNotFound = TRUE;
+                    bEOF = TRUE;
+                    qs_nEditEOF = srchEOF;
+                }
+                else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) && 
+                          ((qs_nEditEOF & srchEOF) == 0) && 
+                          (dwParams & QSEARCH_NEXT) )
+                {
+                    HWND hWndFocused = GetFocus();
 
-                    SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
-                    pos = cr.cpMin;
-                    cr.cpMin = -1;
-                    cr.cpMax = -1;
-                    SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
-                    if ( tfA.dwFlags & FR_BEGINNING )
+                    qs_nEditEOF = srchEOF;
+                    if ( MessageBoxA( 
+                           g_Plugin.hMainWnd, 
+                           qsearchGetHintA(IDS_EOFREACHED),
+                           "AkelPad (QSearch)",
+                           MB_OKCANCEL | MB_ICONQUESTION | MB_DEFBUTTON1
+                           ) == IDOK )
                     {
-                        tfA.dwFlags -= FR_BEGINNING;
-                    }
-                    if ( !bSearchEx )
-                    {
-                        iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
-                          AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
+                        bContinueSearch = TRUE;
                     }
                     else
                     {
-                        iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
+                        // When a Find Button loses focus, the value of qs_nEditEOF resets to 0.
+                        // So we need to set the value of qs_nEditEOF here again.
+                        qs_nEditEOF = srchEOF; 
                     }
-                    if ( iFindResult < 0 )
-                    {
-                        cr.cpMin = pos;
-                        cr.cpMax = pos;
-                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
-                        bNotFound = TRUE;
-                    }
+
+                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
+                        SetFocus(hEdit);
+                    else
+                        SetFocus(ei.hWndEdit);
                 }
                 else
                 {
-                    if ( ((dwSearchFlags & FR_BEGINNING) != FR_BEGINNING) ||
-                         (qs_nEditEOF & srchEOF) )
+                    bContinueSearch = TRUE;
+                }
+
+                if ( bContinueSearch )
+                {
+                    bEOF = TRUE;
+
+                    if ( (dwSearchFlags & FR_UP) == FR_UP )
                     {
-                        tfA.dwFlags = dwSearchFlags | FR_BEGINNING;
+                        INT_X       pos = 0;
+                        CHARRANGE_X cr = {0, 0};
+
+                        SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+                        pos = cr.cpMin;
+                        cr.cpMin = -1;
+                        cr.cpMax = -1;
+                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                        if ( tfA.dwFlags & FR_BEGINNING )
+                        {
+                            tfA.dwFlags -= FR_BEGINNING;
+                        }
                         if ( !bSearchEx )
                         {
                             iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
@@ -3592,23 +3572,56 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         }
                         if ( iFindResult < 0 )
                         {
+                            cr.cpMin = pos;
+                            cr.cpMax = pos;
+                            SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
                     }
                     else
                     {
-                        bNotFound = TRUE;
+                        if ( ((dwSearchFlags & FR_BEGINNING) != FR_BEGINNING) ||
+                             (qs_nEditEOF & srchEOF) )
+                        {
+                            tfA.dwFlags = dwSearchFlags | FR_BEGINNING;
+                            if ( !bSearchEx )
+                            {
+                                iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd, 
+                                  AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
+                            }
+                            else
+                            {
+                                iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
+                            }
+                            if ( iFindResult < 0 )
+                            {
+                                bNotFound = TRUE;
+                            }
+                        }
+                        else
+                        {
+                            bNotFound = TRUE;
+                        }
                     }
+                    qs_nEditEOF = 0;
                 }
+            }
+            else
+            {
                 qs_nEditEOF = 0;
             }
         }
-        else
+        else // pFindAll
         {
-            qs_nEditEOF = 0;
+            MessageBoxA( 
+              g_Plugin.hMainWnd, 
+              "Not supported in non-Unicode version",
+              "AkelPad (QSearch)",
+              MB_OK | MB_ICONEXCLAMATION
+            );
         }
     }
-    else
+    else // !g_Plugin.bOldWindows
     {
         TEXTFINDW tfW;
         int       srchEOF;
@@ -3816,8 +3829,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 if ( pFindAll->pfnFindResultCallback )
                     pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, pFindAll->ShowFindResults.pfnAddOccurrence);
 
-                x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMin, sizeof(AECHARINDEX) );
-                AEC_NextChar( &aeftW.crSearch.ciMin );
+                x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
             }
 
             tDynamicBuffer_Free(&pFindAll->buf);
@@ -3842,14 +3854,6 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             }
         }
     }
-
-    //if ( bNotFound )
-    //{
-    //    if ( dwSearchFlags & FRF_REGEXP )
-    //    {
-    //        bNotRegExp = TRUE;
-    //    }
-    //}
 
     if ( (!pFindAll) && (!bNotFound) && (!qs_nEditEOF) )
     {
