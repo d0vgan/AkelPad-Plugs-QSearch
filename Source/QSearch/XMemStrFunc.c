@@ -204,8 +204,8 @@ void tDynamicBufferEx_Free(tDynamicBufferEx* pBuf)
 
 int tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate)
 {
-    tDynamicBuffer_Allocate( &pBuf->buf, nBytesToAllocate );
     pBuf->nBytesStored = 0;
+    return tDynamicBuffer_Allocate( &pBuf->buf, nBytesToAllocate );
 }
 
 int tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes)

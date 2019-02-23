@@ -1175,8 +1175,8 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
         }
         else
         {
-        SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, IDOK, 0 );
-    }
+            SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, IDOK, 0 );
+        }
     }
 
     return 0;
