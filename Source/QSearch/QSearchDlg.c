@@ -189,8 +189,8 @@ static DWORD   qs_dwHotKey = 0;
 // The reason is: Flexibility.
 
 typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf);
-typedef void (*tShowFindResults_AddOccurrence)(const wchar_t* cszOccurrence);
-typedef void (*tShowFindResults_Done)(unsigned int nOccurrences);
+typedef void (*tShowFindResults_AddOccurrence)(const wchar_t* cszOccurrence, tDynamicBufferEx* pResultsBuf);
+typedef void (*tShowFindResults_Done)(unsigned int nOccurrences, tDynamicBufferEx* pResultsBuf);
 
 static void LogOutput_AddText(const wchar_t* cszText)
 {
@@ -232,7 +232,7 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
     nBytesToAllocate += lstrlenW(cszFindWhat);
     nBytesToAllocate *= sizeof(wchar_t);
 
-    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
         return; // failed to allocate the memory
 
     pszText = (wchar_t *) pBuf->ptr;
@@ -240,15 +240,20 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
     LogOutput_AddText(pszText);
 }
 
-static void qsShowFindResults_LogOutput_AddOccurrence(const wchar_t* cszOccurrence)
+static void qsShowFindResults_LogOutput_AddOccurrence(const wchar_t* cszOccurrence, tDynamicBufferEx* pResultsBuf)
 {
-    LogOutput_AddText(cszOccurrence);
+    // LogOutput_AddText(cszOccurrence);
+    tDynamicBufferEx_Append( pResultsBuf, cszOccurrence, lstrlenW(cszOccurrence)*sizeof(wchar_t) );
+    tDynamicBufferEx_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
 }
 
-static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences)
+static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamicBufferEx* pResultsBuf)
 {
     wchar_t szText[128];
     const wchar_t* cszTextFormat;
+
+    tDynamicBufferEx_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) );
+    LogOutput_AddText( (const wchar_t*) pResultsBuf->buf.ptr );
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
 
@@ -262,9 +267,9 @@ typedef struct sShowFindResults {
     tShowFindResults_Done pfnDone;
 } tShowFindResults;
 
-typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
+typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tDynamicBufferEx* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const wchar_t* cszFindResult, tDynamicBuffer* pBuf, tDynamicBufferEx* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     wchar_t* pStr;
     UINT_PTR nBytesToAllocate;
@@ -274,7 +279,7 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
 
     nBytesToAllocate = (lstrlenW(cszFindResult) + 32) * sizeof(wchar_t);
 
-    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
             return; // failed to allocate the memory
 
     if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
@@ -290,7 +295,7 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     pStr += wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
     lstrcpyW( pStr, cszFindResult );
 
-    pfnAddOccurrence( (const wchar_t *) pBuf->ptr );
+    pfnAddOccurrence( (const wchar_t *) pBuf->ptr, pResultsBuf );
 }
 
 #define QSFRM_LINE       1 // number of lines
@@ -307,9 +312,9 @@ typedef struct sGetFindResultPolicy {
 // nBefore=0 and nAfter=0 with nMode=QSFRM_LINE means: whole line
 // nBefore=0 and nAfter=0 with nMode=QSFRM_CHAR means: just the matching word
 
-typedef void (*tFindResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence);
+typedef void (*tFindResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBufferEx* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence)
+static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBufferEx* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     AETEXTRANGEW tr;
     UINT_PTR     nBytesToAllocate;
@@ -410,13 +415,13 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
 
     nBytesToAllocate = tr.dwBufferMax * sizeof(wchar_t);
 
-    if ( !tDynamicBuffer_Reserve(pBuf, nBytesToAllocate) )
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
             return; // failed to allocate the memory
 
     tr.pBuffer = (wchar_t *) pBuf->ptr;
     tr.pBuffer[0] = 0;
     SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
-    pfrPolicy->pfnStoreResultCallback( hWndEdit, pcrFound, tr.pBuffer, pBuf2, pfnAddOccurrence );
+    pfrPolicy->pfnStoreResultCallback( hWndEdit, pcrFound, tr.pBuffer, pBuf2, pResultsBuf, pfnAddOccurrence );
 }
 
 typedef struct sQSFindAll {
@@ -1163,7 +1168,15 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
             }
         }
 
+        if ( (GetKeyState(VK_QS_FINDBEGIN) & 0x80) && 
+             (GetKeyState(VK_QS_FINDUP) & 0x80) )
+        {
+            SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, 0, 0 );
+        }
+        else
+        {
         SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, IDOK, 0 );
+    }
     }
 
     return 0;
@@ -3778,8 +3791,12 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         {
             unsigned int         nMatches;
             tGetFindResultPolicy frPolicy;
+            tDynamicBufferEx     resultsBuf;
             AEFINDTEXTW          aeftW;
             wchar_t              szFindAllW[2*MAX_TEXT_SIZE];
+
+            tDynamicBufferEx_Init( &resultsBuf );
+            tDynamicBufferEx_Allocate( &resultsBuf, 128*1024*sizeof(wchar_t) );
 
             //frPolicy.nMode = QSFRM_LINE;
             //frPolicy.nBefore = 0;
@@ -3827,7 +3844,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 ++nMatches;
 
                 if ( pFindAll->pfnFindResultCallback )
-                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, pFindAll->ShowFindResults.pfnAddOccurrence);
+                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
 
                 x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
             }
@@ -3835,7 +3852,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             tDynamicBuffer_Free(&pFindAll->buf);
             tDynamicBuffer_Free(&pFindAll->buf2);
 
-            pFindAll->ShowFindResults.pfnDone(nMatches);
+            pFindAll->ShowFindResults.pfnDone(nMatches, &resultsBuf);
+
+            tDynamicBufferEx_Free(&resultsBuf);
 
             if ( nMatches == 0 )
             {
