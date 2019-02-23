@@ -33,7 +33,7 @@ typedef struct sDynamicBuffer {
 
 void tDynamicBuffer_Init(tDynamicBuffer* pBuf);
 void tDynamicBuffer_Free(tDynamicBuffer* pBuf);
-int  tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
+BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
 
 // tDynamicBufferEx
 typedef struct sDynamicBufferEx {
@@ -43,8 +43,8 @@ typedef struct sDynamicBufferEx {
 
 void tDynamicBufferEx_Init(tDynamicBufferEx* pBuf);
 void tDynamicBufferEx_Free(tDynamicBufferEx* pBuf);
-int  tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate);
-int  tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes);
+BOOL tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate);
+UINT_PTR tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes);
 
 //---------------------------------------------------------------------------
 #endif

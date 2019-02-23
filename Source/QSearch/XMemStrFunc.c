@@ -172,7 +172,7 @@ void tDynamicBuffer_Free(tDynamicBuffer* pBuf)
     }
 }
 
-int tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
+BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
 {
     if ( pBuf->nBytesAllocated < nBytesToAllocate )
     {
@@ -184,10 +184,10 @@ int tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
         if ( pBuf->ptr )
             pBuf->nBytesAllocated = nBytesToAllocate;
         else
-            return 0; // failed to allocate the memory
+            return FALSE; // failed to allocate the memory
     }
 
-    return 1; // OK
+    return TRUE; // OK
 }
 
 // tDynamicBufferEx
@@ -202,13 +202,13 @@ void tDynamicBufferEx_Free(tDynamicBufferEx* pBuf)
     pBuf->nBytesStored = 0;
 }
 
-int tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate)
+BOOL tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate)
 {
     pBuf->nBytesStored = 0;
     return tDynamicBuffer_Allocate( &pBuf->buf, nBytesToAllocate );
 }
 
-int tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes)
+UINT_PTR tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes)
 {
     unsigned char* p;
     UINT_PTR nBytesAllocated;
