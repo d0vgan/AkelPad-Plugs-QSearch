@@ -27,24 +27,15 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
 
 // tDynamicBuffer
 typedef struct sDynamicBuffer {
-    void* ptr;
-    UINT_PTR nBytesAllocated;
+    void* ptr; // pointer to the allocated memory
+    UINT_PTR nBytesAllocated; // number of bytes allocated
+    UINT_PTR nBytesStored; // number of bytes currently stored in ptr
 } tDynamicBuffer;
 
 void tDynamicBuffer_Init(tDynamicBuffer* pBuf);
 void tDynamicBuffer_Free(tDynamicBuffer* pBuf);
 BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
-
-// tDynamicBufferEx
-typedef struct sDynamicBufferEx {
-    tDynamicBuffer buf;
-    UINT_PTR nBytesStored; // number of bytes currently stored in buf.ptr
-} tDynamicBufferEx;
-
-void tDynamicBufferEx_Init(tDynamicBufferEx* pBuf);
-void tDynamicBufferEx_Free(tDynamicBufferEx* pBuf);
-BOOL tDynamicBufferEx_Allocate(tDynamicBufferEx* pBuf, UINT_PTR nBytesToAllocate);
-UINT_PTR tDynamicBufferEx_Append(tDynamicBufferEx* pBuf, const void* pData, UINT_PTR nBytes);
+UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR nBytes);
 
 //---------------------------------------------------------------------------
 #endif
