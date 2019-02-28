@@ -13,6 +13,7 @@
 #define  IDC_PB_PROGRESS            1005
 #define  IDC_CH_HIGHLIGHTALL        1006
 #define  IDC_BT_CANCEL              1010
+#define  IDC_ST_INFO                1015
 #define  IDR_MENU_OPTIONS           1020
 #define  IDS_EOFREACHED             1040
 

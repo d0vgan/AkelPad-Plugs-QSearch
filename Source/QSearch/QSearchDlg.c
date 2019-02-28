@@ -151,6 +151,7 @@ static void CallLogOutput(void* ploParams)
         pQSearchDlg->hBtnFindNext = NULL;
         pQSearchDlg->hBtnFindPrev = NULL;
         pQSearchDlg->hBtnFindAll = NULL;
+        pQSearchDlg->hStInfo = NULL;
         pQSearchDlg->bMatchCase = FALSE;
         //pQSearchDlg->bOnDlgStart = FALSE;
         pQSearchDlg->bQSearching = FALSE;
@@ -188,10 +189,32 @@ static DWORD   qs_dwHotKey = 0;
 // There is a single reason for so many helpers.
 // The reason is: Flexibility.
 
-typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf);
+typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf);
 typedef void (*tShowFindResults_AddOccurrence)(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf);
 typedef void (*tShowFindResults_Done)(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf);
 
+// CountOnly...
+static void qsShowFindResults_CountOnly_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf)
+{
+    // empty
+}
+
+static void qsShowFindResults_CountOnly_AddOccurrence(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf)
+{
+    // empty
+}
+
+static void qsShowFindResults_CountOnly_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
+{
+    wchar_t szText[128];
+    const wchar_t* cszTextFormat;
+
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
+    wsprintfW(szText, cszTextFormat, nOccurrences);
+    SetWindowTextW(g_QSearchDlg.hStInfo, szText);
+}
+
+// LogOutput...
 static void LogOutput_AddText(const wchar_t* cszText, UINT_PTR nLen)
 {
     DLLECLOG_OUTPUT_4 loParams;
@@ -206,7 +229,7 @@ static void LogOutput_AddText(const wchar_t* cszText, UINT_PTR nLen)
     CallLogOutput( &loParams );
 }
 
-static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf)
+static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf)
 {
     wchar_t* pszText;
     const wchar_t* cszTextFormat;
@@ -262,12 +285,67 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 
     nLen = wsprintfW(szText, cszTextFormat, nOccurrences);
     LogOutput_AddText(szText, nLen);
+
+    SetWindowTextW(g_QSearchDlg.hStInfo, szText);
+}
+
+// FileOutput...
+static void qsShowFindResults_FileOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf)
+{
+    const wchar_t* cszTextFormat;
+    UINT_PTR nBytesToAllocate;
+
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
+
+    nBytesToAllocate = lstrlenW(cszTextFormat);
+    nBytesToAllocate += lstrlenW(cszFindWhat);
+    nBytesToAllocate += 1;
+    nBytesToAllocate *= sizeof(wchar_t);
+
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
+        return; // failed to allocate the memory
+
+    pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( (LPWSTR) pBuf->ptr, cszTextFormat, cszFindWhat );
+
+    tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
+}
+
+static void qsShowFindResults_FileOutput_AddOccurrence(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf)
+{
+    tDynamicBuffer_Append( pResultsBuf, pOccurrence->ptr, pOccurrence->nBytesStored );
+    tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+}
+
+static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
+{
+    wchar_t szText[128];
+    const wchar_t* cszTextFormat;
+    UINT_PTR nBytes;
+
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
+    nBytes = sizeof(wchar_t) * (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
+    tDynamicBuffer_Append( pResultsBuf, szText, nBytes );
+    tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
+    
+    if ( SendMessage(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
+    {
+        EDITINFO  ei;
+
+        ei.hWndEdit = NULL;
+        SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
+        if ( ei.hWndEdit )
+        {
+            SendMessageW( ei.hWndEdit, EM_REPLACESEL, FALSE, (LPARAM) pResultsBuf->ptr );
+        }
+    }
+
+    SetWindowTextW(g_QSearchDlg.hStInfo, szText);
 }
 
 typedef struct sShowFindResults {
-    tShowFindResults_Init pfnInit;
-    tShowFindResults_AddOccurrence pfnAddOccurrence;
-    tShowFindResults_Done pfnDone;
+    tShowFindResults_Init pfnInit;                   // can't be NULL
+    tShowFindResults_AddOccurrence pfnAddOccurrence; // can't be NULL
+    tShowFindResults_Done pfnDone;                   // can't be NULL
 } tShowFindResults;
 
 typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
@@ -425,7 +503,8 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
 }
 
 typedef struct sQSFindAll {
-    tFindResultCallback pfnFindResultCallback;
+    tFindResultCallback pfnFindResultCallback; // can be NULL
+    tGetFindResultPolicy GetFindResultPolicy;
     tShowFindResults ShowFindResults;
     tDynamicBuffer buf;
     tDynamicBuffer buf2;
@@ -2342,10 +2421,40 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             if ( uMsg == QSM_FINDALL )
             {
                 x_zero_mem(&qsfa, sizeof(tQSFindAll));
-                qsfa.pfnFindResultCallback = qsFindResultCallback;
-                qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
-                qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
-                qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
+                if ( 1 )
+                {
+                    // LogOutput
+                    qsfa.pfnFindResultCallback = qsFindResultCallback;
+                    qsfa.GetFindResultPolicy.nMode = QSFRM_CHARINLINE;
+                    qsfa.GetFindResultPolicy.nBefore = 64;
+                    qsfa.GetFindResultPolicy.nAfter = 64;
+                    qsfa.GetFindResultPolicy.nMaxLineLen = 0;
+                    qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
+                    qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
+                    qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
+                    qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
+                }
+                else if ( 2 )
+                {
+                    // FileOutput
+                    qsfa.pfnFindResultCallback = qsFindResultCallback;
+                    qsfa.GetFindResultPolicy.nMode = QSFRM_LINE;
+                    qsfa.GetFindResultPolicy.nBefore = 0;
+                    qsfa.GetFindResultPolicy.nAfter = 0;
+                    qsfa.GetFindResultPolicy.nMaxLineLen = 0;
+                    qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
+                    qsfa.ShowFindResults.pfnInit = qsShowFindResults_FileOutput_Init;
+                    qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_FileOutput_AddOccurrence;
+                    qsfa.ShowFindResults.pfnDone = qsShowFindResults_FileOutput_Done;
+                }
+                else
+                {
+                    // CountOnly
+                    qsfa.pfnFindResultCallback = NULL;
+                    qsfa.ShowFindResults.pfnInit = qsShowFindResults_CountOnly_Init;
+                    qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_CountOnly_AddOccurrence;
+                    qsfa.ShowFindResults.pfnDone = qsShowFindResults_CountOnly_Done;
+                }
                 pqsfa = &qsfa;
             }
             else
@@ -2583,6 +2692,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 prev_btnFindAllWndProc = setWndProc(g_QSearchDlg.hBtnFindAll, btnFindWndProc);
             }
+            g_QSearchDlg.hStInfo = GetDlgItem(hDlg, IDC_ST_INFO);
 
             hToolTip = qsearchDoInitToolTip(hDlg, hFindEdit);
             if ( g_Plugin.bOldWindows )
@@ -3372,6 +3482,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
     if ( g_Plugin.bOldWindows )
     {
+        if ( g_QSearchDlg.hStInfo )
+            SetWindowTextA(g_QSearchDlg.hStInfo, "");
+
         if ( 0 == ((LPCSTR) g_QSearchDlg.szFindTextW)[0] )
         {
             qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
@@ -3380,6 +3493,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
     }
     else
     {
+        if ( g_QSearchDlg.hStInfo )
+            SetWindowTextW(g_QSearchDlg.hStInfo, L"");
+
         if ( 0 == ((LPCWSTR) g_QSearchDlg.szFindTextW)[0] )
         {
             qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
@@ -3790,22 +3906,12 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         else // pFindAll
         {
             unsigned int         nMatches;
-            tGetFindResultPolicy frPolicy;
             tDynamicBuffer       resultsBuf;
             AEFINDTEXTW          aeftW;
             wchar_t              szFindAllW[2*MAX_TEXT_SIZE];
 
             tDynamicBuffer_Init( &resultsBuf );
             tDynamicBuffer_Allocate( &resultsBuf, 128*1024*sizeof(wchar_t) );
-
-            //frPolicy.nMode = QSFRM_LINE;
-            //frPolicy.nBefore = 0;
-            //frPolicy.nAfter = 0;
-            frPolicy.nMode = QSFRM_CHARINLINE;
-            frPolicy.nBefore = 64;
-            frPolicy.nAfter = 64;
-            frPolicy.nMaxLineLen = 0;
-            frPolicy.pfnStoreResultCallback = qsStoreResultCallback;
 
             aeftW.dwFlags = AEFR_DOWN;
             if ( dwSearchFlags & FR_MATCHCASE )
@@ -3837,14 +3943,14 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             nMatches = 0;
 
-            pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf);
+            pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf, &resultsBuf);
             
             while ( SendMessageW(ei.hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
             {
                 ++nMatches;
 
                 if ( pFindAll->pfnFindResultCallback )
-                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &frPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
+                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
 
                 x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
             }

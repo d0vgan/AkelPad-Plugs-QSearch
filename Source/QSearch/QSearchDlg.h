@@ -79,6 +79,7 @@
         HWND    hBtnFindNext;
         HWND    hBtnFindPrev;
         HWND    hBtnFindAll;
+        HWND    hStInfo;
         BOOL    bMatchCase;
         //BOOL    bOnDlgStart;
         BOOL    bQSearching;
