@@ -37,8 +37,9 @@
 #define  OPT_NEW_UI                   30
 #define  OPT_SELECT_BY_F3             31
 #define  OPT_ADJ_INCOMPL_REGEXP       32
+#define  OPT_FINDALL_MODE             33
 
-#define  OPT_TOTALCOUNT               33
+#define  OPT_TOTALCOUNT               34
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11
@@ -59,6 +60,12 @@
 #define  QS_UI_ORIGINAL                0
 #define  QS_UI_NEW_01                  1
 #define  QS_UI_NEW_02                  2
+
+#define  QS_FINDALL_COUNTONLY_AUTO     0
+#define  QS_FINDALL_COUNTONLY          1
+#define  QS_FINDALL_LOGOUTPUT          2
+#define  QS_FINDALL_FILEOUTPUT         3
+#define  QS_FINDALL_TOTAL              4
 
 //---------------------------------------------------------------------------
 #endif

@@ -50,32 +50,58 @@ const char* szHintBtFindAllA[INLNG_COUNT] = {
     ( "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5" )
 };
 
-const char* szHintChMatchCaseA[INLNG_COUNT] = {
+const char* szHintChMatchCaseA[INLNG_COUNT][2] = {
     /* eng */
-    ( "Match case" ),
+    { 
+        "Match case",
+        "Match case"
+    },
     /* rus */
-    ( "\xD3\xF7\xE8\xF2\xFB\xE2\xE0\xF2\xFC\x20\xF0\xE5\xE3\xE8\xF1\xF2\xF0" ),
+    {
+        "\xD3\xF7\xE8\xF2\xFB\xE2\xE0\xF2\xFC\x20\xF0\xE5\xE3\xE8\xF1\xF2\xF0",
+        "\xD3\xF7\xE8\xF2\x2E\xF0\xE5\xE3\xE8\xF1\xF2\xF0",
+    },
     /* ukr */
-    ( "\xC2\xF0\xE0\xF5\xEE\xE2\xF3\xE2\xE0\xF2\xE8\x20\xF0\xE5\xE3\x69\xF1" \
-      "\xF2\xF0" )
+    {
+        "\xC2\xF0\xE0\xF5\xEE\xE2\xF3\xE2\xE0\xF2\xE8\x20\xF0\xE5\xE3\x69\xF1\xF2\xF0",
+        "\xC2\xF0\xE0\xF5\x2E\xF0\xE5\xE3\x69\xF1\xF2\xF0"
+    }
 };
 
-const char* szHintChWholeWordA[INLNG_COUNT] = {
+const char* szHintChWholeWordA[INLNG_COUNT][2] = {
     /* eng */
-    ( "Whole word" ),
+    {
+        "Whole word",
+        "Whole word"
+    },
     /* rus */
-    ( "\xD1\xEB\xEE\xE2\xEE\x20\xF6\xE5\xEB\xE8\xEA\xEE\xEC" ),
+    {
+        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\xE5\xEB\xE8\xEA\xEE\xEC",
+        "\xD1\xEB\x2E\xF6\xE5\xEB\xE8\xEA\xEE\xEC"
+    },
     /* ukr */
-    ( "\xD1\xEB\xEE\xE2\xEE\x20\xF6\x69\xEB\xEA\xEE\xEC" )
+    {
+        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\x69\xEB\xEA\xEE\xEC",
+        "\xD1\xEB\xEE\xE2\x2E\xF6\x69\xEB\xEA\xEE\xEC"
+    }
 };
 
-const char* szHintChHighlightAllA[INLNG_COUNT] = {
+const char* szHintChHighlightAllA[INLNG_COUNT][2] = {
     /* eng */
-    ( "Highlight all" ),
+    {
+        "Highlight all",
+        "Highlight all"
+    },
     /* rus */
-    ( "\xCF\xEE\xE4\xF1\xE2\xE5\xF2\xE8\xF2\xFC\x20\xE2\xF1\xE5" ),
+    {
+        "\xCF\xEE\xE4\xF1\xE2\xE5\xF2\xE8\xF2\xFC\x20\xE2\xF1\xE5",
+        "\xCF\xEE\xE4\xF1\xE2\x2E\xE2\xF1\xE5"
+    },
     /* ukr */
-    ( "\xCF\x69\xE4\xF1\xE2\x69\xF2\xE8\xF2\xE8\x20\xE2\xF1\x69" )
+    {
+        "\xCF\x69\xE4\xF1\xE2\x69\xF2\xE8\xF2\xE8\x20\xE2\xF1\x69",
+        "\xCF\x69\xE4\xF1\xE2\x2E\xE2\xF1\x69"
+    }
 };
 
 const char* szHintEdTextA[INLNG_COUNT] = {
@@ -227,6 +253,30 @@ const char* szPopupMenuA[INLNG_COUNT][OPTF_COUNT - 1] = {
     }
 };
 
+const char* szFindAllPopupMenuA[INLNG_COUNT][QS_FINDALL_TOTAL] = {
+    /* eng */
+    {
+        "Find All: Count Only (auto)",
+        "Find All: Count Only",
+        "Find All: Log Output",
+        "Find All: File Output"
+    },
+    /* rus */
+    {
+        "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only (auto)",
+        "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only",
+        "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Log Output",
+        "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: File Output"
+    },
+    /* ukr */
+    {
+        "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only (auto)",
+        "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only",
+        "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Log Output",
+        "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: File Output"
+    }
+};
+
 const wchar_t* szHintBtCancelW[INLNG_COUNT] = {
     /* eng */
     ( L"Close" ),
@@ -268,37 +318,58 @@ const wchar_t* szHintBtFindAllW[INLNG_COUNT] = {
     ( L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435" )
 };
 
-const wchar_t* szHintChMatchCaseW[INLNG_COUNT] = {
+const wchar_t* szHintChMatchCaseW[INLNG_COUNT][2] = {
     /* eng */
-    ( L"Match case" ),
+    {
+        L"Match case",
+        L"Match case"
+    },
     /* rus */
-    ( L"\x0423\x0447\x0438\x0442\x044B\x0432\x0430\x0442\x044C\x0020\x0440" \
-      L"\x0435\x0433\x0438\x0441\x0442\x0440" ),
+    {
+        L"\x0423\x0447\x0438\x0442\x044B\x0432\x0430\x0442\x044C\x0020\x0440\x0435\x0433\x0438\x0441\x0442\x0440",
+        L"\x0423\x0447\x0438\x0442\x002E\x0440\x0435\x0433\x0438\x0441\x0442\x0440"
+    },
     /* ukr */
-    ( L"\x0412\x0440\x0430\x0445\x043E\x0432\x0443\x0432\x0430\x0442\x0438" \
-      L"\x0020\x0440\x0435\x0433\x0069\x0441\x0442\x0440" )
+    {
+        L"\x0412\x0440\x0430\x0445\x043E\x0432\x0443\x0432\x0430\x0442\x0438\x0020\x0440\x0435\x0433\x0069\x0441\x0442\x0440",
+        L"\x0412\x0440\x0430\x0445\x002E\x0440\x0435\x0433\x0069\x0441\x0442\x0440"
+    }
 };
 
-const wchar_t* szHintChWholeWordW[INLNG_COUNT] = {
+const wchar_t* szHintChWholeWordW[INLNG_COUNT][2] = {
     /* eng */
-    ( L"Whole word" ),
+    {
+        L"Whole word",
+        L"Whole word"
+    },
     /* rus */
-    ( L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0435\x043B\x0438\x043A" \
-      L"\x043E\x043C" ),
+    {
+        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0435\x043B\x0438\x043A\x043E\x043C",
+        L"\x0421\x043B\x002E\x0446\x0435\x043B\x0438\x043A\x043E\x043C"
+    },
     /* ukr */
-    ( L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0069\x043B\x043A\x043E" \
-      L"\x043C" )
+    {
+        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0069\x043B\x043A\x043E\x043C",
+        L"\x0421\x043B\x043E\x0432\x002E\x0446\x0069\x043B\x043A\x043E\x043C"
+    }
 };
 
-const wchar_t* szHintChHighlightAllW[INLNG_COUNT] = {
+const wchar_t* szHintChHighlightAllW[INLNG_COUNT][2] = {
     /* eng */
-    ( L"Highlight all" ),
+    {
+        L"Highlight all",
+        L"Highlight all"
+    },
     /* rus */
-    ( L"\x041F\x043E\x0434\x0441\x0432\x0435\x0442\x0438\x0442\x044C\x0020" \
-      L"\x0432\x0441\x0435" ),
+    {
+        L"\x041F\x043E\x0434\x0441\x0432\x0435\x0442\x0438\x0442\x044C\x0020\x0432\x0441\x0435",
+        L"\x041F\x043E\x0434\x0441\x0432\x002E\x0432\x0441\x0435"
+    },
     /* ukr */
-    ( L"\x041F\x0069\x0434\x0441\x0432\x0069\x0442\x0438\x0442\x0438\x0020" \
-      L"\x0432\x0441\x0069" )
+    {
+        L"\x041F\x0069\x0434\x0441\x0432\x0069\x0442\x0438\x0442\x0438\x0020\x0432\x0441\x0069",
+        L"\x041F\x0069\x0434\x0441\x0432\x002E\x0432\x0441\x0069"
+    }
 };
 
 const wchar_t* szHintEdTextW[INLNG_COUNT] = {
@@ -493,6 +564,30 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
     }
 };
 
+const wchar_t* szFindAllPopupMenuW[INLNG_COUNT][QS_FINDALL_TOTAL] = {
+    /* eng */
+    {
+        L"Find All: Count Only (auto)",
+        L"Find All: Count Only",
+        L"Find All: Log Output",
+        L"Find All: File Output"
+    },
+    /* rus */
+    {
+        L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only (auto)",
+        L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only",
+        L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Log Output",
+        L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: File Output"
+    },
+    /* ukr */
+    {
+        L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only (auto)",
+        L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only",
+        L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Log Output",
+        L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: File Output"
+    }
+};
+
 
 // extern vars
 extern PluginState g_Plugin;
@@ -522,30 +617,30 @@ void qsearchSetDialogLang(HWND hDlg)
         {
             SetWindowTextA( 
               GetDlgItem(hDlg, IDC_CH_MATCHCASE),
-              szHintChMatchCaseA[uInternalLng] 
+              szHintChMatchCaseA[uInternalLng][1] 
             );
             SetWindowTextA( 
               GetDlgItem(hDlg, IDC_CH_WHOLEWORD),
-              szHintChWholeWordA[uInternalLng] 
+              szHintChWholeWordA[uInternalLng][1] 
             );
             SetWindowTextA( 
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL),
-              szHintChHighlightAllA[uInternalLng] 
+              szHintChHighlightAllA[uInternalLng][1] 
             );
         }
         else
         {
             SetWindowTextW( 
               GetDlgItem(hDlg, IDC_CH_MATCHCASE),
-              szHintChMatchCaseW[uInternalLng] 
+              szHintChMatchCaseW[uInternalLng][1] 
             );
             SetWindowTextW( 
               GetDlgItem(hDlg, IDC_CH_WHOLEWORD),
-              szHintChWholeWordW[uInternalLng] 
+              szHintChWholeWordW[uInternalLng][1] 
             );
             SetWindowTextW( 
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL),
-              szHintChHighlightAllW[uInternalLng] 
+              szHintChHighlightAllW[uInternalLng][1] 
             );
         }
     }
@@ -560,7 +655,7 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
         if ( g_Plugin.bOldWindows )
         {
             MENUITEMINFOA miiA;
-            int           i;
+            unsigned int  i;
 
             x_zero_mem(&miiA, sizeof(MENUITEMINFOA));
 
@@ -577,7 +672,7 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
         else
         {
             MENUITEMINFOW miiW;
-            int           i;
+            unsigned int  i;
 
             x_zero_mem(&miiW, sizeof(MENUITEMINFOW));
 
@@ -598,6 +693,53 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
     }
 }
 
+void qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu)
+{
+    unsigned int uInternalLng = getInternalLng();
+    // no changes for English menu
+    if ( uInternalLng != INLNG_ENG )
+    {
+        if ( g_Plugin.bOldWindows )
+        {
+            MENUITEMINFOA miiA;
+            unsigned int  i;
+
+            x_zero_mem(&miiA, sizeof(MENUITEMINFOA));
+
+            for ( i = 0; i < QS_FINDALL_TOTAL; i++ )
+            {
+                miiA.cbSize = sizeof(MENUITEMINFOA);
+                miiA.fMask = MIIM_TYPE;
+                miiA.fType = MFT_STRING;
+                miiA.dwTypeData = (LPSTR) szFindAllPopupMenuA[uInternalLng][i];
+                miiA.cch = 0;
+                SetMenuItemInfoA( hFindAllPopupMenu, IDM_FINDALL_START + i, FALSE, &miiA );
+            }
+        }
+        else
+        {
+            MENUITEMINFOW miiW;
+            unsigned int  i;
+
+            x_zero_mem(&miiW, sizeof(MENUITEMINFOW));
+
+            for ( i = 0; i < QS_FINDALL_TOTAL; i++ )
+            {
+                miiW.cbSize = sizeof(MENUITEMINFOW);
+                #ifdef MIIM_FTYPE
+                    miiW.fMask = MIIM_FTYPE | MIIM_STRING;
+                #else
+                    miiW.fMask = MIIM_TYPE;
+                #endif
+                miiW.fType = MFT_STRING;
+                miiW.dwTypeData = (LPWSTR) szFindAllPopupMenuW[uInternalLng][i];
+                miiW.cch = 0;
+                SetMenuItemInfoW( hFindAllPopupMenu, IDM_FINDALL_START + i, FALSE, &miiW );
+            }
+        }
+    }
+}
+
 const char* qsearchGetHintA(unsigned int uDlgItemID)
 {
     unsigned int uInternalLng = getInternalLng();
@@ -613,11 +755,11 @@ const char* qsearchGetHintA(unsigned int uDlgItemID)
         case IDC_BT_FINDALL:
             return szHintBtFindAllA[uInternalLng];
         case IDC_CH_MATCHCASE:
-            return szHintChMatchCaseA[uInternalLng];
+            return szHintChMatchCaseA[uInternalLng][0];
         case IDC_CH_WHOLEWORD:
-            return szHintChWholeWordA[uInternalLng];
+            return szHintChWholeWordA[uInternalLng][0];
         case IDC_CH_HIGHLIGHTALL:
-            return szHintChHighlightAllA[uInternalLng];
+            return szHintChHighlightAllA[uInternalLng][0];
         case IDC_ED_FINDTEXT:
             return szHintEdTextA[uInternalLng];
         case IDS_EOFREACHED:
@@ -625,6 +767,23 @@ const char* qsearchGetHintA(unsigned int uDlgItemID)
         default:
             return "";
     }
+}
+
+const char* qsearchGetTextA(unsigned int uDlgItemID)
+{
+    unsigned int uInternalLng = getInternalLng();
+
+    switch ( uDlgItemID )
+    {
+        case IDC_CH_MATCHCASE:
+            return szHintChMatchCaseA[uInternalLng][1];
+        case IDC_CH_WHOLEWORD:
+            return szHintChWholeWordA[uInternalLng][1];
+        case IDC_CH_HIGHLIGHTALL:
+            return szHintChHighlightAllA[uInternalLng][1];
+    }
+
+    return qsearchGetHintA(uDlgItemID);
 }
 
 const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
@@ -642,11 +801,11 @@ const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
         case IDC_BT_FINDALL:
             return szHintBtFindAllW[uInternalLng];
         case IDC_CH_MATCHCASE:
-            return szHintChMatchCaseW[uInternalLng];
+            return szHintChMatchCaseW[uInternalLng][0];
         case IDC_CH_WHOLEWORD:
-            return szHintChWholeWordW[uInternalLng];
+            return szHintChWholeWordW[uInternalLng][0];
         case IDC_CH_HIGHLIGHTALL:
-            return szHintChHighlightAllW[uInternalLng];
+            return szHintChHighlightAllW[uInternalLng][0];
         case IDC_ED_FINDTEXT:
             return szHintEdTextW[uInternalLng];
         case IDS_EOFREACHED:
@@ -654,6 +813,23 @@ const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
         default:
             return L"";
     }
+}
+
+const wchar_t* qsearchGetTextW(unsigned int uDlgItemID)
+{
+    unsigned int uInternalLng = getInternalLng();
+
+    switch ( uDlgItemID )
+    {
+        case IDC_CH_MATCHCASE:
+            return szHintChMatchCaseW[uInternalLng][1];
+        case IDC_CH_WHOLEWORD:
+            return szHintChWholeWordW[uInternalLng][1];
+        case IDC_CH_HIGHLIGHTALL:
+            return szHintChHighlightAllW[uInternalLng][1];
+    }
+
+    return qsearchGetHintW(uDlgItemID);
 }
 
 const wchar_t* qsearchGetStringW(unsigned int uStringID)
@@ -679,7 +855,7 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
         {
             const wchar_t* szFindAllOccurrencesFoundW[INLNG_COUNT] = {
                 /* eng */
-                L"%u occurrence(s) found.",
+                L"%u occurrences found.",
                 /* rus */
                 L"%u \x043D\x0430\x0439\x0434\x0435\x043D\x043E.",
                 /* ukr */

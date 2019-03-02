@@ -54,6 +54,7 @@
         DWORD    dwNewUI;
         DWORD    dwSelectByF3;
         DWORD    dwAdjIncomplRegExp;
+        DWORD    dwFindAllMode;
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);

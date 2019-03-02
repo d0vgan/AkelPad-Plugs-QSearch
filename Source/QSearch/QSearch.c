@@ -64,9 +64,10 @@ void CloseLog(void)
 #define  DEFAULT_ALT_HIGHLIGHTALL    0x48  // 'H' (Highlight)
 #define  DEFAULT_FIND_HISTORY_ITEMS  15
 #define  DEFAULT_HISTORY_SAVE        0x03
-#define  DEFAULT_QS_UI               QS_UI_NEW_01
+#define  DEFAULT_QS_UI               QS_UI_NEW_02
 #define  DEFAULT_SELECT_BY_F3        2
 #define  DEFAULT_ADJ_INCOMPL_REGEXP  1
+#define  DEFAULT_FINDALL_MODE        QS_FINDALL_LOGOUTPUT
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
@@ -125,6 +126,7 @@ void CloseLog(void)
         pOptions->dwNewUI = WRONG_DWORD_VALUE;
         pOptions->dwSelectByF3 = WRONG_DWORD_VALUE;
         pOptions->dwAdjIncomplRegExp = WRONG_DWORD_VALUE;
+        pOptions->dwFindAllMode = WRONG_DWORD_VALUE;
     }
 
     void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[])
@@ -134,26 +136,7 @@ void CloseLog(void)
 
     void copyOptions(QSearchOpt* pOptDst, const QSearchOpt* pOptSrc)
     {
-        copyOptionsFlags(pOptDst->dwFlags, pOptSrc->dwFlags);
-        pOptDst->dockRect.left      = pOptSrc->dockRect.left;
-        pOptDst->dockRect.right     = pOptSrc->dockRect.right;
-        pOptDst->dockRect.top       = pOptSrc->dockRect.top;
-        pOptDst->dockRect.bottom    = pOptSrc->dockRect.bottom;
-        pOptDst->colorNotFound      = pOptSrc->colorNotFound;
-        pOptDst->colorNotRegExp     = pOptSrc->colorNotRegExp;
-        pOptDst->colorEOF           = pOptSrc->colorEOF;
-        pOptDst->colorHighlight     = pOptSrc->colorHighlight;
-        pOptDst->dwHighlightMarkID  = pOptSrc->dwHighlightMarkID;
-        pOptDst->dwHighlightState   = pOptSrc->dwHighlightState;
-        pOptDst->dwUseAltHotkeys    = pOptSrc->dwUseAltHotkeys;
-        pOptDst->dwAltMatchCase     = pOptSrc->dwAltMatchCase;
-        pOptDst->dwAltWholeWord     = pOptSrc->dwAltWholeWord;
-        pOptDst->dwAltHighlightAll  = pOptSrc->dwAltHighlightAll;
-        pOptDst->dwFindHistoryItems = pOptSrc->dwFindHistoryItems;
-        pOptDst->dwHistorySave      = pOptSrc->dwHistorySave;
-        pOptDst->dwNewUI            = pOptSrc->dwNewUI;
-        pOptDst->dwSelectByF3       = pOptSrc->dwSelectByF3;
-        pOptDst->dwAdjIncomplRegExp = pOptSrc->dwAdjIncomplRegExp;
+        x_mem_cpy(pOptDst, pOptSrc, sizeof(QSearchOpt));
     }
 
     BOOL equalOptions(const QSearchOpt* pOpt1, const QSearchOpt* pOpt2)
@@ -183,7 +166,8 @@ void CloseLog(void)
              (pOpt1->dwHistorySave      !=  pOpt2->dwHistorySave)      ||
              (pOpt1->dwNewUI            !=  pOpt2->dwNewUI)            ||
              (pOpt1->dwSelectByF3       !=  pOpt2->dwSelectByF3)       ||
-             (pOpt1->dwAdjIncomplRegExp !=  pOpt2->dwAdjIncomplRegExp) )
+             (pOpt1->dwAdjIncomplRegExp !=  pOpt2->dwAdjIncomplRegExp) ||
+             (pOpt1->dwFindAllMode      !=  pOpt2->dwFindAllMode) )
         {
             return FALSE;
         }
@@ -230,7 +214,8 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 29 */  "history_save",
   /* 30 */  "new_ui",
   /* 31 */  "select_by_f3",
-  /* 32 */  "adj_incompl_regexp"
+  /* 32 */  "adj_incompl_regexp",
+  /* 33 */  "findall_mode"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -266,7 +251,8 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* 29 */  L"history_save",
   /* 30 */  L"new_ui",
   /* 31 */  L"select_by_f3",
-  /* 32 */  L"adj_incompl_regexp"
+  /* 32 */  L"adj_incompl_regexp",
+  /* 33 */  L"findall_mode"
 };
 
 
@@ -1185,6 +1171,9 @@ void ReadOptions(void)
             g_Options.dwAdjIncomplRegExp = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
 
+            g_Options.dwFindAllMode = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FINDALL_MODE], WRONG_DWORD_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1251,6 +1240,9 @@ void ReadOptions(void)
 
             g_Options.dwAdjIncomplRegExp = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
+
+            g_Options.dwFindAllMode = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FINDALL_MODE], WRONG_DWORD_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1356,7 +1348,7 @@ void ReadOptions(void)
     if ( g_Options.dwHistorySave == WRONG_DWORD_VALUE )
         g_Options.dwHistorySave = DEFAULT_HISTORY_SAVE;
 
-    if ( g_Options.dwNewUI == WRONG_DWORD_VALUE )
+    if ( g_Options.dwNewUI == WRONG_DWORD_VALUE || g_Options.dwNewUI > QS_UI_NEW_02 )
         g_Options.dwNewUI = DEFAULT_QS_UI;
 
     if ( g_Options.dwSelectByF3 == WRONG_DWORD_VALUE )
@@ -1364,6 +1356,9 @@ void ReadOptions(void)
 
     if ( g_Options.dwAdjIncomplRegExp == WRONG_DWORD_VALUE )
         g_Options.dwAdjIncomplRegExp = DEFAULT_ADJ_INCOMPL_REGEXP;
+
+    if ( g_Options.dwFindAllMode == WRONG_DWORD_VALUE || g_Options.dwFindAllMode >= QS_FINDALL_TOTAL )
+        g_Options.dwFindAllMode = DEFAULT_FINDALL_MODE;
 }
 
 void SaveOptions(void)
@@ -1474,6 +1469,9 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
                   g_Options.dwAdjIncomplRegExp );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_MODE],
+                  g_Options.dwFindAllMode );
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -1552,6 +1550,9 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
                   g_Options.dwAdjIncomplRegExp );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_MODE],
+                  g_Options.dwFindAllMode );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
