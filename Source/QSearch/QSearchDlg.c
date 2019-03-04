@@ -966,8 +966,6 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
                     }
                 }
             }
-            // TODO: we MUST ensure that the text WAS changed here!!!
-            // (i.e. that it's not the same as before - see qsearchDoSelFind)
             qs_bEditTextChanged = TRUE;
             return TRUE;
         }
@@ -1165,21 +1163,64 @@ static LRESULT CALLBACK btnWndProc(HWND hBtn,
 
 BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[])
 {
+    wchar_t prevFindTextW[MAX_TEXT_SIZE];
+
+    if ( g_Plugin.bOldWindows )
+    {
+        lstrcpyA( (LPSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW );
+    }
+    else
+    {
+        lstrcpyW( (LPWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW );
+    }
+
     if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlags) )
     {
-        qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
-        setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
-
-        SendMessage(hEdit, EM_SETSEL, 0, -1);
-        qs_bEditSelJustChanged = TRUE;
-
-        if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+        HWND    hDlgItm;
+        BOOL    bMatchCase;
+        
+        bMatchCase = FALSE;
+        if ( hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE) )
         {
-            qs_bForceFindFirst = FALSE;
-            qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, dwOptFlags);
+            if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                bMatchCase = TRUE;
+        }
+
+        qs_bEditTextChanged = FALSE;
+
+        if ( g_Plugin.bOldWindows )
+        {
+            int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = bMatchCase ? lstrcmpA : lstrcmpiA;
+            if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
+            {
+                qs_bEditTextChanged = TRUE;
+            }
         }
         else
-            qs_bForceFindFirst = TRUE;
+        {
+            int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = bMatchCase ? lstrcmpW : lstrcmpiW;
+            if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
+            {
+                qs_bEditTextChanged = TRUE;
+            }
+        }
+
+        if ( qs_bEditTextChanged )
+        {
+            qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
+            setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
+
+            SendMessage(hEdit, EM_SETSEL, 0, -1);
+            qs_bEditSelJustChanged = TRUE;
+
+            if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+            {
+                qs_bForceFindFirst = FALSE;
+                qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, dwOptFlags);
+            }
+            else
+                qs_bForceFindFirst = TRUE;
+        }
 
         return TRUE;
     }
@@ -2509,8 +2550,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 qsPickUpSelection( hFindEdit, g_Options.dwFlags );
             }
             getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
-            if ( qs_bForceFindFirst ||
-                 (qs_bEditTextChanged && !g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE]) )
+            if ( qs_bForceFindFirst || qs_bEditTextChanged )
             {
                 qs_bForceFindFirst = FALSE;
                 qs_bEditTextChanged = FALSE;
