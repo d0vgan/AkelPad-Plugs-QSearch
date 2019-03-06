@@ -256,21 +256,21 @@ const char* szPopupMenuA[INLNG_COUNT][OPTF_COUNT - 1] = {
 const char* szFindAllPopupMenuA[INLNG_COUNT][QS_FINDALL_TOTAL] = {
     /* eng */
     {
-        "Find All: Count Only (auto)",
+        "Auto Count All",
         "Find All: Count Only",
         "Find All: Log Output",
         "Find All: File Output"
     },
     /* rus */
     {
-        "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only (auto)",
+        "Auto Count All",
         "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only",
         "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Log Output",
         "\xCD\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: File Output"
     },
     /* ukr */
     {
-        "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only (auto)",
+        "Auto Count All",
         "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Count Only",
         "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: Log Output",
         "\xC7\xED\xE0\xE9\xF2\xE8\x20\xE2\xF1\xE5: File Output"
@@ -567,21 +567,21 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
 const wchar_t* szFindAllPopupMenuW[INLNG_COUNT][QS_FINDALL_TOTAL] = {
     /* eng */
     {
-        L"Find All: Count Only (auto)",
+        L"Auto Count All",
         L"Find All: Count Only",
         L"Find All: Log Output",
         L"Find All: File Output"
     },
     /* rus */
     {
-        L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only (auto)",
+        L"Auto Count All",
         L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only",
         L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Log Output",
         L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: File Output"
     },
     /* ukr */
     {
-        L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only (auto)",
+        L"Auto Count All",
         L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Count Only",
         L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: Log Output",
         L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435: File Output"

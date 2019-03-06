@@ -1357,7 +1357,7 @@ void ReadOptions(void)
     if ( g_Options.dwAdjIncomplRegExp == WRONG_DWORD_VALUE )
         g_Options.dwAdjIncomplRegExp = DEFAULT_ADJ_INCOMPL_REGEXP;
 
-    if ( g_Options.dwFindAllMode == WRONG_DWORD_VALUE || g_Options.dwFindAllMode >= QS_FINDALL_TOTAL )
+    if ( g_Options.dwFindAllMode == WRONG_DWORD_VALUE )
         g_Options.dwFindAllMode = DEFAULT_FINDALL_MODE;
 }
 

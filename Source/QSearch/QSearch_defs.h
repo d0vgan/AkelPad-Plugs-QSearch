@@ -61,11 +61,13 @@
 #define  QS_UI_NEW_01                  1
 #define  QS_UI_NEW_02                  2
 
-#define  QS_FINDALL_COUNTONLY_AUTO     0
+#define  QS_FINDALL_AUTO_COUNT         0
 #define  QS_FINDALL_COUNTONLY          1
 #define  QS_FINDALL_LOGOUTPUT          2
 #define  QS_FINDALL_FILEOUTPUT         3
 #define  QS_FINDALL_TOTAL              4
+#define  QS_FINDALL_MASK               0x000F
+#define  QS_FINDALL_AUTO_COUNT_FLAG    0x0100
 
 //---------------------------------------------------------------------------
 #endif

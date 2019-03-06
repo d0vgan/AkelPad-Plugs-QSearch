@@ -101,7 +101,8 @@ BEGIN
 
     POPUP "Find All Options"
     BEGIN
-        MENUITEM "Find All: Count Only (auto)",     IDM_FINDALL_COUNTONLY_AUTO
+        MENUITEM "Auto Count All",                  IDM_FINDALL_AUTO_COUNT
+        MENUITEM "",                                -1
         MENUITEM "Find All: Count Only",            IDM_FINDALL_COUNTONLY
         MENUITEM "Find All: Log Output",            IDM_FINDALL_LOGOUTPUT
         MENUITEM "Find All: File Output",           IDM_FINDALL_FILEOUTPUT

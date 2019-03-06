@@ -1161,7 +1161,7 @@ static LRESULT CALLBACK btnWndProc(HWND hBtn,
     return callWndProc(prev_chWndProc, hCh, uMsg, wParam, lParam);
 }*/
 
-BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[])
+BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll)
 {
     wchar_t prevFindTextW[MAX_TEXT_SIZE];
 
@@ -1186,23 +1186,30 @@ BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[])
                 bMatchCase = TRUE;
         }
 
-        qs_bEditTextChanged = FALSE;
-
-        if ( g_Plugin.bOldWindows )
+        if ( !isHighlightAll )
         {
-            int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = bMatchCase ? lstrcmpA : lstrcmpiA;
-            if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
+            qs_bEditTextChanged = FALSE;
+
+            if ( g_Plugin.bOldWindows )
             {
-                qs_bEditTextChanged = TRUE;
+                int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = bMatchCase ? lstrcmpA : lstrcmpiA;
+                if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
+                {
+                    qs_bEditTextChanged = TRUE;
+                }
+            }
+            else
+            {
+                int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = bMatchCase ? lstrcmpW : lstrcmpiW;
+                if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
+                {
+                    qs_bEditTextChanged = TRUE;
+                }
             }
         }
         else
         {
-            int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = bMatchCase ? lstrcmpW : lstrcmpiW;
-            if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
-            {
-                qs_bEditTextChanged = TRUE;
-            }
+            qs_bEditTextChanged = TRUE;
         }
 
         if ( qs_bEditTextChanged )
@@ -1309,7 +1316,7 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
         if ( (GetKeyState(VK_QS_FINDBEGIN) & 0x80) && 
              (GetKeyState(VK_QS_FINDUP) & 0x80) )
         {
-            SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, 0, 0 );
+            SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode & QS_FINDALL_MASK, 0 );
         }
         else
         {
@@ -1934,7 +1941,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 {
                     getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
                     qsearchFindHistoryAdd( hFindEdit, g_QSearchDlg.szFindTextW, 0 );
-                    qsPickUpSelection( hFindEdit, g_Options.dwFlags );
+                    qsPickUpSelection( hFindEdit, g_Options.dwFlags, FALSE );
                 }*/
                 getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
                 qsearchDoSearchText( hFindEdit, uSearch, g_Options.dwFlags, NULL );
@@ -1983,7 +1990,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             else if ( id == IDC_BT_FINDALL )
             {
-                PostMessage( hDlg, QSM_FINDALL, 0, 0 );
+                PostMessage( hDlg, QSM_FINDALL, g_Options.dwFindAllMode & QS_FINDALL_MASK, 0 );
                 return 1;
             }
             else if ( id == IDC_CH_MATCHCASE )
@@ -2004,8 +2011,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                          g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
                         qs_bForceFindFirst = TRUE;
-                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
+                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags, FALSE);
                     }
+
+                    setInfoEmpty();
 
                     if ( !bProcessed )
                     {
@@ -2015,6 +2024,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
                         if ( bHighlightAllChecked )
                             qsUpdateHighlight(hDlg, hFindEdit, g_Options.dwFlags);
+                    }
+                    else
+                    {
+                        qs_bEditTextChanged = TRUE;
+                        qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
                     }
                 }
             }
@@ -2036,8 +2050,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                          g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
                         qs_bForceFindFirst = TRUE;
-                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
+                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags, FALSE);
                     }
+
+                    setInfoEmpty();
 
                     if ( !bProcessed )
                     {
@@ -2059,6 +2075,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                             qsearchDoTryHighlightAll(hDlg, g_Options.dwFlags);
                         }
                     }
+                    else
+                    {
+                        qs_bEditTextChanged = TRUE;
+                        qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
+                    }
                 }
             }
             else if ( id == IDC_CH_HIGHLIGHTALL )
@@ -2079,8 +2100,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                          g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
                         g_Options.dwHighlightState |= HLS_IS_CHECKED;
-                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags); // on success, sets qs_bEditTextChanged and calls qsearchDoSetNotFound()
+                        bProcessed = qsPickUpSelection(hFindEdit, g_Options.dwFlags, TRUE);
                     }
+
+                    setInfoEmpty();
 
                     if ( !bProcessed )
                     {
@@ -2096,6 +2119,13 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                             qsearchDoTryUnhighlightAll();
                         }
                     }
+
+                    if ( bHighlightAllChecked &&
+                         (g_Options.dwNewUI == QS_UI_NEW_02) &&
+                         (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) )
+                    {
+                        PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
+                    }
                 }
             }
             else if ( id == IDC_CB_FINDTEXT )
@@ -2108,6 +2138,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         qs_bForceFindFirst = TRUE;
                         g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH(g_Options.dwFlags);
                         qsearchDoSetNotFound(hFindEdit, FALSE, FALSE, FALSE);
+                        setInfoEmpty();
                         break;
                     case CBN_DROPDOWN:
                         getEditFindText(hFindEdit, g_QSearchDlg.szFindTextW);
@@ -2223,9 +2254,27 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     }
                 }
             }
-            else if ( (id >= IDM_FINDALL_START) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL) )
+            else if ( id == IDM_FINDALL_START )
             {
+                if ( hFindAllPopupMenu )
+                {
+                    unsigned int state = GetMenuState(hFindAllPopupMenu, id, MF_BYCOMMAND);
+                    if ( (state & MF_CHECKED) == MF_CHECKED )
+                    {
+                        if ( g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG )
+                            g_Options.dwFindAllMode -= QS_FINDALL_AUTO_COUNT_FLAG;
+                    }
+                    else
+                        g_Options.dwFindAllMode |= QS_FINDALL_AUTO_COUNT_FLAG;
+                }
+            }
+            else if ( (id > IDM_FINDALL_START) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL) )
+            {
+                DWORD dwFlags = 0;
+                if ( g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG )
+                    dwFlags |= QS_FINDALL_AUTO_COUNT_FLAG;
                 g_Options.dwFindAllMode = id - IDM_FINDALL_START;
+                g_Options.dwFindAllMode |= dwFlags;
             }
             break;
         }
@@ -2450,9 +2499,12 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             if ( g_QSearchDlg.hBtnFindAll == (HWND) wParam )
             {
-                for ( i = 0; i < QS_FINDALL_TOTAL; i++ )
+                uCheck = (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) ? MF_CHECKED : MF_UNCHECKED;
+                CheckMenuItem( hFindAllPopupMenu, IDM_FINDALL_START, MF_BYCOMMAND | uCheck );
+
+                for ( i = QS_FINDALL_COUNTONLY; i < QS_FINDALL_TOTAL; i++ )
                 {
-                    uCheck = (i == g_Options.dwFindAllMode) ? MF_CHECKED : MF_UNCHECKED;
+                    uCheck = (i == (g_Options.dwFindAllMode & QS_FINDALL_MASK)) ? MF_CHECKED : MF_UNCHECKED;
                     CheckMenuItem( hFindAllPopupMenu, IDM_FINDALL_START + i, MF_BYCOMMAND | uCheck );
                 }
 
@@ -2495,13 +2547,16 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         case QSM_FINDALL:
         {
             DWORD dwSearch;
+            DWORD dwFindAllMode;
             tQSFindAll qsfa;
             tQSFindAll* pqsfa;
 
             if ( uMsg == QSM_FINDALL )
             {
+                dwFindAllMode = (DWORD) wParam;
+
                 x_zero_mem(&qsfa, sizeof(tQSFindAll));
-                if ( (g_Options.dwFindAllMode == QS_FINDALL_LOGOUTPUT) ||
+                if ( (dwFindAllMode == QS_FINDALL_LOGOUTPUT) ||
                      (g_Options.dwNewUI != QS_UI_NEW_02) )
                 {
                     // LogOutput
@@ -2515,7 +2570,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
                     qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
                 }
-                else if ( g_Options.dwFindAllMode == QS_FINDALL_FILEOUTPUT )
+                else if ( dwFindAllMode == QS_FINDALL_FILEOUTPUT )
                 {
                     // FileOutput
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
@@ -2547,7 +2602,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
                 qsearchFindHistoryAdd( hFindEdit, g_QSearchDlg.szFindTextW, 0 );
-                qsPickUpSelection( hFindEdit, g_Options.dwFlags );
+                qsPickUpSelection( hFindEdit, g_Options.dwFlags, FALSE );
             }
             getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
             if ( qs_bForceFindFirst || qs_bEditTextChanged )
@@ -2591,7 +2646,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         }
         case QSM_PICKUPSELTEXT:
         {
-            BOOL bPickedUp = qsPickUpSelection(hFindEdit, g_Options.dwFlags);
+            BOOL bPickedUp = qsPickUpSelection(hFindEdit, g_Options.dwFlags, FALSE);
             if ( lParam )
                 *((BOOL *)lParam) = bPickedUp;
             return 1;
@@ -3549,7 +3604,7 @@ static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
     *pszRegExW = 0;
 }
 
-static void CALLBACK FindAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+static void CALLBACK CountAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
     EnterCriticalSection(&csFindAllTimerId);
     if ( idEvent == nFindAllTimerId )
@@ -3559,7 +3614,7 @@ static void CALLBACK FindAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DW
     }
     LeaveCriticalSection(&csFindAllTimerId);
 
-    PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, 0, 0 );
+    PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
 }
 
 // searches for g_QSearchDlg.szFindTextW
@@ -3591,7 +3646,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         if ( g_QSearchDlg.hStInfo )
         {
             if ( (g_Options.dwNewUI == QS_UI_NEW_02) &&
-                 (g_Options.dwFindAllMode == QS_FINDALL_COUNTONLY_AUTO) &&
+                 (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) &&
                  (0 != ((LPCSTR) g_QSearchDlg.szFindTextW)[0]) )
             {
                 char szInfoTextA[128];
@@ -3629,7 +3684,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         if ( g_QSearchDlg.hStInfo )
         {
             if ( (g_Options.dwNewUI == QS_UI_NEW_02) &&
-                 (g_Options.dwFindAllMode == QS_FINDALL_COUNTONLY_AUTO) &&
+                 (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) &&
                  (0 != ((LPCWSTR) g_QSearchDlg.szFindTextW)[0]) )
             {
                 wchar_t szInfoTextW[128];
@@ -3726,7 +3781,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
     if ( dwParams & QSEARCH_FIRST )
     {
-        if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+        if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] && !pFindAll )
         {
             CHARRANGE_X cr = {0, 0};
 
@@ -4182,7 +4237,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
         if ( nDelayMs != 0 )
         {
-            nTimerId = SetTimer(NULL, 0, nDelayMs, FindAllTimerProc);
+            nTimerId = SetTimer(NULL, 0, nDelayMs, CountAllTimerProc);
         }
         else
         {
@@ -4199,7 +4254,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
         if ( nDelayMs == 0 )
         {
-            PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, 0, 0 );
+            PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
         }
     }
 }
