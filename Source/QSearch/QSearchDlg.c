@@ -6,14 +6,15 @@
 #include "XMemStrFunc.h"
 
 
-#define  QSEARCH_FIRST       0x0001
-#define  QSEARCH_NEXT        0x0002
-#define  QSEARCH_SEL         0x0100
-#define  QSEARCH_SEL_FINDUP  0x0200
-#define  QSEARCH_NOFINDUP    0x1000
-#define  QSEARCH_NOFINDBEGIN 0x2000
-#define  QSEARCH_FINDUP      0x4000
-#define  QSEARCH_FINDBEGIN   0x8000
+#define  QSEARCH_FIRST       0x000001
+#define  QSEARCH_NEXT        0x000002
+#define  QSEARCH_SEL         0x000100
+#define  QSEARCH_SEL_FINDUP  0x000200
+#define  QSEARCH_NOFINDUP    0x001000
+#define  QSEARCH_NOFINDBEGIN 0x002000
+#define  QSEARCH_FINDUP      0x004000
+#define  QSEARCH_FINDBEGIN   0x008000
+#define  QSEARCH_USEDELAY    0x010000
 
 #define  QSEARCH_EOF_DOWN    0x0001
 #define  QSEARCH_EOF_UP      0x0002
@@ -1390,7 +1391,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     cutEditText( hEdit, (wParam == VK_DELETE) );
                     if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
                     {
-                        SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN, 0 );
+                        SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN | QSEARCH_USEDELAY, 0 );
                     }
                     else
                     {
@@ -1404,7 +1405,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     {
                         LRESULT lResult = callWndProc(prev_editWndProc, 
                                             hEdit, uMsg, wParam, lParam);
-                        SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN, 0 );
+                        SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN | QSEARCH_USEDELAY, 0 );
                         return lResult;
                     }
                     else
@@ -1588,7 +1589,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 {
                     LRESULT lResult = callWndProc(prev_editWndProc, 
                                         hEdit, uMsg, wParam, lParam);
-                    SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN, 0 );
+                    SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP | QSEARCH_NOFINDBEGIN | QSEARCH_USEDELAY, 0 );
                     return lResult;
                 }
                 else
@@ -2633,6 +2634,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             if ( wParam & QSEARCH_NOFINDBEGIN )
                 dwSearch |= QSEARCH_NOFINDBEGIN;
+
+            if ( wParam & QSEARCH_USEDELAY )
+                dwSearch |= QSEARCH_USEDELAY;
 
             getEditFindText( hFindEdit, g_QSearchDlg.szFindTextW );
             qsearchDoSearchText( hFindEdit, dwSearch, g_Options.dwFlags, NULL );
@@ -4230,7 +4234,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         UINT nDelayMs;
         UINT_PTR nTimerId;
 
-        if ( dwParams & QSEARCH_FIRST )
+        if ( (dwParams & (QSEARCH_FIRST | QSEARCH_USEDELAY)) == (QSEARCH_FIRST | QSEARCH_USEDELAY) )
             nDelayMs = 400;
         else
             nDelayMs = 0;
