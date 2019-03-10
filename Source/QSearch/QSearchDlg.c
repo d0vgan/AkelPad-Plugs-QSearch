@@ -62,6 +62,10 @@ static void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams)
 #define DLLA_HIGHLIGHT_UNMARK              3
 #define DLLA_HIGHLIGHT_FINDMARK            4
 
+#define DLLA_CODER_SETALIAS         6
+#define DLLA_CODER_GETALIAS         18
+#define MAX_CODERALIAS              MAX_PATH
+
 #define MARKFLAG_MATCHCASE 0x01
 #define MARKFLAG_REGEXP    0x02
 #define MARKFLAG_WHOLEWORD 0x04
@@ -84,8 +88,25 @@ typedef struct sDLLECHIGHLIGHT_UNMARK {
     UINT_PTR dwMarkID;
 } DLLECHIGHLIGHT_UNMARK;
 
+typedef struct sDLLECCODERSETTINGS_GETALIAS {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    HWND hWndEdit;
+    AEHDOC hDoc;
+    unsigned char* pszAlias;
+} DLLECCODERSETTINGS_GETALIAS;
+
+typedef struct sDLLECCODERSETTINGS_SETALIAS {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    const unsigned char* pszAlias;
+} DLLECCODERSETTINGS_SETALIAS;
+
 const char*    cszHighlightMainA = "Coder::HighLight";
 const wchar_t* cszHighlightMainW = L"Coder::HighLight";
+
+const char*    cszCoderSettingsA = "Coder::Settings";
+const wchar_t* cszCoderSettingsW = L"Coder::Settings";
 
 static void CallHighlightMain(void* phlParams)
 {
@@ -97,6 +118,45 @@ static void CallHighlightMain(void* phlParams)
     {
         CallPluginFuncW(cszHighlightMainW, phlParams);
     }
+}
+
+static void CallCoderSettings(void* pstParams)
+{
+    if ( g_Plugin.bOldWindows )
+    {
+        CallPluginFuncA(cszCoderSettingsA, pstParams);
+    }
+    else
+    {
+        CallPluginFuncW(cszCoderSettingsW, pstParams);
+    }
+}
+
+static void getCoderAliasW(wchar_t* pszAliasBufW)
+{
+    DLLECCODERSETTINGS_GETALIAS stParams;
+
+    if ( pszAliasBufW )
+        pszAliasBufW[0] = 0;
+
+    stParams.dwStructSize = sizeof(DLLECCODERSETTINGS_GETALIAS);
+    stParams.nAction = DLLA_CODER_GETALIAS;
+    stParams.hWndEdit = NULL;
+    stParams.hDoc = NULL;
+    stParams.pszAlias = (unsigned char *) pszAliasBufW;
+
+    CallCoderSettings( &stParams );
+}
+
+static void setCoderAliasW(const wchar_t* pszAliasBufW)
+{
+    DLLECCODERSETTINGS_SETALIAS stParams;
+
+    stParams.dwStructSize = sizeof(DLLECCODERSETTINGS_SETALIAS);
+    stParams.nAction = DLLA_CODER_SETALIAS;
+    stParams.pszAlias = (const unsigned char *) pszAliasBufW;
+
+    CallCoderSettings( &stParams );
 }
 /* <<<<<<<<<<<<<<<<<<<<<<<< highlight plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -210,11 +270,17 @@ static void qsShowFindResults_CountOnly_AddOccurrence(const tDynamicBuffer* pOcc
 
 static void qsShowFindResults_CountOnly_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
 {
-    wchar_t szText[128];
     const wchar_t* cszTextFormat;
+    int nLen;
+    wchar_t szText[128];
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-    wsprintfW(szText, cszTextFormat, nOccurrences);
+    nLen = wsprintfW(szText, cszTextFormat, nOccurrences);
+    if ( nLen > 0 )
+    {
+        --nLen;
+        szText[nLen] = 0; // without the trailing '.'
+    }
     SetWindowTextW(g_QSearchDlg.hStInfo, szText);
 }
 
@@ -240,6 +306,9 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
     UINT_PTR nBytesToAllocate;
     UINT_PTR nLen;
     DLLECLOG_OUTPUT_1 loParams;
+    wchar_t szCoderAlias[MAX_CODERALIAS + 1];
+
+    getCoderAliasW(szCoderAlias);
 
     loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_1);
     loParams.nAction = 1;
@@ -250,7 +319,7 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
     loParams.nInputCodepage = -2;
     loParams.nOutputCodepage = -2;
     loParams.nFlags = 2; // 2 = no input line
-    loParams.pszAlias = NULL;
+    loParams.pszAlias = szCoderAlias[0] ? szCoderAlias : NULL;
 
     CallLogOutput( &loParams );
 
@@ -277,9 +346,9 @@ static void qsShowFindResults_LogOutput_AddOccurrence(const tDynamicBuffer* pOcc
 
 static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
 {
-    wchar_t szText[128];
     const wchar_t* cszTextFormat;
     UINT_PTR nLen;
+    wchar_t szText[128];
 
     nLen = pResultsBuf->nBytesStored/sizeof(wchar_t); // without the trailing '\0'
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
@@ -287,9 +356,14 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
 
-    nLen = wsprintfW(szText, cszTextFormat, nOccurrences);
+    nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
     LogOutput_AddText(szText, nLen);
 
+    if ( nLen > 0 )
+    {
+        --nLen;
+        szText[nLen] = 0; // without the trailing '.'
+    }
     SetWindowTextW(g_QSearchDlg.hStInfo, szText);
 }
 
@@ -323,13 +397,16 @@ static void qsShowFindResults_FileOutput_AddOccurrence(const tDynamicBuffer* pOc
 
 static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
 {
-    wchar_t szText[128];
     const wchar_t* cszTextFormat;
-    UINT_PTR nBytes;
+    UINT_PTR nLen;
+    wchar_t  szText[128];
+    wchar_t  szCoderAlias[MAX_CODERALIAS + 1];
+
+    getCoderAliasW(szCoderAlias);
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-    nBytes = sizeof(wchar_t) * (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
-    tDynamicBuffer_Append( pResultsBuf, szText, nBytes );
+    nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
+    tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     
     if ( SendMessage(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
@@ -340,10 +417,18 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
         SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
         if ( ei.hWndEdit )
         {
+            if ( szCoderAlias[0] )
+                setCoderAliasW(szCoderAlias);
+
             SendMessageW( ei.hWndEdit, EM_REPLACESEL, FALSE, (LPARAM) pResultsBuf->ptr );
         }
     }
 
+    if ( nLen > 0 )
+    {
+        --nLen;
+        szText[nLen] = 0; // without the trailing '.'
+    }
     SetWindowTextW(g_QSearchDlg.hStInfo, szText);
 }
 
