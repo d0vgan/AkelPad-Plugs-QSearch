@@ -7,14 +7,15 @@ The plugin function (QSearch::QSearch) is assumed to be assigned
 with a hot-key (for example, F7).
 
 QSearch panel's keys:
-Enter, F3   - find next (down)
-Shift+Enter - find previous (up)
-Alt+Enter   - find from file's beginning
-Ctrl+Enter  - pick up selected text
-Esc         - hide the panel
-Ctrl+Del    - edit control: erase the text after the caret (to the right)
-Ctrl+BS     - edit control: erase the text before the caret (to the left)
-Ctrl+A      - edit control: select all the text
+Enter, F3       - find next (down)
+Shift+Enter     - find previous (up)
+Alt+Enter       - find from file's beginning
+Alt+Shift+Enter - find all
+Ctrl+Enter      - pick up selected text
+Esc             - hide the panel
+Ctrl+Del        - edit control: erase the text after the caret (to the right)
+Ctrl+BS         - edit control: erase the text before the caret (to the left)
+Ctrl+A          - edit control: select all the text
 
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text 
@@ -320,8 +321,12 @@ Additional options (QSearch panel's popup menu or file
      QSearch shows its old "classic" UI:
      [text to find]  [ ]Match case [ ]Whole word [ ]Highlight all
     new_ui = 1
-     QSearch shows updated "classic" UI (with buttons):
+     QSearch shows updated "classic" UI + two buttons:
      [text to find]  [ < ] [ > ]  [ ]Match case [ ]Whole word [ ]Highlight all
+    new_ui = 2
+     QSearch shows updated "classic" UI + three buttons:
+     [text to find]  [ < ] [ > ] [ * ]  [ ]Match case [ ]Whole word [ ]Highlight all
+       - the [ * ] button means "Find All" and has its own popup menu
 
 32) select_by_f3 = 0
      This option is topical when both "Search: Pick up selected text" and
@@ -353,10 +358,27 @@ Additional options (QSearch panel's popup menu or file
     adj_incompl_regexp = 0
      Does not adjust "incomplete" RegExp.
 
+34) findall_mode = 2
+     Responsible for the "Find All" mode.
+     Its lower byte can be one of:
+      1 - Count Only
+      2 - Log Output
+      3 - File Output
+     The following value can be added:
+      256 - Auto Count All
+     Thus, the value of findall_mode = 258 will mean:
+      * Auto Count All (count all occurrences while searching)
+      * Log Output (output to Log::Output when "Find All" is pressed)
+
 
 --------
 History:
 --------
+v.7.2 (March 2019)
+ + "Find All" functionality (set new_ui=2)
+ + "Auto Count All" functionality (set new_ui=2)
+ * the UI has been slightly updated
+
 v.7.1 (December 2018)
  + fixed: "Whole word" had no effect on "Highlight all" while searching with
    regular expressions
@@ -629,7 +651,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Dec 2018, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Mar 2019, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
