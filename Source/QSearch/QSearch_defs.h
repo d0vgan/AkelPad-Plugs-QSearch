@@ -38,8 +38,9 @@
 #define  OPT_SELECT_BY_F3             31
 #define  OPT_ADJ_INCOMPL_REGEXP       32
 #define  OPT_FINDALL_MODE             33
+#define  OPT_FINDALL_RESULT           34
 
-#define  OPT_TOTALCOUNT               34
+#define  OPT_TOTALCOUNT               35
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11
@@ -68,6 +69,13 @@
 #define  QS_FINDALL_TOTAL              4
 #define  QS_FINDALL_MASK               0x000F
 #define  QS_FINDALL_AUTO_COUNT_FLAG    0x0100
+
+#define  QS_FINDALL_RSLT_LINE          0x0000
+#define  QS_FINDALL_RSLT_MATCH         0x0001
+#define  QS_FINDALL_RSLT_POS           0x0010
+#define  QS_FINDALL_RSLT_LEN           0x0020
+#define  QS_FINDALL_RSLT_SEARCHING     0x0100
+#define  QS_FINDALL_RSLT_OCCFOUND      0x0200
 
 //---------------------------------------------------------------------------
 #endif

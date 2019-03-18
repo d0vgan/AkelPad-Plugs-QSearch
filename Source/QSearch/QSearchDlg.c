@@ -302,10 +302,6 @@ static void LogOutput_AddText(const wchar_t* cszText, UINT_PTR nLen)
 
 static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf)
 {
-    wchar_t* pszText;
-    const wchar_t* cszTextFormat;
-    UINT_PTR nBytesToAllocate;
-    UINT_PTR nLen;
     DLLECLOG_OUTPUT_1 loParams;
     wchar_t szCoderAlias[MAX_CODERALIAS + 1];
 
@@ -324,19 +320,27 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
 
     CallLogOutput( &loParams );
 
-    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+    {
+        wchar_t* pszText;
+        const wchar_t* cszTextFormat;
+        UINT_PTR nBytesToAllocate;
+        UINT_PTR nLen;
 
-    nBytesToAllocate = lstrlenW(cszTextFormat);
-    nBytesToAllocate += lstrlenW(cszFindWhat);
-    nBytesToAllocate += 1;
-    nBytesToAllocate *= sizeof(wchar_t);
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
 
-    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
-        return; // failed to allocate the memory
+        nBytesToAllocate = lstrlenW(cszTextFormat);
+        nBytesToAllocate += lstrlenW(cszFindWhat);
+        nBytesToAllocate += 1;
+        nBytesToAllocate *= sizeof(wchar_t);
 
-    pszText = (wchar_t *) pBuf->ptr;
-    nLen = (UINT_PTR) wsprintfW(pszText, cszTextFormat, cszFindWhat);
-    LogOutput_AddText(pszText, nLen);
+        if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
+            return; // failed to allocate the memory
+
+        pszText = (wchar_t *) pBuf->ptr;
+        nLen = (UINT_PTR) wsprintfW(pszText, cszTextFormat, cszFindWhat);
+        LogOutput_AddText(pszText, nLen);
+    }
 }
 
 static void qsShowFindResults_LogOutput_AddOccurrence(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf)
@@ -358,7 +362,11 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
 
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
-    LogOutput_AddText(szText, nLen);
+
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+    {
+        LogOutput_AddText(szText, nLen);
+    }
 
     if ( nLen > 0 )
     {
@@ -371,23 +379,26 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 // FileOutput...
 static void qsShowFindResults_FileOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf)
 {
-    const wchar_t* cszTextFormat;
-    UINT_PTR nBytesToAllocate;
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+    {
+        const wchar_t* cszTextFormat;
+        UINT_PTR nBytesToAllocate;
 
-    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
 
-    nBytesToAllocate = lstrlenW(cszTextFormat);
-    nBytesToAllocate += lstrlenW(cszFindWhat);
-    nBytesToAllocate += 1;
-    nBytesToAllocate *= sizeof(wchar_t);
+        nBytesToAllocate = lstrlenW(cszTextFormat);
+        nBytesToAllocate += lstrlenW(cszFindWhat);
+        nBytesToAllocate += 1;
+        nBytesToAllocate *= sizeof(wchar_t);
 
-    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
-        return; // failed to allocate the memory
+        if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
+            return; // failed to allocate the memory
 
-    pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( (LPWSTR) pBuf->ptr, cszTextFormat, cszFindWhat );
+        pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( (LPWSTR) pBuf->ptr, cszTextFormat, cszFindWhat );
 
-    tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
-    tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+        tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
+        tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+    }
 }
 
 static void qsShowFindResults_FileOutput_AddOccurrence(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf)
@@ -407,7 +418,12 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
-    tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+    {
+        tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+    }
+
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     
     if ( SendMessage(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
@@ -445,26 +461,68 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
 {
     wchar_t* pStr;
     UINT_PTR nBytesToAllocate;
-    INT_X nLinePos;
-    int nUnwrappedLine;
-    AECHARINDEX ci;
 
-    nBytesToAllocate = pFindResult->nBytesStored + 32*sizeof(wchar_t);
+    nBytesToAllocate = pFindResult->nBytesStored;
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+    {
+        nBytesToAllocate += 32*sizeof(wchar_t);
+    }
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+    {
+        nBytesToAllocate += 16*sizeof(wchar_t);
+    }
 
     if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
-            return; // failed to allocate the memory
-
-    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-        nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
-    else
-        nUnwrappedLine = pcrFound->ciMin.nLine;
-    
-    x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
-    nLinePos = AEC_WrapLineBegin(&ci);
+        return; // failed to allocate the memory
 
     // the output string:
-    pStr = (wchar_t *) pBuf->ptr;
-    pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+    {
+        INT_X nLinePos;
+        int nUnwrappedLine;
+        AECHARINDEX ci;
+
+        if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+            nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
+        else
+            nUnwrappedLine = pcrFound->ciMin.nLine;
+    
+        x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
+        nLinePos = AEC_WrapLineBegin(&ci);
+
+        pStr = (wchar_t *) pBuf->ptr;
+        pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
+    }
+    else
+    {
+        pBuf->nBytesStored = 0;
+    }
+
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+    {
+        int nLen;
+        AECHARINDEX ciBegin;
+        AECHARINDEX ciEnd;
+        AEINDEXSUBTRACT aeis;
+
+        x_mem_cpy( &ciBegin, &pcrFound->ciMin, sizeof(AECHARINDEX) );
+        x_mem_cpy( &ciEnd, &pcrFound->ciMax, sizeof(AECHARINDEX) );
+        aeis.ciChar1 = &ciEnd;
+        aeis.ciChar2 = &ciBegin;
+        aeis.bColumnSel = FALSE;
+        aeis.nNewLine = AELB_ASIS;
+        nLen = (int) SendMessage( hWndEdit, AEM_INDEXSUBTRACT, 0, (LPARAM) &aeis );
+
+        pStr = (wchar_t *) pBuf->ptr;
+        if ( pBuf->nBytesStored != 0 )
+        {
+            pBuf->nBytesStored -= sizeof(wchar_t); // exclude the trailing L'\t'
+            pStr += pBuf->nBytesStored/sizeof(wchar_t);
+        }
+
+        pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d)\t", nLen );
+    }
+
     tDynamicBuffer_Append(pBuf, pFindResult->ptr, pFindResult->nBytesStored);
 
     pfnAddOccurrence(pBuf, pResultsBuf);
@@ -495,86 +553,91 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
 
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
-    // TODO: check pfrPolicy->nMaxLineLen
-    if ( pfrPolicy->nMode == QSFRM_CHAR )
-    {
-        AEINDEXOFFSET io;
 
-        if ( pfrPolicy->nBefore > 0 )
-        {
-            io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMin;
-            io.ciCharOut = &tr.cr.ciMin;
-            io.nOffset = -pfrPolicy->nBefore;
-            io.nNewLine = AELB_R;
-            SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
-        }
-        if ( pfrPolicy->nAfter > 0)
-        {
-            io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMax;
-            io.ciCharOut = &tr.cr.ciMax;
-            io.nOffset = pfrPolicy->nAfter;
-            io.nNewLine = AELB_R;
-            SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
-        }
-    }
-    else if ( pfrPolicy->nMode == QSFRM_CHARINLINE )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCH) == 0 )
     {
-        if ( tr.cr.ciMin.nCharInLine > pfrPolicy->nBefore )
-            tr.cr.ciMin.nCharInLine -= pfrPolicy->nBefore;
-        else
-            tr.cr.ciMin.nCharInLine = 0;
-
-        if ( tr.cr.ciMax.nCharInLine + pfrPolicy->nAfter < tr.cr.ciMax.lpLine->nLineLen )
-            tr.cr.ciMax.nCharInLine += pfrPolicy->nAfter;
-        else
-            tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
-    }
-    else // QSFRM_LINE
-    {
-        if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
+        // TODO: check pfrPolicy->nMaxLineLen
+        if ( pfrPolicy->nMode == QSFRM_CHAR )
         {
-            tr.cr.ciMin.nCharInLine = 0;
-            tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
-        }
-        else
-        {
-            INT_X  nLineStartPos;
-            int    nUnwrappedLine;
-            int    nLineCount;
+            AEINDEXOFFSET io;
 
             if ( pfrPolicy->nBefore > 0 )
             {
-                if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                    nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
-                else
-                    nUnwrappedLine = tr.cr.ciMin.nLine;
-
-                if ( nUnwrappedLine > pfrPolicy->nBefore )
-                    nUnwrappedLine -= pfrPolicy->nBefore;
-                else
-                    nUnwrappedLine = 0;
-
-                nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
-                SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMin );
+                io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMin;
+                io.ciCharOut = &tr.cr.ciMin;
+                io.nOffset = -pfrPolicy->nBefore;
+                io.nNewLine = AELB_R;
+                SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
             }
             if ( pfrPolicy->nAfter > 0)
             {
-                if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                    nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
-                else
-                    nUnwrappedLine = tr.cr.ciMax.nLine;
+                io.ciCharIn = (AECHARINDEX *) &pcrFound->ciMax;
+                io.ciCharOut = &tr.cr.ciMax;
+                io.nOffset = pfrPolicy->nAfter;
+                io.nNewLine = AELB_R;
+                SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
+            }
+        }
+        else if ( pfrPolicy->nMode == QSFRM_CHARINLINE )
+        {
+            if ( tr.cr.ciMin.nCharInLine > pfrPolicy->nBefore )
+                tr.cr.ciMin.nCharInLine -= pfrPolicy->nBefore;
+            else
+                tr.cr.ciMin.nCharInLine = 0;
 
-                nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
-                if ( nUnwrappedLine + pfrPolicy->nAfter < nLineCount )
-                    nUnwrappedLine += pfrPolicy->nAfter;
-                else
-                    nUnwrappedLine = nLineCount;
+            if ( tr.cr.ciMax.nCharInLine + pfrPolicy->nAfter < tr.cr.ciMax.lpLine->nLineLen )
+                tr.cr.ciMax.nCharInLine += pfrPolicy->nAfter;
+            else
+                tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+        }
+        else // QSFRM_LINE
+        {
+            if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
+            {
+                tr.cr.ciMin.nCharInLine = 0;
+                tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+            }
+            else
+            {
+                INT_X  nLineStartPos;
+                int    nUnwrappedLine;
+                int    nLineCount;
 
-                nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
-                SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMax );
+                if ( pfrPolicy->nBefore > 0 )
+                {
+                    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                        nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
+                    else
+                        nUnwrappedLine = tr.cr.ciMin.nLine;
+
+                    if ( nUnwrappedLine > pfrPolicy->nBefore )
+                        nUnwrappedLine -= pfrPolicy->nBefore;
+                    else
+                        nUnwrappedLine = 0;
+
+                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
+                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMin );
+                }
+                if ( pfrPolicy->nAfter > 0)
+                {
+                    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                        nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
+                    else
+                        nUnwrappedLine = tr.cr.ciMax.nLine;
+
+                    nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
+                    if ( nUnwrappedLine + pfrPolicy->nAfter < nLineCount )
+                        nUnwrappedLine += pfrPolicy->nAfter;
+                    else
+                        nUnwrappedLine = nLineCount;
+
+                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
+                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMax );
+                }
             }
         }
     }
+
     tr.bColumnSel = FALSE;
     tr.pBuffer = NULL;
     tr.nNewLine = AELB_ASIS;
@@ -3599,9 +3662,10 @@ static void convertFindExToRegExA(const char* cszFindExA, char* pszRegExA)
                 }
                 break;
 
-            case '*':  // "*" -> ".*" (any 0 or more chars)
+            case '*':  // "*" -> ".*?" (any 0 or more chars, not greedy)
                 *(pszRegExA++) = '.';
                 *(pszRegExA++) = '*';
+                *(pszRegExA++) = '?';
                 break;
 
             case '?':  // "?" -> "." (any single char)
@@ -3663,9 +3727,10 @@ static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
                 }
                 break;
 
-            case L'*':  // "*" -> ".*" (any 0 or more chars)
+            case L'*':  // "*" -> ".*?" (any 0 or more chars, not greedy)
                 *(pszRegExW++) = L'.';
                 *(pszRegExW++) = L'*';
+                *(pszRegExW++) = L'?';
                 break;
 
             case L'?':  // "?" -> "." (any single char)

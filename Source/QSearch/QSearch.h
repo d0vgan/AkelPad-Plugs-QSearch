@@ -55,6 +55,7 @@
         DWORD    dwSelectByF3;
         DWORD    dwAdjIncomplRegExp;
         DWORD    dwFindAllMode;
+        DWORD    dwFindAllResult;
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);
