@@ -370,6 +370,17 @@ Additional options (QSearch panel's popup menu or file
       * Auto Count All (count all occurrences while searching)
       * Log Output (output to Log::Output when "Find All" is pressed)
 
+35) findall_result = 816
+     Represents the "Find All Results Format" dialog.
+     The value will be the sum of the following numbers:
+      0 - Include the line with the occurrence
+      1 - Include only the match (occurrence) itself
+      16 - Include the position: (Ln,Pos)
+      32 - Include the match length: (Len)
+      256 - Include the header: "Searching for %s ..."
+      512 - Include the footer: "%d found."
+      4096 - Apply the Coder alias
+
 
 --------
 History:

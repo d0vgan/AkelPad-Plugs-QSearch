@@ -842,11 +842,11 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
         {
             const wchar_t* szFindAllSearchingForW[INLNG_COUNT] = {
                 /* eng */
-                L"Searching for \"%s\" ...",
+                L"Searching for %c%s%c ...",
                 /* rus */
-                L"\x0418\x0449\x0435\x043C \"%s\" ...",
+                L"\x0418\x0449\x0435\x043C %c%s%c ...",
                 /* ukr */
-                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E \"%s\" ..."
+                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E %c%s%c ..."
             };
             return szFindAllSearchingForW[uInternalLng];
         }

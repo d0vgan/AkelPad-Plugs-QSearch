@@ -76,6 +76,7 @@
 #define  QS_FINDALL_RSLT_LEN           0x0020
 #define  QS_FINDALL_RSLT_SEARCHING     0x0100
 #define  QS_FINDALL_RSLT_OCCFOUND      0x0200
+#define  QS_FINDALL_RSLT_CODERALIAS    0x1000
 
 //---------------------------------------------------------------------------
 #endif
