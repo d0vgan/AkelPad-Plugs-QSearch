@@ -69,6 +69,7 @@ void CloseLog(void)
 #define  DEFAULT_ADJ_INCOMPL_REGEXP  1
 #define  DEFAULT_FINDALL_MODE        QS_FINDALL_LOGOUTPUT
 #define  DEFAULT_FINDALL_RESULT      QS_FINDALL_RSLT_LINE | QS_FINDALL_RSLT_POS | QS_FINDALL_RSLT_LEN | QS_FINDALL_RSLT_SEARCHING | QS_FINDALL_RSLT_OCCFOUND
+#define  DEFAULT_FINDALL_COUNT_DELAY 400
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
@@ -129,6 +130,7 @@ void CloseLog(void)
         pOptions->dwAdjIncomplRegExp = WRONG_DWORD_VALUE;
         pOptions->dwFindAllMode = WRONG_DWORD_VALUE;
         pOptions->dwFindAllResult = WRONG_DWORD_VALUE;
+        pOptions->dwFindAllCountDelay = WRONG_DWORD_VALUE;
     }
 
     void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[])
@@ -150,27 +152,28 @@ void CloseLog(void)
                 return FALSE;
         }
 
-        if ( (pOpt1->dockRect.left      !=  pOpt2->dockRect.left)      ||
-             (pOpt1->dockRect.right     !=  pOpt2->dockRect.right)     ||
-             (pOpt1->dockRect.top       !=  pOpt2->dockRect.top)       ||
-             (pOpt1->dockRect.bottom    !=  pOpt2->dockRect.bottom)    ||
-             (pOpt1->colorNotFound      !=  pOpt2->colorNotFound)      ||
-             (pOpt1->colorNotRegExp     !=  pOpt2->colorNotRegExp)     ||
-             (pOpt1->colorEOF           !=  pOpt2->colorEOF)           ||
-             (pOpt1->colorHighlight     !=  pOpt2->colorHighlight)     ||
-             (pOpt1->dwHighlightMarkID  !=  pOpt2->dwHighlightMarkID)  ||
-             (pOpt1->dwHighlightState   !=  pOpt2->dwHighlightState)   ||
-             (pOpt1->dwUseAltHotkeys    !=  pOpt2->dwUseAltHotkeys)    ||
-             (pOpt1->dwAltMatchCase     !=  pOpt2->dwAltMatchCase)     ||
-             (pOpt1->dwAltWholeWord     !=  pOpt2->dwAltWholeWord)     ||
-             (pOpt1->dwAltHighlightAll  !=  pOpt2->dwAltHighlightAll)  ||
-             (pOpt1->dwFindHistoryItems !=  pOpt2->dwFindHistoryItems) ||
-             (pOpt1->dwHistorySave      !=  pOpt2->dwHistorySave)      ||
-             (pOpt1->dwNewUI            !=  pOpt2->dwNewUI)            ||
-             (pOpt1->dwSelectByF3       !=  pOpt2->dwSelectByF3)       ||
-             (pOpt1->dwAdjIncomplRegExp !=  pOpt2->dwAdjIncomplRegExp) ||
-             (pOpt1->dwFindAllMode      !=  pOpt2->dwFindAllMode) ||
-             (pOpt1->dwFindAllResult    !=  pOpt2->dwFindAllResult) )
+        if ( (pOpt1->dockRect.left       !=  pOpt2->dockRect.left)      ||
+             (pOpt1->dockRect.right      !=  pOpt2->dockRect.right)     ||
+             (pOpt1->dockRect.top        !=  pOpt2->dockRect.top)       ||
+             (pOpt1->dockRect.bottom     !=  pOpt2->dockRect.bottom)    ||
+             (pOpt1->colorNotFound       !=  pOpt2->colorNotFound)      ||
+             (pOpt1->colorNotRegExp      !=  pOpt2->colorNotRegExp)     ||
+             (pOpt1->colorEOF            !=  pOpt2->colorEOF)           ||
+             (pOpt1->colorHighlight      !=  pOpt2->colorHighlight)     ||
+             (pOpt1->dwHighlightMarkID   !=  pOpt2->dwHighlightMarkID)  ||
+             (pOpt1->dwHighlightState    !=  pOpt2->dwHighlightState)   ||
+             (pOpt1->dwUseAltHotkeys     !=  pOpt2->dwUseAltHotkeys)    ||
+             (pOpt1->dwAltMatchCase      !=  pOpt2->dwAltMatchCase)     ||
+             (pOpt1->dwAltWholeWord      !=  pOpt2->dwAltWholeWord)     ||
+             (pOpt1->dwAltHighlightAll   !=  pOpt2->dwAltHighlightAll)  ||
+             (pOpt1->dwFindHistoryItems  !=  pOpt2->dwFindHistoryItems) ||
+             (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)      ||
+             (pOpt1->dwNewUI             !=  pOpt2->dwNewUI)            ||
+             (pOpt1->dwSelectByF3        !=  pOpt2->dwSelectByF3)       ||
+             (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp) ||
+             (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)      ||
+             (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)    ||
+             (pOpt1->dwFindAllCountDelay != pOpt2->dwFindAllCountDelay) )
         {
             return FALSE;
         }
@@ -219,7 +222,8 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_SELECT_BY_F3             31 */  "select_by_f3",
   /* OPT_ADJ_INCOMPL_REGEXP       32 */  "adj_incompl_regexp",
   /* OPT_FINDALL_MODE             33 */  "findall_mode",
-  /* OPT_FINDALL_RESULT           34 */  "findall_result"
+  /* OPT_FINDALL_RESULT           34 */  "findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      35 */  "findall_count_delay"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -257,7 +261,8 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_SELECT_BY_F3             31 */  L"select_by_f3",
   /* OPT_ADJ_INCOMPL_REGEXP       32 */  L"adj_incompl_regexp",
   /* OPT_FINDALL_MODE             33 */  L"findall_mode",
-  /* OPT_FINDALL_RESULT           34 */  L"findall_result"
+  /* OPT_FINDALL_RESULT           34 */  L"findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      35 */  L"findall_count_delay"
 };
 
 
@@ -1182,6 +1187,9 @@ void ReadOptions(void)
             g_Options.dwFindAllResult = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_FINDALL_RESULT], WRONG_DWORD_VALUE );
 
+            g_Options.dwFindAllCountDelay = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY], WRONG_DWORD_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1254,6 +1262,9 @@ void ReadOptions(void)
 
             g_Options.dwFindAllResult = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_FINDALL_RESULT], WRONG_DWORD_VALUE );
+
+            g_Options.dwFindAllCountDelay = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY], WRONG_DWORD_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1373,6 +1384,9 @@ void ReadOptions(void)
 
     if ( g_Options.dwFindAllResult == WRONG_DWORD_VALUE )
         g_Options.dwFindAllResult = DEFAULT_FINDALL_RESULT;
+
+    if ( g_Options.dwFindAllCountDelay == WRONG_DWORD_VALUE )
+        g_Options.dwFindAllCountDelay = DEFAULT_FINDALL_COUNT_DELAY;
 }
 
 void SaveOptions(void)
@@ -1489,6 +1503,9 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_RESULT],
                   g_Options.dwFindAllResult );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
+                  g_Options.dwFindAllCountDelay );
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -1573,6 +1590,9 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_RESULT],
                   g_Options.dwFindAllResult );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
+                  g_Options.dwFindAllCountDelay );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);

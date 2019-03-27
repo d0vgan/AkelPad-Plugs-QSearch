@@ -381,6 +381,10 @@ Additional options (QSearch panel's popup menu or file
       512 - Include the footer: "%d found."
       4096 - Apply the Coder alias
 
+36) findall_count_delay = 400
+     Delay, in milliseconds, before starting to count all the occurrences
+     when both the "Auto Count All" and On-the-fly mode are on.
+
 
 --------
 History:

@@ -4436,7 +4436,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         UINT_PTR nTimerId;
 
         if ( (dwParams & (QSEARCH_FIRST | QSEARCH_USEDELAY)) == (QSEARCH_FIRST | QSEARCH_USEDELAY) )
-            nDelayMs = 400;
+            nDelayMs = g_Options.dwFindAllCountDelay;
         else
             nDelayMs = 0;
 

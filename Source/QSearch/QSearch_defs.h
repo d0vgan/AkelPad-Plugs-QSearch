@@ -39,8 +39,9 @@
 #define  OPT_ADJ_INCOMPL_REGEXP       32
 #define  OPT_FINDALL_MODE             33
 #define  OPT_FINDALL_RESULT           34
+#define  OPT_FINDALL_COUNT_DELAY      35
 
-#define  OPT_TOTALCOUNT               35
+#define  OPT_TOTALCOUNT               36
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

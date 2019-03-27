@@ -56,6 +56,7 @@
         DWORD    dwAdjIncomplRegExp;
         DWORD    dwFindAllMode;
         DWORD    dwFindAllResult;
+        DWORD    dwFindAllCountDelay;
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);
