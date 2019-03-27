@@ -24,6 +24,8 @@
 #define  VK_QS_FINDUP        VK_SHIFT    // Shift
 #define  VK_QS_PICKUPTEXT    VK_CONTROL  // Ctrl
 
+#define  VK_QS_WW_SRCH_MODE  VK_CONTROL  // Ctrl
+
 
 // extern vars
 extern PluginState     g_Plugin;
@@ -2214,7 +2216,51 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             else if ( id == IDC_CH_WHOLEWORD )
             {
-                if ( HIWORD(wParam) == BN_CLICKED )
+                if ( GetKeyState(VK_QS_WW_SRCH_MODE) & 0x80 )
+                {
+                    HWND hChWholeWord;
+                    UINT uChecked;
+                    
+                    hChWholeWord = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_WHOLEWORD);
+                    if ( hChWholeWord )
+                    {
+                        if ( SendMessage(hChWholeWord, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                            uChecked = BST_UNCHECKED;
+                        else
+                            uChecked = BST_CHECKED;
+                        SendMessage(hChWholeWord, BM_SETCHECK, uChecked, 0);
+                    }
+
+                    if ( g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] )
+                    {
+                        g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] = 0;
+                        g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] = 1;
+                        CheckMenuItem( hPopupMenu, IDM_SRCHUSESPECIALCHARS, MF_BYCOMMAND | MF_UNCHECKED );
+                        CheckMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_CHECKED );
+                        EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_ENABLED );
+                    }
+                    else if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] )
+                    {
+                        g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] = 0;
+                        g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] = 0;
+                        CheckMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_UNCHECKED );
+                        EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_GRAYED );
+                        CheckMenuItem( hPopupMenu, IDM_SRCHUSESPECIALCHARS, MF_BYCOMMAND | MF_UNCHECKED );
+                    }
+                    else
+                    {
+                        g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] = 1;
+                        g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] = 0;
+                        CheckMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_UNCHECKED );
+                        EnableMenuItem( hPopupMenu, IDM_SRCHREGEXPDOTNEWLINE, MF_BYCOMMAND | MF_GRAYED );
+                        CheckMenuItem( hPopupMenu, IDM_SRCHUSESPECIALCHARS, MF_BYCOMMAND | MF_CHECKED );
+                    }
+
+                    qsdlgShowHideWholeWordCheckBox(hDlg, g_Options.dwFlags);
+                    qs_nEditEOF = 0;
+                    qsearchDoSetNotFound( hFindEdit, FALSE, FALSE, FALSE );
+                }
+                else if ( HIWORD(wParam) == BN_CLICKED )
                 {
                     HWND hChHighlightAll;
                     BOOL bHighlightAllChecked = FALSE;
