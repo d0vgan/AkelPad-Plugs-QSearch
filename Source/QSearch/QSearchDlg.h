@@ -80,6 +80,8 @@
         HWND    hBtnFindPrev;
         HWND    hBtnFindAll;
         HWND    hStInfo;
+        HMENU   hPopupMenu;
+        HMENU   hFindAllPopupMenu;
         BOOL    bMatchCase;
         //BOOL    bOnDlgStart;
         BOOL    bQSearching;

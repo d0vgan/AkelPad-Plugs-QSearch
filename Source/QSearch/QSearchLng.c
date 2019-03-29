@@ -71,17 +71,17 @@ const char* szHintChMatchCaseA[INLNG_COUNT][2] = {
 const char* szHintChWholeWordA[INLNG_COUNT][2] = {
     /* eng */
     {
-        "Whole word",
+        "Whole word / Search mode (Ctrl+click)",
         "Whole word"
     },
     /* rus */
     {
-        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\xE5\xEB\xE8\xEA\xEE\xEC",
+        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\xE5\xEB\xE8\xEA\xEE\xEC / Search mode (Ctrl+click)",
         "\xD1\xEB\x2E\xF6\xE5\xEB\xE8\xEA\xEE\xEC"
     },
     /* ukr */
     {
-        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\x69\xEB\xEA\xEE\xEC",
+        "\xD1\xEB\xEE\xE2\xEE\x20\xF6\x69\xEB\xEA\xEE\xEC / Search mode (Ctrl+click)",
         "\xD1\xEB\xEE\xE2\x2E\xF6\x69\xEB\xEA\xEE\xEC"
     }
 };
@@ -339,17 +339,17 @@ const wchar_t* szHintChMatchCaseW[INLNG_COUNT][2] = {
 const wchar_t* szHintChWholeWordW[INLNG_COUNT][2] = {
     /* eng */
     {
-        L"Whole word",
+        L"Whole word / Search mode (Ctrl+click)",
         L"Whole word"
     },
     /* rus */
     {
-        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0435\x043B\x0438\x043A\x043E\x043C",
+        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0435\x043B\x0438\x043A\x043E\x043C / Search mode (Ctrl+click)",
         L"\x0421\x043B\x002E\x0446\x0435\x043B\x0438\x043A\x043E\x043C"
     },
     /* ukr */
     {
-        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0069\x043B\x043A\x043E\x043C",
+        L"\x0421\x043B\x043E\x0432\x043E\x0020\x0446\x0069\x043B\x043A\x043E\x043C / Search mode (Ctrl+click)",
         L"\x0421\x043B\x043E\x0432\x002E\x0446\x0069\x043B\x043A\x043E\x043C"
     }
 };
