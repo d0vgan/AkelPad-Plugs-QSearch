@@ -188,6 +188,7 @@
     <ClCompile Include="QSearch\QSearchDlg.c" />
     <ClCompile Include="QSearch\QSearchFindEx.c" />
     <ClCompile Include="QSearch\QSearchLng.c" />
+    <ClCompile Include="QSearch\QSearchSettDlg.c" />
     <ClCompile Include="QSearch\XMemStrFunc.c" />
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +199,7 @@
     <ClInclude Include="QSearch\QSearchDlg.h" />
     <ClInclude Include="QSearch\QSearchFindEx.h" />
     <ClInclude Include="QSearch\QSearchLng.h" />
+    <ClInclude Include="QSearch\QSearchSettDlg.h" />
     <ClInclude Include="QSearch\QSearch_defs.h" />
     <ClInclude Include="QSearch\resource.h" />
     <ClInclude Include="QSearch\XMemStrFunc.h" />

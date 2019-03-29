@@ -1,22 +1,9 @@
-REM Visual Studio 9.0 (2008) Express
+REM Visual Studio 2017 Community
 
-@ECHO OFF
-Set SdkProgramFiles=%ProgramFiles%
-if "%ProgramFiles(x86)%" == "" goto programfiles_ok
-Set ProgramFiles=%ProgramFiles(x86)%
-:programfiles_ok
-Set VCDIR=%ProgramFiles%\Microsoft Visual Studio 9.0\VC
-Set VSCOMMON=%ProgramFiles%\Microsoft Visual Studio 9.0\Common7\IDE
-Set MSSDK=%SdkProgramFiles%\Microsoft SDKs\Windows\v6.0A
+call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
 
-REM if exist "%MSSDK%" goto sdk_ok
-REM Set MSSDK=%VCDIR%\PlatformSDK
-REM :sdk_ok
-
-::###################################::
-Set PATH=%VCDIR%\bin;%MSSDK%\bin;%VSCOMMON%;%PATH%
-Set INCLUDE=%MSSDK%\include;%VCDIR%\include;%INCLUDE%
-Set LIB=%MSSDK%\lib;%VCDIR%\lib;%LIB%
+set MSSDK=%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.1A
+set PATH=%MSSDK%\bin;%PATH%
 
 cd .\QSearch
 

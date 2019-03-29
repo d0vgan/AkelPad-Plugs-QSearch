@@ -30,6 +30,9 @@
     <ClCompile Include="QSearch\QSearchLng.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QSearch\QSearchSettDlg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="QSearch\XMemStrFunc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QSearch\QSearchLng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QSearch\QSearchSettDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QSearch\resource.h">

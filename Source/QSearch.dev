@@ -1,7 +1,7 @@
 [Project]
 FileName=QSearch.dev
 Name=QSearch
-UnitCount=15
+UnitCount=17
 PchHead=-1
 PchSource=-1
 Ver=1
@@ -250,6 +250,26 @@ BuildCmd=
 
 [Unit15]
 FileName=QSearch\XMemStrFunc.h
+CompileCpp=0
+Folder=QSearch
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit16]
+FileName=QSearch\QSearchSettDlg.c
+Folder=QSearch
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+CompileCpp=0
+
+[Unit17]
+FileName=QSearch\QSearchSettDlg.h
 CompileCpp=0
 Folder=QSearch
 Compile=1

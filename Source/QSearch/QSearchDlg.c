@@ -2,6 +2,7 @@
 
 #include "QSearch.h"
 #include "QSearchDlg.h"
+#include "QSearchSettDlg.h"
 #include "QSearchLng.h"
 #include "XMemStrFunc.h"
 
@@ -2501,6 +2502,25 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     dwFlags |= QS_FINDALL_AUTO_COUNT_FLAG;
                 g_Options.dwFindAllMode = id - IDM_FINDALL_START;
                 g_Options.dwFindAllMode |= dwFlags;
+            }
+            else if ( id == IDM_FINDALL_SETTINGSDLG )
+            {
+                INT_PTR nRet;
+
+                if ( g_Plugin.bOldWindows )
+                {
+                    nRet = DialogBoxA(g_Plugin.hInstanceDLL,
+						              MAKEINTRESOURCEA(IDD_FINDALL_SETTINGS),
+                                      g_Plugin.hMainWnd,
+									  QSFndAllSettDlgProc);
+                }
+                else
+                {
+                    nRet = DialogBoxW(g_Plugin.hInstanceDLL,
+						              MAKEINTRESOURCEW(IDD_FINDALL_SETTINGS),
+                                      g_Plugin.hMainWnd,
+									  QSFndAllSettDlgProc);
+                }
             }
             break;
         }

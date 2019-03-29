@@ -3,6 +3,10 @@
 //---------------------------------------------------------------------------
 #include "QSearch_defs.h"
 
+#ifndef IDC_STATIC
+#define IDC_STATIC (-1)
+#endif
+
 #define  IDI_QSEARCH                100
 
 #define  IDD_QSEARCH                1000
@@ -13,6 +17,7 @@
 #define  IDC_PB_PROGRESS            1005
 #define  IDC_CH_HIGHLIGHTALL        1006
 #define  IDC_BT_CANCEL              1010
+#define  IDC_BT_OK                  1011
 #define  IDC_ST_INFO                1015
 #define  IDR_MENU_OPTIONS           1020
 #define  IDS_EOFREACHED             1040
@@ -23,6 +28,9 @@
 #define  IDC_BT_FINDPREV            2002
 #define  IDOK_FINDPREV              2003
 #define  IDC_BT_FINDALL             2004
+
+#define  IDD_FINDALL_SETTINGS       3000
+#define  IDC_ST_EXAMPLE             3001
 
 #define  IDM_START                  10001
 #define  IDM_SRCHONTHEFLYMODE       (IDM_START + OPTF_SRCH_ONTHEFLY_MODE)
@@ -47,6 +55,7 @@
 #define  IDM_FINDALL_COUNTONLY      (IDM_FINDALL_START + QS_FINDALL_COUNTONLY)
 #define  IDM_FINDALL_LOGOUTPUT      (IDM_FINDALL_START + QS_FINDALL_LOGOUTPUT)
 #define  IDM_FINDALL_FILEOUTPUT     (IDM_FINDALL_START + QS_FINDALL_FILEOUTPUT)
+#define  IDM_FINDALL_SETTINGSDLG    10151
 
 //---------------------------------------------------------------------------
 #endif

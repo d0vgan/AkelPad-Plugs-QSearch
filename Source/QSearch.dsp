@@ -106,6 +106,10 @@ SOURCE=.\QSearch\QSearchDlg.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\QSearch\QSearchSettDlg.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\QSearch\QSearchFindEx.c
 # End Source File
 # Begin Source File
