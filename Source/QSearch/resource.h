@@ -30,7 +30,15 @@
 #define  IDC_BT_FINDALL             2004
 
 #define  IDD_FINDALL_SETTINGS       3000
-#define  IDC_ST_EXAMPLE             3001
+#define  IDC_CH_FA_HEADER           3001
+#define  IDC_CH_FA_POSITION         3002
+#define  IDC_CH_FA_LENGTH           3003
+#define  IDC_CH_FA_FOOTER           3004
+#define  IDC_RB_FA_LINE             3011
+#define  IDC_RB_FA_MATCHONLY        3012
+#define  IDC_CH_FA_COLORTHEME       3021
+#define  IDC_ST_FA_EXAMPLE          3031
+#define  IDC_ST_FA_EXAMPLE_DATA     3032
 
 #define  IDM_START                  10001
 #define  IDM_SRCHONTHEFLYMODE       (IDM_START + OPTF_SRCH_ONTHEFLY_MODE)
