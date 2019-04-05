@@ -34,7 +34,7 @@
 #define  IDC_CH_FA_POSITION         3002
 #define  IDC_CH_FA_LENGTH           3003
 #define  IDC_CH_FA_FOOTER           3004
-#define  IDC_RB_FA_LINE             3011
+#define  IDC_RB_FA_WHOLELINE        3011
 #define  IDC_RB_FA_MATCHONLY        3012
 #define  IDC_CH_FA_COLORTHEME       3021
 #define  IDC_ST_FA_EXAMPLE          3031
@@ -64,6 +64,8 @@
 #define  IDM_FINDALL_LOGOUTPUT      (IDM_FINDALL_START + QS_FINDALL_LOGOUTPUT)
 #define  IDM_FINDALL_FILEOUTPUT     (IDM_FINDALL_START + QS_FINDALL_FILEOUTPUT)
 #define  IDM_FINDALL_SETTINGSDLG    10151
+#define  IDM_FINDALL_SHOWLINE       10155
+#define  IDM_FINDALL_SHOWMATCHONLY  10156
 
 //---------------------------------------------------------------------------
 #endif

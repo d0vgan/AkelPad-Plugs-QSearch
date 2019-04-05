@@ -1,5 +1,6 @@
 #include "QSearchSettDlg.h"
 #include "QSearch.h"
+#include "XMemStrFunc.h"
 
 
 extern PluginState  g_Plugin;
@@ -51,6 +52,21 @@ static BOOL CheckBox_SetCheck(HWND hDlg, UINT idCheckBox, BOOL bChecked)
 
 //////////////// FndAllSettDlg... ////////////////
 
+typedef struct sCheckBoxOptFlagItem {
+    int id;
+    unsigned int optf;
+} tCheckBoxOptFlagItem;
+
+static const tCheckBoxOptFlagItem arrCheckBoxOptions[] = {
+    { IDC_CH_FA_HEADER,     QS_FINDALL_RSLT_SEARCHING  },
+    { IDC_CH_FA_POSITION,   QS_FINDALL_RSLT_POS        },
+    { IDC_CH_FA_LENGTH,     QS_FINDALL_RSLT_LEN        },
+    { IDC_CH_FA_FOOTER,     QS_FINDALL_RSLT_OCCFOUND   },
+    { IDC_CH_FA_COLORTHEME, QS_FINDALL_RSLT_CODERALIAS },
+    { 0,                    0 } // trailing "empty" item
+};
+
+static void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg);
 static BOOL FndAllSettDlg_OnOK(HWND hDlg);
 static void FndAllSettDlg_OnInitDialog(HWND hDlg);
 static void FndAllSettDlg_EndDialog(HWND hDlg, INT_PTR nResult);
@@ -78,6 +94,21 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 return 1;
             }
 
+            case IDC_CH_FA_HEADER:
+            case IDC_CH_FA_POSITION:
+            case IDC_CH_FA_LENGTH:
+            case IDC_CH_FA_FOOTER:
+            case IDC_CH_FA_COLORTHEME:
+            case IDC_RB_FA_WHOLELINE:
+            case IDC_RB_FA_MATCHONLY:
+            {
+                if ( HIWORD(wParam) == BN_CLICKED )
+                {
+                    FndAllSettDlg_OnCheckBoxClicked(hDlg);
+                }
+                break;
+            }
+
             default:
                 break;
         }
@@ -90,62 +121,136 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 	return 0;
 }
 
+static DWORD getFindAllResultFlags(HWND hDlg)
+{
+    unsigned int i;
+    DWORD dwFindAllResultFlags;
+
+    dwFindAllResultFlags = 0;
+
+    for ( i = 0; ; ++i )
+    {
+        if ( arrCheckBoxOptions[i].id == 0 && arrCheckBoxOptions[i].optf == 0 )
+            break;
+
+        if ( CheckBox_IsChecked(hDlg, arrCheckBoxOptions[i].id) )
+            dwFindAllResultFlags |= arrCheckBoxOptions[i].optf;
+    }
+
+    if ( CheckBox_IsChecked(hDlg, IDC_RB_FA_MATCHONLY) )
+        dwFindAllResultFlags |= QS_FINDALL_RSLT_MATCHONLY;
+    else
+        dwFindAllResultFlags |= QS_FINDALL_RSLT_WHOLELINE;
+
+    return dwFindAllResultFlags;
+}
+
+void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
+{
+    HWND hStExampleData;
+    DWORD dwFindAllResultFlags;
+    tDynamicBuffer infoBuf;
+    wchar_t szMatch1[64];
+    wchar_t szMatch2[64];
+    wchar_t szMatch3[64];
+
+    tDynamicBuffer_Init(&infoBuf);
+    tDynamicBuffer_Allocate(&infoBuf, 256*sizeof(wchar_t));
+
+    szMatch1[0] = 0;
+    szMatch2[0] = 0;
+    szMatch3[0] = 0;
+
+    dwFindAllResultFlags = getFindAllResultFlags(hDlg);
+    if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
+    {
+        const wchar_t* s = L"Searching for /w[a-z]+d/ ...\n";
+        tDynamicBuffer_Append(&infoBuf, s, lstrlenW(s)*sizeof(wchar_t));
+    }
+    if ( dwFindAllResultFlags & QS_FINDALL_RSLT_POS )
+    {
+        lstrcatW(szMatch1, L"(1,15)");
+        lstrcatW(szMatch2, L"(2,3)");
+        lstrcatW(szMatch3, L"(2,12)");
+    }
+    if ( dwFindAllResultFlags & QS_FINDALL_RSLT_LEN )
+    {
+        lstrcatW(szMatch1, L"(4)");
+        lstrcatW(szMatch2, L"(5)");
+        lstrcatW(szMatch3, L"(4)");
+    }
+
+    {
+        if ( szMatch1[0] != 0 )
+            lstrcatW(szMatch1, L"\t");
+        if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
+            lstrcatW(szMatch1, L"word\n");
+        else
+            lstrcatW(szMatch1, L"A line with a word.\n");
+
+        if ( szMatch2[0] != 0 )
+            lstrcatW(szMatch2, L"\t");
+        if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
+            lstrcatW(szMatch2, L"world\n");
+        else
+            lstrcatW(szMatch2, L"A world of wisdom.\n");
+
+        if ( szMatch3[0] != 0 )
+            lstrcatW(szMatch3, L"\t");
+        if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
+            lstrcatW(szMatch3, L"wisd\n");
+        else
+            lstrcatW(szMatch3, L"A world of wisdom.\n");
+
+        tDynamicBuffer_Append(&infoBuf, szMatch1, lstrlenW(szMatch1)*sizeof(wchar_t));
+        tDynamicBuffer_Append(&infoBuf, szMatch2, lstrlenW(szMatch2)*sizeof(wchar_t));
+        tDynamicBuffer_Append(&infoBuf, szMatch3, lstrlenW(szMatch3)*sizeof(wchar_t));
+    }
+
+    if ( dwFindAllResultFlags & QS_FINDALL_RSLT_OCCFOUND )
+    {
+        const wchar_t* s = L"3 found.";
+        tDynamicBuffer_Append(&infoBuf, s, lstrlenW(s)*sizeof(wchar_t));
+    }
+
+    tDynamicBuffer_Append(&infoBuf, L"\0", 1*sizeof(wchar_t));
+
+    hStExampleData = GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE_DATA);
+    SetWindowTextW(hStExampleData, (const wchar_t *) infoBuf.ptr);
+}
+
 BOOL FndAllSettDlg_OnOK(HWND hDlg)
 {
-    DWORD dwFindAllResult = 0;
-
-    if ( CheckBox_IsChecked(hDlg, IDC_CH_FA_HEADER) )
-        dwFindAllResult |= QS_FINDALL_RSLT_SEARCHING;
-
-    if ( CheckBox_IsChecked(hDlg, IDC_CH_FA_POSITION) )
-        dwFindAllResult |= QS_FINDALL_RSLT_POS;
-
-    if ( CheckBox_IsChecked(hDlg, IDC_CH_FA_LENGTH) )
-        dwFindAllResult |= QS_FINDALL_RSLT_LEN;
-
-    if ( CheckBox_IsChecked(hDlg, IDC_CH_FA_FOOTER) )
-        dwFindAllResult |= QS_FINDALL_RSLT_OCCFOUND;
-
-    if ( CheckBox_IsChecked(hDlg, IDC_CH_FA_COLORTHEME) )
-        dwFindAllResult |= QS_FINDALL_RSLT_CODERALIAS;
-    
-    g_Options.dwFindAllResult = dwFindAllResult;
+    g_Options.dwFindAllResult = getFindAllResultFlags(hDlg);
 
     return TRUE;
 }
 
-static void FndAllSettDlg_OnInitDialog(HWND hDlg)
+void FndAllSettDlg_OnInitDialog(HWND hDlg)
 {
+    unsigned int i;
     BOOL bChecked;
 
     AnyWindow_CenterWindow(hDlg, g_Plugin.hMainWnd, FALSE);
 
-    bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING) ? TRUE : FALSE;
-    CheckBox_SetCheck(hDlg, IDC_CH_FA_HEADER, bChecked);
+    for ( i = 0; ; ++i )
+    {
+        if ( arrCheckBoxOptions[i].id == 0 && arrCheckBoxOptions[i].optf == 0 )
+            break;
 
-    bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS) ? TRUE : FALSE;
-    CheckBox_SetCheck(hDlg, IDC_CH_FA_POSITION, bChecked);
+        bChecked = (g_Options.dwFindAllResult & arrCheckBoxOptions[i].optf) ? TRUE : FALSE;
+        CheckBox_SetCheck(hDlg, arrCheckBoxOptions[i].id, bChecked);
+    }
 
-    bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN) ? TRUE : FALSE;
-    CheckBox_SetCheck(hDlg, IDC_CH_FA_LENGTH, bChecked);
+    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY )
+        CheckBox_SetCheck(hDlg, IDC_RB_FA_MATCHONLY, TRUE);
+    else
+        CheckBox_SetCheck(hDlg, IDC_RB_FA_WHOLELINE, TRUE);
 
-    // bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LINE) ? TRUE : FALSE;
-
-    // bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCH) ? TRUE : FALSE;
-
-    bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND) ? TRUE : FALSE;
-    CheckBox_SetCheck(hDlg, IDC_CH_FA_FOOTER, bChecked);
-
-    bChecked = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS) ? TRUE : FALSE;
-    CheckBox_SetCheck(hDlg, IDC_CH_FA_COLORTHEME, bChecked);
+    FndAllSettDlg_OnCheckBoxClicked(hDlg);
 }
 
 void FndAllSettDlg_EndDialog(HWND hDlg, INT_PTR nResult)
 {
-//    if ( sd_hToolTip )
-//    {
-//        DestroyWindow(sd_hToolTip);
-//        sd_hToolTip = NULL;
-//    }
     EndDialog(hDlg, nResult);
 }

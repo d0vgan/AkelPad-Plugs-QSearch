@@ -589,7 +589,7 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCH) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
     {
         // TODO: check pfrPolicy->nMaxLineLen
         if ( pfrPolicy->nMode == QSFRM_CHAR )
@@ -2493,6 +2493,18 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 g_Options.dwFindAllMode = id - IDM_FINDALL_START;
                 g_Options.dwFindAllMode |= dwFlags;
             }
+            else if ( id == IDM_FINDALL_SHOWLINE )
+            {
+                g_Options.dwFindAllResult |= QS_FINDALL_RSLT_WHOLELINE;
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY )
+                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_MATCHONLY;
+            }
+            else if ( id == IDM_FINDALL_SHOWMATCHONLY )
+            {
+                g_Options.dwFindAllResult |= QS_FINDALL_RSLT_MATCHONLY;
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_WHOLELINE )
+                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_WHOLELINE;
+            }
             else if ( id == IDM_FINDALL_SETTINGSDLG )
             {
                 INT_PTR nRet;
@@ -2741,6 +2753,17 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 {
                     uCheck = (i == (g_Options.dwFindAllMode & QS_FINDALL_MASK)) ? MF_CHECKED : MF_UNCHECKED;
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_START + i, MF_BYCOMMAND | uCheck );
+                }
+
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY )
+                {
+                    CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWLINE, MF_BYCOMMAND | MF_UNCHECKED );
+                    CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWMATCHONLY, MF_BYCOMMAND | MF_CHECKED );
+                }
+                else
+                {
+                    CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWMATCHONLY, MF_BYCOMMAND | MF_UNCHECKED );
+                    CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWLINE, MF_BYCOMMAND | MF_CHECKED );
                 }
 
                 hPopMnu = g_QSearchDlg.hFindAllPopupMenu;

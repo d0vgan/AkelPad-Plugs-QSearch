@@ -71,8 +71,8 @@
 #define  QS_FINDALL_MASK               0x000F
 #define  QS_FINDALL_AUTO_COUNT_FLAG    0x0100
 
-#define  QS_FINDALL_RSLT_LINE          0x0000
-#define  QS_FINDALL_RSLT_MATCH         0x0001
+#define  QS_FINDALL_RSLT_WHOLELINE     0x0000
+#define  QS_FINDALL_RSLT_MATCHONLY     0x0001
 #define  QS_FINDALL_RSLT_POS           0x0010
 #define  QS_FINDALL_RSLT_LEN           0x0020
 #define  QS_FINDALL_RSLT_SEARCHING     0x0100
