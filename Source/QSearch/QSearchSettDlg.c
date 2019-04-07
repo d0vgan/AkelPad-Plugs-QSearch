@@ -98,7 +98,6 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             case IDC_CH_FA_POSITION:
             case IDC_CH_FA_LENGTH:
             case IDC_CH_FA_FOOTER:
-            case IDC_CH_FA_COLORTHEME:
             case IDC_RB_FA_WHOLELINE:
             case IDC_RB_FA_MATCHONLY:
             {
