@@ -353,6 +353,9 @@ Additional options (QSearch panel's popup menu or file
      end of RegExp are ignored to avoid selection till the end of the file.
      The purpose of this is highly noticeable in the On-the-fly mode, when
      "+" or "*" appears in the middle of the RegEx being typed.
+     To force a RegExp with these symbols at the end, just add extra '+' or
+     '*' at the end of the RegExp: for example, use "a++" instead of "a+"
+     and "a*?+" instead of "a*?".
     adj_incompl_regexp = 2
      Adjusts "incomplete" RegExp only in the On-the-fly mode.
     adj_incompl_regexp = 0

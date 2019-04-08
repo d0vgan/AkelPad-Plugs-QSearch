@@ -2507,21 +2507,21 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             else if ( id == IDM_FINDALL_SETTINGSDLG )
             {
-                INT_PTR nRet;
-
                 if ( g_Plugin.bOldWindows )
                 {
-                    nRet = DialogBoxA(g_Plugin.hInstanceDLL,
-						              MAKEINTRESOURCEA(IDD_FINDALL_SETTINGS),
-                                      g_Plugin.hMainWnd,
-									  QSFndAllSettDlgProc);
+                    /*
+                    DialogBoxA(g_Plugin.hInstanceDLL,
+                               MAKEINTRESOURCEA(IDD_FINDALL_SETTINGS),
+                               g_Plugin.hMainWnd,
+                               QSFndAllSettDlgProc);
+                    */
                 }
                 else
                 {
-                    nRet = DialogBoxW(g_Plugin.hInstanceDLL,
-						              MAKEINTRESOURCEW(IDD_FINDALL_SETTINGS),
-                                      g_Plugin.hMainWnd,
-									  QSFndAllSettDlgProc);
+                    DialogBoxW(g_Plugin.hInstanceDLL,
+                               MAKEINTRESOURCEW(IDD_FINDALL_SETTINGS),
+                               g_Plugin.hMainWnd,
+                               QSFndAllSettDlgProc);
                 }
             }
             break;
@@ -2744,7 +2744,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             // pt.y = (int) (short) HIWORD(lParam);
             GetCursorPos(&pt);
 
-            if ( g_QSearchDlg.hBtnFindAll == (HWND) wParam )
+            if ( (g_QSearchDlg.hBtnFindAll == (HWND) wParam) && !g_Plugin.bOldWindows )
             {
                 uCheck = (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) ? MF_CHECKED : MF_UNCHECKED;
                 CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_START, MF_BYCOMMAND | uCheck );
@@ -3655,7 +3655,12 @@ static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[])
     {
         --n1;
         if ( n2 - n1 > 1 )
-            return; // syntax error: "++", "**", "+*" or "*+"
+        {
+            // "++", "**", "+*" or "*+"
+            // special case to preserve the first '+' or '*' from the two at the end
+            szTextA[n1 + 1] = 0;
+            return;
+        }
 
         if ( n1 == 0 )
             return; // just "+(?)" or "*(?)", nothing to do
@@ -3716,7 +3721,12 @@ static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[])
     {
         --n1;
         if ( n2 - n1 > 1 )
-            return; // syntax error: "++", "**", "+*" or "*+"
+        {
+            // "++", "**", "+*" or "*+"
+            // special case to preserve the first '+' or '*' from the two at the end
+            szTextW[n1 + 1] = 0;
+            return;
+        }
 
         if ( n1 == 0 )
             return; // just "+(?)" or "*(?)", nothing to do
