@@ -1,5 +1,6 @@
 #include "QSearchSettDlg.h"
 #include "QSearch.h"
+#include "QSearchLng.h"
 #include "XMemStrFunc.h"
 
 
@@ -147,8 +148,11 @@ static DWORD getFindAllResultFlags(HWND hDlg)
 void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
 {
     HWND hStExampleData;
+    const wchar_t* cszTextFormat;
+    int nLen;
     DWORD dwFindAllResultFlags;
     tDynamicBuffer infoBuf;
+    wchar_t szText[128];
     wchar_t szMatch1[64];
     wchar_t szMatch2[64];
     wchar_t szMatch3[64];
@@ -163,8 +167,10 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     dwFindAllResultFlags = getFindAllResultFlags(hDlg);
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
     {
-        const wchar_t* s = L"Searching for /w[a-z]+d/ ...\n";
-        tDynamicBuffer_Append(&infoBuf, s, lstrlenW(s)*sizeof(wchar_t));
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
+        nLen = wsprintfW(szText, cszTextFormat, L'/', L"w[a-z]+d", L'/');
+        tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
+        tDynamicBuffer_Append(&infoBuf, L"\n", 1*sizeof(wchar_t));
     }
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_POS )
     {
@@ -208,8 +214,9 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
 
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_OCCFOUND )
     {
-        const wchar_t* s = L"3 found.";
-        tDynamicBuffer_Append(&infoBuf, s, lstrlenW(s)*sizeof(wchar_t));
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
+        nLen = wsprintfW(szText, cszTextFormat, 3); // "3 found."
+        tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
     }
 
     tDynamicBuffer_Append(&infoBuf, L"\0", 1*sizeof(wchar_t));
