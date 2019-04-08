@@ -1367,6 +1367,8 @@ static LRESULT CALLBACK chWholeWordWndProc(HWND hCh,
     {
         case WM_LBUTTONDOWN:
         case WM_LBUTTONDBLCLK:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONDBLCLK:
             if ( GetKeyState(VK_QS_WW_SRCH_MODE) & 0x80 )
             {
                 OnChWholeWordSrchMode();
