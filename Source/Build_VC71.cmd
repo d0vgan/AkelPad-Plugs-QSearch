@@ -10,6 +10,7 @@ Set PATH=%VCDIR%\bin;%MSSDK%\bin;%PATH%
 Set INCLUDE=%MSSDK%\include;%VCDIR%\include;%ATLMFC%\include;%INCLUDE%
 Set LIB=%MSSDK%\lib;%VCDIR%\lib;%LIB%
 
+if not exist "..\Plugs" mkdir "..\Plugs"
 cd .\QSearch
 
 rc /r /Fo"QSearch.res" "QSearch.rc"

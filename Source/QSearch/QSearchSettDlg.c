@@ -118,7 +118,7 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
         FndAllSettDlg_OnInitDialog(hDlg);
     }
 
-	return 0;
+    return 0;
 }
 
 static DWORD getFindAllResultFlags(HWND hDlg)
@@ -155,14 +155,12 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     wchar_t szText[128];
     wchar_t szMatch1[64];
     wchar_t szMatch2[64];
-    wchar_t szMatch3[64];
 
     tDynamicBuffer_Init(&infoBuf);
     tDynamicBuffer_Allocate(&infoBuf, 256*sizeof(wchar_t));
 
     szMatch1[0] = 0;
     szMatch2[0] = 0;
-    szMatch3[0] = 0;
 
     dwFindAllResultFlags = getFindAllResultFlags(hDlg);
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
@@ -174,48 +172,38 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     }
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_POS )
     {
-        lstrcatW(szMatch1, L"(1,15)");
-        lstrcatW(szMatch2, L"(2,3)");
-        lstrcatW(szMatch3, L"(2,12)");
+        lstrcatW(szMatch1, L"(1,3)");
+        lstrcatW(szMatch2, L"(1,12)");
     }
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_LEN )
     {
-        lstrcatW(szMatch1, L"(4)");
-        lstrcatW(szMatch2, L"(5)");
-        lstrcatW(szMatch3, L"(4)");
+        lstrcatW(szMatch1, L"(5)");
+        lstrcatW(szMatch2, L"(4)");
     }
 
     {
         if ( szMatch1[0] != 0 )
             lstrcatW(szMatch1, L"\t");
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
-            lstrcatW(szMatch1, L"word\n");
+            lstrcatW(szMatch1, L"world\n");
         else
-            lstrcatW(szMatch1, L"A line with a word.\n");
+            lstrcatW(szMatch1, L"A world of words.\n");
 
         if ( szMatch2[0] != 0 )
             lstrcatW(szMatch2, L"\t");
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
-            lstrcatW(szMatch2, L"world\n");
+            lstrcatW(szMatch2, L"word\n");
         else
-            lstrcatW(szMatch2, L"A world of wisdom.\n");
-
-        if ( szMatch3[0] != 0 )
-            lstrcatW(szMatch3, L"\t");
-        if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
-            lstrcatW(szMatch3, L"wisd\n");
-        else
-            lstrcatW(szMatch3, L"A world of wisdom.\n");
+            lstrcatW(szMatch2, L"A world of words.\n");
 
         tDynamicBuffer_Append(&infoBuf, szMatch1, lstrlenW(szMatch1)*sizeof(wchar_t));
         tDynamicBuffer_Append(&infoBuf, szMatch2, lstrlenW(szMatch2)*sizeof(wchar_t));
-        tDynamicBuffer_Append(&infoBuf, szMatch3, lstrlenW(szMatch3)*sizeof(wchar_t));
     }
 
     if ( dwFindAllResultFlags & QS_FINDALL_RSLT_OCCFOUND )
     {
         cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-        nLen = wsprintfW(szText, cszTextFormat, 3); // "3 found."
+        nLen = wsprintfW(szText, cszTextFormat, 2); // "2 found."
         tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
     }
 

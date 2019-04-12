@@ -22,6 +22,7 @@ set "INCLUDE=%MSSDK%\include;%MSSDK%\include\crt;%VCDIR%\include;%INCLUDE%"
 set "LIB=%MSSDK%\lib\amd64;%MSSDK%\lib\x64;%VCDIR%\lib\amd64;%LIB%"
 set MACHINE=AMD64
 
+if not exist "..\Plugs64" mkdir "..\Plugs64"
 cd .\QSearch
 
 rc /R /DRC_VERSIONBIT=%BIT% /Fo"QSearch.res" "QSearch.rc"

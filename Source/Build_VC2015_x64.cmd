@@ -2,6 +2,7 @@ REM Visual Studio 14.0 (2015) Express
 
 call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64 8.1
 
+if not exist "..\Plugs64" mkdir "..\Plugs64"
 cd .\QSearch
 
 set BIT=64

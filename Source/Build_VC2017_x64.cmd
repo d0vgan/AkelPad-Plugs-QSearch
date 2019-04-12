@@ -2,6 +2,7 @@ REM Visual Studio 2017 Community
 
 call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
+if not exist "..\Plugs64" mkdir "..\Plugs64"
 cd .\QSearch
 
 set BIT=64
