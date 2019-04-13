@@ -2490,7 +2490,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         g_Options.dwFindAllMode |= QS_FINDALL_AUTO_COUNT_FLAG;
                 }
             }
-            else if ( (id > IDM_FINDALL_START) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL) )
+            else if ( (id > IDM_FINDALL_START) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL_TYPES) )
             {
                 DWORD dwFlags = 0;
                 if ( g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG )
@@ -2754,7 +2754,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 uCheck = (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) ? MF_CHECKED : MF_UNCHECKED;
                 CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_START, MF_BYCOMMAND | uCheck );
 
-                for ( i = QS_FINDALL_COUNTONLY; i < QS_FINDALL_TOTAL; i++ )
+                for ( i = QS_FINDALL_COUNTONLY; i < QS_FINDALL_TOTAL_TYPES; i++ )
                 {
                     uCheck = (i == (g_Options.dwFindAllMode & QS_FINDALL_MASK)) ? MF_CHECKED : MF_UNCHECKED;
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_START + i, MF_BYCOMMAND | uCheck );

@@ -125,8 +125,8 @@ BEGIN
         MENUITEM "Find All: Log Output",            IDM_FINDALL_LOGOUTPUT
         MENUITEM "Find All: File Output",           IDM_FINDALL_FILEOUTPUT
         MENUITEM "",                                -1
-        MENUITEM "Show whole line",                 IDM_FINDALL_SHOWLINE
-        MENUITEM "Show match only",                 IDM_FINDALL_SHOWMATCHONLY
+        MENUITEM "Output: Whole line",              IDM_FINDALL_SHOWLINE
+        MENUITEM "Output: Match only",              IDM_FINDALL_SHOWMATCHONLY
         MENUITEM "",                                -1
         MENUITEM "Output options...",               IDM_FINDALL_SETTINGSDLG
     END
