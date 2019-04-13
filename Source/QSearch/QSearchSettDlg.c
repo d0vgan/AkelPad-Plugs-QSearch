@@ -225,6 +225,8 @@ void FndAllSettDlg_OnInitDialog(HWND hDlg)
     unsigned int i;
     BOOL bChecked;
 
+    qsearchSetFindAllSettDlgLang(hDlg);
+
     AnyWindow_CenterWindow(hDlg, g_Plugin.hMainWnd, FALSE);
 
     for ( i = 0; ; ++i )

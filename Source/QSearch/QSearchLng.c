@@ -625,7 +625,7 @@ static unsigned int getInternalLng(void)
     }
 }
 
-void qsearchSetDialogLang(HWND hDlg)
+void qsearchSetMainDlgLang(HWND hDlg)
 {
     unsigned int uInternalLng = getInternalLng();
     // no changes for English dialog
@@ -662,6 +662,103 @@ void qsearchSetDialogLang(HWND hDlg)
             );
         }
     }
+}
+
+void qsearchSetFindAllSettDlgLang(HWND hDlg)
+{
+    static const wchar_t* szFindAllSettTitleW[INLNG_COUNT] = {
+        /* eng */
+        L"QSearch - Find All - Output",
+        /* rus */
+        L"QSearch - \x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435 - \x0412\x044B\x0432\x043E\x0434",
+        /* ukr */
+        L"QSearch - \x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435 - \x0412\x0438\x0432\x0456\x0434"
+    };
+
+    static const wchar_t* szFindAllOutputHeaderW[INLNG_COUNT] = {
+        /* eng */
+        L"Header: Searching for \"%s\" ...",
+        /* rus */
+        L"\x0417\x0430\x0433\x043E\x043B\x043E\x0432\x043E\x043A: \x0418\x0449\x0435\x043C \"%s\" ...",
+        /* ukr */
+        L"\x0417\x0430\x0433\x043E\x043B\x043E\x0432\x043E\x043A: \x0428\x0443\x043A\x0430\x0454\x043C\x043E \"%s\" ..."
+    };
+
+    static const wchar_t* szFindAllOutputPositionW[INLNG_COUNT] = {
+        /* eng */
+        L"Position: (Ln,Pos)",
+        /* rus */
+        L"\x041F\x043E\x0437\x0438\x0446\x0438\x044F: (Ln,Pos)",
+        /* ukr */
+        L"\x041F\x043E\x0437\x0438\x0446\x0456\x044F: (Ln,Pos)"
+    };
+
+    static const wchar_t* szFindAllOutputLengthW[INLNG_COUNT] = {
+        /* eng */
+        L"Length: (Len)",
+        /* rus */
+        L"\x0414\x043B\x0438\x043D\x0430: (Len)",
+        /* ukr */
+        L"\x0414\x043E\x0432\x0436\x0438\x043D\x0430: (Len)"
+    };
+
+    static const wchar_t* szFindAllOutputFooterW[INLNG_COUNT] = {
+        /* eng */
+        L"Footer: %d found.",
+        /* rus */
+        L"\x0418\x0442\x043E\x0433: %d \x043D\x0430\x0439\x0434\x0435\x043D\x043E.",
+        /* ukr */
+        L"\x041F\x0456\x0434\x0441\x0443\x043C\x043E\x043A: %d \x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E."
+    };
+
+    static const wchar_t* szFindAllOutputWholeLineW[INLNG_COUNT] = {
+        /* eng */
+        L"Whole line",
+        /* rus */
+        L"\x0412\x0441\x044F\x0020\x0441\x0442\x0440\x043E\x043A\x0430",
+        /* ukr */
+        L"\x0423\x0432\x0435\x0441\x044C\x0020\x0440\x044F\x0434\x043E\x043A"
+    };
+
+    static const wchar_t* szFindAllOutputMatchOnlyW[INLNG_COUNT] = {
+        /* eng */
+        L"Match only",
+        /* rus */
+        L"\x0422\x043E\x043B\x044C\x043A\x043E\x0020\x0441\x043E\x0432\x043F\x0430\x0434\x0435\x043D\x0438\x0435",
+        /* ukr */
+        L"\x0422\x0456\x043B\x044C\x043A\x0438\x0020\x0441\x043F\x0456\x0432\x043F\x0430\x0434\x0456\x043D\x043D\x044F"
+    };
+
+    static const wchar_t* szFindAllOutputColorThemeW[INLNG_COUNT] = {
+        /* eng */
+        L"Apply the color scheme",
+        /* rus */
+        L"\x041F\x0440\x0438\x043C\x0435\x043D\x0438\x0442\x044C\x0020\x0446\x0432\x0435\x0442\x043E\x0432\x0443\x044E\x0020\x0441\x0445\x0435\x043C\x0443",
+        /* ukr */
+        L"\x0417\x0430\x0441\x0442\x043E\x0441\x0443\x0432\x0430\x0442\x0438\x0020\x043A\x043E\x043B\x044C\x043E\x0440\x043E\x0432\x0443\x0020\x0441\x0445\x0435\x043C\x0443"
+    };
+
+    static const wchar_t* szFindAllOutputExampleW[INLNG_COUNT] = {
+        /* eng */
+        L"Example:",
+        /* rus */
+        L"\x041F\x0440\x0438\x043C\x0435\x0440:",
+        /* ukr */
+        L"\x041F\x0440\x0438\x043A\x043B\x0430\x0434:"
+    };
+
+    unsigned int uInternalLng;
+    
+    uInternalLng = getInternalLng();
+    SetWindowTextW( hDlg, szFindAllSettTitleW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_HEADER),     szFindAllOutputHeaderW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_POSITION),   szFindAllOutputPositionW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_LENGTH),     szFindAllOutputLengthW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_WHOLELINE),  szFindAllOutputWholeLineW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_MATCHONLY),  szFindAllOutputMatchOnlyW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FOOTER),     szFindAllOutputFooterW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_COLORTHEME), szFindAllOutputColorThemeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE),    szFindAllOutputExampleW[uInternalLng] );
 }
 
 void qsearchSetPopupMenuLang(HMENU hPopupMenu)
@@ -858,7 +955,7 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
     {
         case QS_STRID_FINDALL_SEARCHINGFOR:
         {
-            const wchar_t* szFindAllSearchingForW[INLNG_COUNT] = {
+            static const wchar_t* szFindAllSearchingForW[INLNG_COUNT] = {
                 /* eng */
                 L"Searching for %c%s%c ...",
                 /* rus */
@@ -871,7 +968,7 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
 
         case QS_STRID_FINDALL_OCCURRENCESFOUND:
         {
-            const wchar_t* szFindAllOccurrencesFoundW[INLNG_COUNT] = {
+            static const wchar_t* szFindAllOccurrencesFoundW[INLNG_COUNT] = {
                 /* eng */
                 L"%u occurrences found.",
                 /* rus */
@@ -881,6 +978,7 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
             };
             return szFindAllOccurrencesFoundW[uInternalLng];
         }
+
     };
 
     return L"";

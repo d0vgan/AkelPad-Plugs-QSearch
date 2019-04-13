@@ -3116,7 +3116,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             g_QSearchDlg.hFindAllPopupMenu = GetSubMenu(hPopupMenuLoaded, 1);
             qsearchSetPopupMenuLang(g_QSearchDlg.hPopupMenu);
             qsearchSetFindAllPopupMenuLang(g_QSearchDlg.hFindAllPopupMenu);
-            qsearchSetDialogLang(hDlg);
+            qsearchSetMainDlgLang(hDlg);
 
             qsdlgShowHideWholeWordCheckBox(hDlg, g_Options.dwFlags);
 

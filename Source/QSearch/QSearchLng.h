@@ -5,7 +5,8 @@
 
 
 // lng funcs
-void           qsearchSetDialogLang(HWND hDlg);
+void           qsearchSetMainDlgLang(HWND hDlg);
+void           qsearchSetFindAllSettDlgLang(HWND hDlg);
 void           qsearchSetPopupMenuLang(HMENU hPopupMenu);
 void           qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu);
 const char*    qsearchGetHintA(unsigned int uDlgItemID);
