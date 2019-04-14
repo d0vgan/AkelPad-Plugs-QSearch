@@ -366,7 +366,8 @@ Additional options (QSearch panel's popup menu or file
      Its lower byte can be one of:
       1 - Count Only
       2 - Log Output
-      3 - File Output
+      3 - File Output * N (Multiple tabs)
+      4 - File Output * 1 (Single tab)
      The following value can be added:
       256 - Auto Count All
      Thus, the value of findall_mode = 258 will mean:

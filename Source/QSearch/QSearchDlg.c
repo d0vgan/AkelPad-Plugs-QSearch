@@ -464,8 +464,13 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
     bOutputResult = FALSE;
 
     if ( ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) &&
-         (pCurrentEditFrame != NULL) && 
-         SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pCurrentEditFrame) )
+         (g_Plugin.nMDI == WMD_SDI) )
+    {
+        bOutputResult = TRUE;
+    }
+    else if ( ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) &&
+              (pCurrentEditFrame != NULL) && 
+              SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pCurrentEditFrame) )
     {
         SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pCurrentEditFrame);
         bOutputResult = TRUE;
