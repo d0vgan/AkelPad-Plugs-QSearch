@@ -66,12 +66,13 @@
 #define  QS_FINDALL_AUTO_COUNT         0
 #define  QS_FINDALL_COUNTONLY          1
 #define  QS_FINDALL_LOGOUTPUT          2
-#define  QS_FINDALL_FILEOUTPUT         3
-#define  QS_FINDALL_TOTAL_TYPES        4 // Only "Find All" types
-#define  QS_FINDALL_SHOWLINE           4
-#define  QS_FINDALL_SHOWMATCHONLY      5
-#define  QS_FINDALL_SETTINGSDLG        6
-#define  QS_FINDALL_TOTAL              7 // All items of the "Find All" menu
+#define  QS_FINDALL_FILEOUTPUT_MULT    3
+#define  QS_FINDALL_FILEOUTPUT_SNGL    4
+#define  QS_FINDALL_TOTAL_TYPES        5 // Only "Find All" types
+#define  QS_FINDALL_SHOWLINE           5
+#define  QS_FINDALL_SHOWMATCHONLY      6
+#define  QS_FINDALL_SETTINGSDLG        7
+#define  QS_FINDALL_TOTAL              8 // All items of the "Find All" menu
 #define  QS_FINDALL_MASK               0x000F
 #define  QS_FINDALL_AUTO_COUNT_FLAG    0x0100
 

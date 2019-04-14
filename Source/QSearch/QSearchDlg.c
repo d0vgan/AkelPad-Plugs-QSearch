@@ -435,8 +435,10 @@ static void qsShowFindResults_FileOutput_AddOccurrence(const tDynamicBuffer* pOc
 
 static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
 {
+    static FRAMEDATA* pCurrentEditFrame = NULL;
     const wchar_t* cszTextFormat;
     UINT_PTR nLen;
+    BOOL bOutputResult;
     wchar_t  szText[128];
     wchar_t  szCoderAlias[MAX_CODERALIAS + 1];
 
@@ -459,20 +461,61 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
 
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     
-    if ( SendMessage(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
+    bOutputResult = FALSE;
+
+    if ( ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) &&
+         (pCurrentEditFrame != NULL) && 
+         SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pCurrentEditFrame) )
+    {
+        SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pCurrentEditFrame);
+        bOutputResult = TRUE;
+    }
+    else if ( SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
+    {
+        pCurrentEditFrame = NULL;
+        bOutputResult = TRUE;
+    }
+    
+    if ( bOutputResult )
     {
         EDITINFO  ei;
 
+        if ( pCurrentEditFrame == NULL )
+        {
+            pCurrentEditFrame = (FRAMEDATA *) SendMessageW( g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
+        }
+
         ei.hWndEdit = NULL;
-        SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
+        SendMessageW( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
         if ( ei.hWndEdit )
         {
+            AEAPPENDTEXTW aeatW;
+            AECHARINDEX aeci;
+
             if ( szCoderAlias[0] )
             {
                 setCoderAliasW(szCoderAlias);
             }
 
-            SendMessageW( ei.hWndEdit, EM_REPLACESEL, FALSE, (LPARAM) pResultsBuf->ptr );
+            if ( ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) )
+            {
+                if ( SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) ei.hWndEdit, 0) != 0 )
+                {
+                    aeatW.pText = L"\r\r";
+                    aeatW.dwTextLen = (UINT_PTR) (-1);
+                    aeatW.nNewLine = AELB_ASINPUT;
+                    SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+                }
+            }
+
+            /* SendMessageW( ei.hWndEdit, EM_REPLACESEL, FALSE, (LPARAM) pResultsBuf->ptr ); */
+            aeatW.pText = (const wchar_t *) pResultsBuf->ptr;
+            aeatW.dwTextLen = pResultsBuf->nBytesStored/sizeof(wchar_t) - 1; // excluding the trailing '\0'
+            aeatW.nNewLine = AELB_ASINPUT;
+            SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+
+            SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeci );
+            SendMessageW( ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeci, (LPARAM) &aeci );
         }
     }
 
@@ -2836,7 +2879,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
                     qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
                 }
-                else if ( dwFindAllMode == QS_FINDALL_FILEOUTPUT )
+                else if ( dwFindAllMode == QS_FINDALL_FILEOUTPUT_MULT ||
+                          dwFindAllMode == QS_FINDALL_FILEOUTPUT_SNGL )
                 {
                     // FileOutput
                     dwSearch |= QSEARCH_FINDALL;

@@ -119,16 +119,17 @@ BEGIN
 
     POPUP "Find All Options"
     BEGIN
-        MENUITEM "Auto Count All",                  IDM_FINDALL_AUTO_COUNT
-        MENUITEM "",                                -1
-        MENUITEM "Find All: Count Only",            IDM_FINDALL_COUNTONLY
-        MENUITEM "Find All: Log Output",            IDM_FINDALL_LOGOUTPUT
-        MENUITEM "Find All: File Output",           IDM_FINDALL_FILEOUTPUT
-        MENUITEM "",                                -1
-        MENUITEM "Output: Whole line",              IDM_FINDALL_SHOWLINE
-        MENUITEM "Output: Match only",              IDM_FINDALL_SHOWMATCHONLY
-        MENUITEM "",                                -1
-        MENUITEM "Output options...",               IDM_FINDALL_SETTINGSDLG
+        MENUITEM "Auto Count All",                               IDM_FINDALL_AUTO_COUNT
+        MENUITEM "",                                             -1
+        MENUITEM "Find All: Count Only",                         IDM_FINDALL_COUNTONLY
+        MENUITEM "Find All: Log Output",                         IDM_FINDALL_LOGOUTPUT
+        MENUITEM "Find All: File Output * N",                    IDM_FINDALL_FILEOUTPUT_MULT
+        MENUITEM "Find All: File Output * 1",                    IDM_FINDALL_FILEOUTPUT_SNGL
+        MENUITEM "",                                             -1
+        MENUITEM "Output: Whole line",                           IDM_FINDALL_SHOWLINE
+        MENUITEM "Output: Match only",                           IDM_FINDALL_SHOWMATCHONLY
+        MENUITEM "",                                             -1
+        MENUITEM "Output options...",                            IDM_FINDALL_SETTINGSDLG
     END
 END
 
