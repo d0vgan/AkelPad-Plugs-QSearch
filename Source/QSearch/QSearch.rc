@@ -123,8 +123,8 @@ BEGIN
         MENUITEM "",                                             -1
         MENUITEM "Find All: Count Only",                         IDM_FINDALL_COUNTONLY
         MENUITEM "Find All: Log Output",                         IDM_FINDALL_LOGOUTPUT
-        MENUITEM "Find All: File Output * N",                    IDM_FINDALL_FILEOUTPUT_MULT
-        MENUITEM "Find All: File Output * 1",                    IDM_FINDALL_FILEOUTPUT_SNGL
+        MENUITEM "Find All: File Output (N tabs)",               IDM_FINDALL_FILEOUTPUT_MULT
+        MENUITEM "Find All: File Output (1 tab)",                IDM_FINDALL_FILEOUTPUT_SNGL
         MENUITEM "",                                             -1
         MENUITEM "Output: Whole line",                           IDM_FINDALL_SHOWLINE
         MENUITEM "Output: Match only",                           IDM_FINDALL_SHOWMATCHONLY

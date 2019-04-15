@@ -1752,6 +1752,23 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     }
                 }
             }
+            // else if ( wParam == 0x43 ) // 'C'
+            // {
+            //     if ( GetKeyState(VK_MENU) & 0x80 ) // Alt+C
+            //     {
+            //         HWND hCh = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
+            //         if ( hCh )
+            //         {
+            //             WPARAM wState;
+            //             if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
+            //                 wState = BST_UNCHECKED;
+            //             else
+            //                 wState = BST_CHECKED;
+            //             SendMessage(hCh, BM_SETCHECK, wState, 0);
+            //         }
+            //         return 0;
+            //     }
+            // }
             else if ( LOBYTE(wParam) == LOBYTE(qs_dwHotKey) )
             {
                 bHotKeyPressed = isQSearchHotKeyPressed();
@@ -1871,6 +1888,13 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             break;
         }
+        // case WM_SYSCHAR:
+        // {
+        //     if ( wParam == 0x43 ) // Alt+C
+        //     {
+        //         return 0;
+        //     }
+        // }
         case WM_SETFOCUS:
         {
             qs_bEditIsActive = TRUE;
