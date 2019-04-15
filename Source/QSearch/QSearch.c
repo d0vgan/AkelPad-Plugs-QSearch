@@ -59,6 +59,7 @@ void CloseLog(void)
 #define  DEFAULT_COLOR_EOF           RGB(0xE4, 0xFF, 0xE4)
 #define  DEFAULT_COLOR_HIGHLIGHT     RGB(0xC0, 0xFF, 0xC0)
 #define  DEFAULT_HIGHLIGHT_MARK_ID   1001
+#define  DEFAULT_USE_ALT_HOTKEYS     1
 #define  DEFAULT_ALT_MATCHCASE       0x43  // 'C', Alt+C (Case)
 #define  DEFAULT_ALT_WHOLEWORD       0x57  // 'W', Alt+W (Whole Word)
 #define  DEFAULT_ALT_SEARCHMODE      0x52  // 'R', Alt+R (Search Mode)
@@ -945,6 +946,32 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             break;
         }
+        case AKDN_HOTKEYGLOBAL:
+        {
+            if ( g_Options.dwUseAltHotkeys && g_QSearchDlg.hDlg )
+            {
+                BYTE uModifier = HIBYTE(wParam);
+                if ( uModifier == HOTKEYF_ALT )
+                {
+                    BYTE uKeyCode = LOBYTE(wParam);
+                    if ( uKeyCode == g_Options.dwAltMatchCase ||
+                         uKeyCode == g_Options.dwAltWholeWord ||
+                         uKeyCode == g_Options.dwAltSearchMode ||
+                         uKeyCode == g_Options.dwAltHighlightAll )
+                    {
+                        HWND hFocusedWnd = GetFocus();
+                        if ( (hFocusedWnd == g_QSearchDlg.hFindEdit) ||
+                             (GetParent(hFocusedWnd) == g_QSearchDlg.hDlg) )
+                        {
+                            int* pKeyProcessing = (int *) lParam;
+                            *pKeyProcessing = 1; // stop processing
+                            qsearchDlgProc(g_QSearchDlg.hDlg, WM_SYSKEYDOWN, uKeyCode, 0);
+                        }
+                    }
+                }
+            }
+            break;
+        }
         case AKDN_SIZE_ONSTART:
         {
             if ( g_QSearchDlg.pDockData )
@@ -1360,7 +1387,7 @@ void ReadOptions(void)
         g_Options.dwHighlightState = 0;
 
     if ( g_Options.dwUseAltHotkeys == WRONG_DWORD_VALUE )
-        g_Options.dwUseAltHotkeys = 0;
+        g_Options.dwUseAltHotkeys = DEFAULT_USE_ALT_HOTKEYS;
 
     if ( g_Options.dwAltMatchCase == WRONG_DWORD_VALUE )
         g_Options.dwAltMatchCase = DEFAULT_ALT_MATCHCASE;
