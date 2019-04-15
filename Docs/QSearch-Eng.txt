@@ -16,6 +16,7 @@ Esc             - hide the panel
 Ctrl+Del        - edit control: erase the text after the caret (to the right)
 Ctrl+BS         - edit control: erase the text before the caret (to the left)
 Ctrl+A          - edit control: select all the text
+See also 'use_alt_hotkeys' below.
 
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text 
@@ -281,6 +282,7 @@ Additional options (QSearch panel's popup menu or file
      The following additional accelerator keys are available in QSearch panel:
      Alt+alt_match_case    (Alt+C) - Match case on/off
      Alt+alt_whole_word    (Alt+W) - Whole word on/off
+     Alt+alt_search_mode   (Alt+R) - Search mode (text/spec.symb/regexp)
      Alt+alt_highlight_all (Alt+H) - Highlight all on/off
 
 26) alt_match_case = 67
@@ -298,17 +300,24 @@ Additional options (QSearch panel's popup menu or file
      The default value of 87 means a 'W' key i.e. the accelerator is Alt+W.
      See 'alt_match_case' for more details.
 
-28) alt_highlight_all = 72
+28) alt_search_mode = 82
+     When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
+     an accelerator key code for switching the search mode:
+     text -> special characters -> regular expressions -> text -> ...
+     The default value of 82 means a 'R' key i.e. the accelerator is Alt+R.
+     See 'alt_match_case' for more details.
+
+29) alt_highlight_all = 72
      When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
      an accelerator key code for QSearch'es "Highlight all" check-box.
      The default value of 72 means a 'H' key i.e. the accelerator is Alt+H.
      See 'alt_match_case' for more details.
 
-29) find_history_items = 15
+30) find_history_items = 15
      Maximum number of items in the find history (drop-down list).
      You can set it to 0 to disable the find history.
 
-30) history_save = 3
+31) history_save = 3
      Can be set to 0 or be a sum of the following values:
      0 - the find history and the state are not saved.
      1 - the find history is saved to the System Registry.
@@ -317,7 +326,7 @@ Additional options (QSearch panel's popup menu or file
          being used by AkelPad to save the settings (e.g. to .ini file).
          Allows QSearch'es settings to be completely portable.
 
-31) new_ui = 0
+32) new_ui = 0
      QSearch shows its old "classic" UI:
      [text to find]  [ ]Match case [ ]Whole word [ ]Highlight all
     new_ui = 1
@@ -328,7 +337,7 @@ Additional options (QSearch panel's popup menu or file
      [text to find]  [ < ] [ > ] [ * ]  [ ]Match case [ ]Whole word [ ]Highlight all
        - the [ * ] button means "Find All" and has its own popup menu
 
-32) select_by_f3 = 0
+33) select_by_f3 = 0
      This option is topical when both "Search: Pick up selected text" and
      "Window: Catch main F3" are checked.
      When there is no selected text in the editor window, F3 uses the text
@@ -348,7 +357,7 @@ Additional options (QSearch panel's popup menu or file
      last character.
      (Example: w|ord, wo|rd, wor|d - but not word| or |word.)
 
-33) adj_incompl_regexp = 1
+34) adj_incompl_regexp = 1
      Adjusts "incomplete" RegExp: the symbols "+", "*", "+?" and "*?" at the
      end of RegExp are ignored to avoid selection till the end of the file.
      The purpose of this is highly noticeable in the On-the-fly mode, when
@@ -361,7 +370,7 @@ Additional options (QSearch panel's popup menu or file
     adj_incompl_regexp = 0
      Does not adjust "incomplete" RegExp.
 
-34) findall_mode = 2
+35) findall_mode = 2
      Responsible for the "Find All" mode.
      Its lower byte can be one of:
       1 - Count Only
@@ -374,7 +383,7 @@ Additional options (QSearch panel's popup menu or file
       * Auto Count All (count all occurrences while searching)
       * Log Output (output to Log::Output when "Find All" is pressed)
 
-35) findall_result = 816
+36) findall_result = 816
      Represents the "Find All Results Format" dialog.
      The value will be the sum of the following numbers:
       0 - Include the line with the occurrence
@@ -385,7 +394,7 @@ Additional options (QSearch panel's popup menu or file
       512 - Include the footer: "%d found."
       4096 - Apply the Coder alias
 
-36) findall_count_delay = 400
+37) findall_count_delay = 400
      Delay, in milliseconds, before starting to count all the occurrences
      when both the "Auto Count All" and On-the-fly mode are on.
 

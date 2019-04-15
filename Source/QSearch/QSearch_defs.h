@@ -31,17 +31,18 @@
 #define  OPT_USE_ALT_HOTKEYS          24
 #define  OPT_ALT_MATCHCASE            25
 #define  OPT_ALT_WHOLEWORD            26
-#define  OPT_ALT_HIGHLIGHTALL         27
-#define  OPT_FIND_HISTORY_ITEMS       28
-#define  OPT_HISTORY_SAVE             29
-#define  OPT_NEW_UI                   30
-#define  OPT_SELECT_BY_F3             31
-#define  OPT_ADJ_INCOMPL_REGEXP       32
-#define  OPT_FINDALL_MODE             33
-#define  OPT_FINDALL_RESULT           34
-#define  OPT_FINDALL_COUNT_DELAY      35
+#define  OPT_ALT_SEARCHMODE           27
+#define  OPT_ALT_HIGHLIGHTALL         28
+#define  OPT_FIND_HISTORY_ITEMS       29
+#define  OPT_HISTORY_SAVE             30
+#define  OPT_NEW_UI                   31
+#define  OPT_SELECT_BY_F3             32
+#define  OPT_ADJ_INCOMPL_REGEXP       33
+#define  OPT_FINDALL_MODE             34
+#define  OPT_FINDALL_RESULT           35
+#define  OPT_FINDALL_COUNT_DELAY      36
 
-#define  OPT_TOTALCOUNT               36
+#define  OPT_TOTALCOUNT               37
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

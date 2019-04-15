@@ -59,9 +59,10 @@ void CloseLog(void)
 #define  DEFAULT_COLOR_EOF           RGB(0xE4, 0xFF, 0xE4)
 #define  DEFAULT_COLOR_HIGHLIGHT     RGB(0xC0, 0xFF, 0xC0)
 #define  DEFAULT_HIGHLIGHT_MARK_ID   1001
-#define  DEFAULT_ALT_MATCHCASE       0x43  // 'C' (Case)
-#define  DEFAULT_ALT_WHOLEWORD       0x57  // 'W' (Whole Word)
-#define  DEFAULT_ALT_HIGHLIGHTALL    0x48  // 'H' (Highlight)
+#define  DEFAULT_ALT_MATCHCASE       0x43  // 'C', Alt+C (Case)
+#define  DEFAULT_ALT_WHOLEWORD       0x57  // 'W', Alt+W (Whole Word)
+#define  DEFAULT_ALT_SEARCHMODE      0x52  // 'R', Alt+R (Search Mode)
+#define  DEFAULT_ALT_HIGHLIGHTALL    0x48  // 'H', Alt+H (Highlight)
 #define  DEFAULT_FIND_HISTORY_ITEMS  15
 #define  DEFAULT_HISTORY_SAVE        0x03
 #define  DEFAULT_QS_UI               QS_UI_NEW_02
@@ -122,6 +123,7 @@ void CloseLog(void)
         pOptions->dwUseAltHotkeys = WRONG_DWORD_VALUE;
         pOptions->dwAltMatchCase = WRONG_DWORD_VALUE;
         pOptions->dwAltWholeWord = WRONG_DWORD_VALUE;
+        pOptions->dwAltSearchMode = WRONG_DWORD_VALUE;
         pOptions->dwAltHighlightAll = WRONG_DWORD_VALUE;
         pOptions->dwFindHistoryItems = WRONG_DWORD_VALUE;
         pOptions->dwHistorySave = WRONG_DWORD_VALUE;
@@ -165,6 +167,7 @@ void CloseLog(void)
              (pOpt1->dwUseAltHotkeys     !=  pOpt2->dwUseAltHotkeys)    ||
              (pOpt1->dwAltMatchCase      !=  pOpt2->dwAltMatchCase)     ||
              (pOpt1->dwAltWholeWord      !=  pOpt2->dwAltWholeWord)     ||
+             (pOpt1->dwAltSearchMode     !=  pOpt2->dwAltSearchMode)    ||
              (pOpt1->dwAltHighlightAll   !=  pOpt2->dwAltHighlightAll)  ||
              (pOpt1->dwFindHistoryItems  !=  pOpt2->dwFindHistoryItems) ||
              (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)      ||
@@ -215,15 +218,16 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_USE_ALT_HOTKEYS          24 */  "use_alt_hotkeys",
   /* OPT_ALT_MATCHCASE            25 */  "alt_match_case",
   /* OPT_ALT_WHOLEWORD            26 */  "alt_whole_word",
-  /* OPT_ALT_HIGHLIGHTALL         27 */  "alt_highlight_all",
-  /* OPT_FIND_HISTORY_ITEMS       28 */  "find_history_items",
-  /* OPT_HISTORY_SAVE             29 */  "history_save",
-  /* OPT_NEW_UI                   30 */  "new_ui",
-  /* OPT_SELECT_BY_F3             31 */  "select_by_f3",
-  /* OPT_ADJ_INCOMPL_REGEXP       32 */  "adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             33 */  "findall_mode",
-  /* OPT_FINDALL_RESULT           34 */  "findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      35 */  "findall_count_delay"
+  /* OPT_ALT_SEARCHMODE           27 */  "alt_search_mode",
+  /* OPT_ALT_HIGHLIGHTALL         28 */  "alt_highlight_all",
+  /* OPT_FIND_HISTORY_ITEMS       29 */  "find_history_items",
+  /* OPT_HISTORY_SAVE             30 */  "history_save",
+  /* OPT_NEW_UI                   31 */  "new_ui",
+  /* OPT_SELECT_BY_F3             32 */  "select_by_f3",
+  /* OPT_ADJ_INCOMPL_REGEXP       33 */  "adj_incompl_regexp",
+  /* OPT_FINDALL_MODE             34 */  "findall_mode",
+  /* OPT_FINDALL_RESULT           35 */  "findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      36 */  "findall_count_delay"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -254,15 +258,16 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_USE_ALT_HOTKEYS          24 */  L"use_alt_hotkeys",
   /* OPT_ALT_MATCHCASE            25 */  L"alt_match_case",
   /* OPT_ALT_WHOLEWORD            26 */  L"alt_whole_word",
-  /* OPT_ALT_HIGHLIGHTALL         27 */  L"alt_highlight_all",
-  /* OPT_FIND_HISTORY_ITEMS       28 */  L"find_history_items",
-  /* OPT_HISTORY_SAVE             29 */  L"history_save",
-  /* OPT_NEW_UI                   30 */  L"new_ui",
-  /* OPT_SELECT_BY_F3             31 */  L"select_by_f3",
-  /* OPT_ADJ_INCOMPL_REGEXP       32 */  L"adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             33 */  L"findall_mode",
-  /* OPT_FINDALL_RESULT           34 */  L"findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      35 */  L"findall_count_delay"
+  /* OPT_ALT_SEARCHMODE           27 */  L"alt_search_mode",
+  /* OPT_ALT_HIGHLIGHTALL         28 */  L"alt_highlight_all",
+  /* OPT_FIND_HISTORY_ITEMS       29 */  L"find_history_items",
+  /* OPT_HISTORY_SAVE             30 */  L"history_save",
+  /* OPT_NEW_UI                   31 */  L"new_ui",
+  /* OPT_SELECT_BY_F3             32 */  L"select_by_f3",
+  /* OPT_ADJ_INCOMPL_REGEXP       33 */  L"adj_incompl_regexp",
+  /* OPT_FINDALL_MODE             34 */  L"findall_mode",
+  /* OPT_FINDALL_RESULT           35 */  L"findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      36 */  L"findall_count_delay"
 };
 
 
@@ -1163,6 +1168,9 @@ void ReadOptions(void)
             g_Options.dwAltWholeWord = readDwordA( hOptions, 
               CSZ_OPTIONS[OPT_ALT_WHOLEWORD], WRONG_DWORD_VALUE );
 
+            g_Options.dwAltSearchMode = readDwordA( hOptions, 
+              CSZ_OPTIONS[OPT_ALT_SEARCHMODE], WRONG_DWORD_VALUE );
+
             g_Options.dwAltHighlightAll = readDwordA( hOptions, 
               CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], WRONG_DWORD_VALUE );
 
@@ -1238,6 +1246,9 @@ void ReadOptions(void)
 
             g_Options.dwAltWholeWord = readDwordW( hOptions, 
               CWSZ_OPTIONS[OPT_ALT_WHOLEWORD], WRONG_DWORD_VALUE );
+
+            g_Options.dwAltSearchMode = readDwordW( hOptions, 
+              CWSZ_OPTIONS[OPT_ALT_SEARCHMODE], WRONG_DWORD_VALUE );
 
             g_Options.dwAltHighlightAll = readDwordW( hOptions, 
               CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], WRONG_DWORD_VALUE );
@@ -1356,6 +1367,9 @@ void ReadOptions(void)
 
     if ( g_Options.dwAltWholeWord == WRONG_DWORD_VALUE )
         g_Options.dwAltWholeWord = DEFAULT_ALT_WHOLEWORD;
+
+    if ( g_Options.dwAltSearchMode == WRONG_DWORD_VALUE )
+        g_Options.dwAltSearchMode = DEFAULT_ALT_SEARCHMODE;
 
     if ( g_Options.dwAltHighlightAll == WRONG_DWORD_VALUE )
         g_Options.dwAltHighlightAll = DEFAULT_ALT_HIGHLIGHTALL;
@@ -1479,6 +1493,9 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_WHOLEWORD], 
                   g_Options.dwAltWholeWord );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_SEARCHMODE], 
+                  g_Options.dwAltSearchMode );
+
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], 
                   g_Options.dwAltHighlightAll );
 
@@ -1566,6 +1583,9 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_WHOLEWORD], 
                   g_Options.dwAltWholeWord );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_SEARCHMODE], 
+                  g_Options.dwAltSearchMode );
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], 
                   g_Options.dwAltHighlightAll );

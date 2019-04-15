@@ -48,6 +48,7 @@
         DWORD    dwUseAltHotkeys;
         DWORD    dwAltMatchCase;
         DWORD    dwAltWholeWord;
+        DWORD    dwAltSearchMode;
         DWORD    dwAltHighlightAll;
         DWORD    dwFindHistoryItems; // QSM_UPDATEUI, QS_UI_FIND, 0
         DWORD    dwHistorySave;
