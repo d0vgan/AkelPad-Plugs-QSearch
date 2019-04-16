@@ -965,7 +965,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         {
                             int* pKeyProcessing = (int *) lParam;
                             *pKeyProcessing = 1; // stop processing
-                            qsearchDlgProc(g_QSearchDlg.hDlg, WM_SYSKEYDOWN, uKeyCode, 0);
+                            qsearchDlgOnAltHotkey(g_QSearchDlg.hDlg, uKeyCode);
                         }
                     }
                 }

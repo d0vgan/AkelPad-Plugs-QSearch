@@ -1376,6 +1376,76 @@ static LRESULT CALLBACK btnWndProc(HWND hBtn,
 }
 */
 
+static wchar_t virtKeyToCharW(DWORD dwKey)
+{
+    UINT uCh = MapVirtualKeyW(dwKey, 2 /*MAPVK_VK_TO_CHAR*/);
+    wchar_t wch = (wchar_t) (uCh & 0xFFFF);
+    return wch;
+}
+
+static char virtKeyToCharA(DWORD dwKey)
+{
+    UINT uCh = MapVirtualKeyA(dwKey, 2 /*MAPVK_VK_TO_CHAR*/);
+    char ch = (char) (uCh & 0xFF);
+    return ch;
+}
+
+#define AHKF_PARENTHESES 0x01
+#define AHKF_INDENT      0x02
+static void strFormatAltHotkeyW(wchar_t* szHotkeyW, DWORD dwAltHotkey, UINT uFlags)
+{
+    wchar_t* p;
+
+    p = szHotkeyW;
+    if ( uFlags & AHKF_INDENT )
+        *(p++) = L' ';
+    if ( uFlags & AHKF_PARENTHESES )
+        *(p++) = L'(';
+    *(p++) = L'A';
+    *(p++) = L'l';
+    *(p++) = L't';
+    *(p++) = L'+';
+    *(p++) = virtKeyToCharW(dwAltHotkey);
+    if ( uFlags & AHKF_PARENTHESES )
+        *(p++) = L')';
+    *p = 0;
+}
+
+static void strFormatAltHotkeyA(char* szHotkeyA, DWORD dwAltHotkey, UINT uFlags)
+{
+    char* p;
+
+    p = szHotkeyA;
+    if ( uFlags & AHKF_INDENT )
+        *(p++) = ' ';
+    if ( uFlags & AHKF_PARENTHESES )
+        *(p++) = '(';
+    *(p++) = 'A';
+    *(p++) = 'l';
+    *(p++) = 't';
+    *(p++) = '+';
+    *(p++) = virtKeyToCharA(dwAltHotkey);
+    if ( uFlags & AHKF_PARENTHESES )
+        *(p++) = ')';
+    *p = 0;
+}
+
+static void strAppendAltHotkeyW(wchar_t* strW, DWORD dwAltHotkey)
+{
+    wchar_t szHotKeyW[32];
+
+    strFormatAltHotkeyW(szHotKeyW, dwAltHotkey, AHKF_INDENT | AHKF_PARENTHESES);
+    lstrcatW(strW, szHotKeyW);
+}
+
+static void strAppendAltHotkeyA(char* strA, DWORD dwAltHotkey)
+{
+    char szHotKeyA[32];
+
+    strFormatAltHotkeyA(szHotKeyA, dwAltHotkey, AHKF_INDENT | AHKF_PARENTHESES);
+    lstrcatA(strA, szHotKeyA);
+}
+
 static void OnChWholeWordSrchMode()
 {
     if ( g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] )
@@ -1426,6 +1496,59 @@ static LRESULT CALLBACK chWholeWordWndProc(HWND hCh,
         case WM_MBUTTONDBLCLK:
             OnChWholeWordSrchMode();
             return 0;
+
+        case WM_NOTIFY:
+            if ( g_Plugin.bOldWindows )
+            {
+                if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
+                {
+                    static char szHintA[128];
+                    char szHotkeyWordA[32];
+                    char szHotkeyModeA[32];
+                    LPNMTTDISPINFOA lpnmdiA;
+
+                    szHotkeyWordA[0] = 0;
+                    szHotkeyModeA[0] = 0;
+                    if ( g_Options.dwUseAltHotkeys )
+                    {
+                        strFormatAltHotkeyA(szHotkeyWordA, g_Options.dwAltWholeWord, AHKF_INDENT | AHKF_PARENTHESES);
+                        strFormatAltHotkeyA(szHotkeyModeA, g_Options.dwAltSearchMode, 0);
+                        lstrcatA(szHotkeyModeA, " / ");
+                    }
+                    wsprintfA(szHintA, qsearchGetHintA(IDC_CH_WHOLEWORD), szHotkeyWordA, szHotkeyModeA);
+
+                    lpnmdiA = (LPNMTTDISPINFOA) lParam;
+                    SendMessageA(lpnmdiA->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                    lpnmdiA->lpszText = szHintA;
+                    return 0;
+                }
+            }
+            else
+            {
+                if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
+                {
+                    static wchar_t szHintW[128];
+                    wchar_t szHotkeyWordW[32];
+                    wchar_t szHotkeyModeW[32];
+                    LPNMTTDISPINFOW lpnmdiW;
+                    
+                    szHotkeyWordW[0] = 0;
+                    szHotkeyModeW[0] = 0;
+                    if ( g_Options.dwUseAltHotkeys )
+                    {
+                        strFormatAltHotkeyW(szHotkeyWordW, g_Options.dwAltWholeWord, AHKF_INDENT | AHKF_PARENTHESES);
+                        strFormatAltHotkeyW(szHotkeyModeW, g_Options.dwAltSearchMode, 0);
+                        lstrcatW(szHotkeyModeW, L" / ");
+                    }
+                    wsprintfW(szHintW, qsearchGetHintW(IDC_CH_WHOLEWORD), szHotkeyWordW, szHotkeyModeW);
+                    
+                    lpnmdiW = (LPNMTTDISPINFOW) lParam;
+                    SendMessageW(lpnmdiW->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                    lpnmdiW->lpszText = szHintW;
+                    return 0;
+                }
+            }
+            break;
     }
 
     return callWndProc(prev_chWholeWordWndProc, hCh, uMsg, wParam, lParam);
@@ -2017,7 +2140,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
                 {
                     LPNMTTDISPINFOA lpnmdiA = (LPNMTTDISPINFOA) lParam;
-                    SendMessage(lpnmdiA->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                    SendMessageA(lpnmdiA->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
                     lpnmdiA->lpszText = (LPSTR) qsearchGetHintA(IDC_ED_FINDTEXT);
                     return 0;
                 }
@@ -2027,7 +2150,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
                 {
                     LPNMTTDISPINFOW lpnmdiW = (LPNMTTDISPINFOW) lParam;
-                    SendMessage(lpnmdiW->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                    SendMessageW(lpnmdiW->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
                     lpnmdiW->lpszText = (LPWSTR) qsearchGetHintW(IDC_ED_FINDTEXT);
                     return 0;
                 }
@@ -2157,6 +2280,82 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
     }
 }
 
+INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam)
+{
+    if ( g_Options.dwUseAltHotkeys )
+    {
+        if ( wParam == g_Options.dwAltMatchCase )
+        {
+            qsChangeCkeckBoxState(IDC_CH_MATCHCASE);
+            return 1;
+        }
+        if ( wParam == g_Options.dwAltHighlightAll )
+        {
+            qsChangeCkeckBoxState(IDC_CH_HIGHLIGHTALL);
+            return 1;
+        }
+        if ( wParam == g_Options.dwAltWholeWord )
+        {
+            qsChangeCkeckBoxState(IDC_CH_WHOLEWORD);
+            return 1;
+        }
+        if ( wParam == g_Options.dwAltSearchMode )
+        {
+            OnChWholeWordSrchMode();
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
+{
+    HWND hChHighlightAll;
+    BOOL bHighlightAllChecked = FALSE;
+    BOOL bProcessed = FALSE;
+
+    hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
+    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
+        bHighlightAllChecked = TRUE;
+
+    if ( bHighlightAllChecked &&
+        g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
+        g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
+        g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
+    {
+        qs_bForceFindFirst = TRUE;
+        bProcessed = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
+    }
+
+    setInfoEmpty();
+
+    if ( !bProcessed )
+    {
+        qs_bForceFindFirst = TRUE;
+        qs_bEditTextChanged = TRUE;
+        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+
+        if ( bHighlightAllChecked )
+        {
+            DWORD dwOptFlagsTemp[OPTF_COUNT];
+
+            getEditFindText(g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW);
+
+            copyOptionsFlags(dwOptFlagsTemp, g_Options.dwFlags);
+            dwOptFlagsTemp[OPTF_SRCH_ONTHEFLY_MODE] = 1;
+            dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0;
+            qsearchDoSearchText( g_QSearchDlg.hFindEdit, QSEARCH_FIRST, dwOptFlagsTemp, NULL );
+
+            qsearchDoTryHighlightAll(hDlg, g_Options.dwFlags);
+        }
+    }
+    else
+    {
+        qs_bEditTextChanged = TRUE;
+        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+    }
+}
+
 INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
   UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2264,39 +2463,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
-                    HWND hChHighlightAll;
-                    BOOL bHighlightAllChecked = FALSE;
-                    BOOL bProcessed = FALSE;
-
-                    hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-                    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                        bHighlightAllChecked = TRUE;
-
-                    if ( bHighlightAllChecked &&
-                         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
-                         g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
-                         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
-                    {
-                        qs_bForceFindFirst = TRUE;
-                        bProcessed = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
-                    }
-
-                    setInfoEmpty();
-
-                    if ( !bProcessed )
-                    {
-                        qs_bForceFindFirst = TRUE;
-                        qs_bEditTextChanged = TRUE;
-                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
-
-                        if ( bHighlightAllChecked )
-                            qsUpdateHighlight(hDlg, g_QSearchDlg.hFindEdit, g_Options.dwFlags);
-                    }
-                    else
-                    {
-                        qs_bEditTextChanged = TRUE;
-                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
-                    }
+                    OnChMatchCaseOrWholeWordClicked(hDlg);
                 }
             }
             else if ( id == IDC_CH_WHOLEWORD )
@@ -2306,50 +2473,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 }
                 else if ( HIWORD(wParam) == BN_CLICKED )
                 {
-                    HWND hChHighlightAll;
-                    BOOL bHighlightAllChecked = FALSE;
-                    BOOL bProcessed = FALSE;
-
-                    hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-                    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                        bHighlightAllChecked = TRUE;
-
-                    if ( bHighlightAllChecked &&
-                         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
-                         g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] &&
-                         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
-                    {
-                        qs_bForceFindFirst = TRUE;
-                        bProcessed = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
-                    }
-
-                    setInfoEmpty();
-
-                    if ( !bProcessed )
-                    {
-                        qs_bForceFindFirst = TRUE;
-                        qs_bEditTextChanged = TRUE;
-                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
-
-                        if ( bHighlightAllChecked )
-                        {
-                            DWORD dwOptFlagsTemp[OPTF_COUNT];
-
-                            getEditFindText(g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW);
-
-                            copyOptionsFlags(dwOptFlagsTemp, g_Options.dwFlags);
-                            dwOptFlagsTemp[OPTF_SRCH_ONTHEFLY_MODE] = 1;
-                            dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0;
-                            qsearchDoSearchText( g_QSearchDlg.hFindEdit, QSEARCH_FIRST, dwOptFlagsTemp, NULL );
-
-                            qsearchDoTryHighlightAll(hDlg, g_Options.dwFlags);
-                        }
-                    }
-                    else
-                    {
-                        qs_bEditTextChanged = TRUE;
-                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
-                    }
+                    OnChMatchCaseOrWholeWordClicked(hDlg);
                 }
             }
             else if ( id == IDC_CH_HIGHLIGHTALL )
@@ -2609,34 +2733,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         //}
         case WM_SYSKEYDOWN:
         {
-            if ( g_Options.dwUseAltHotkeys )
-            {
-                if ( wParam == g_Options.dwAltMatchCase )
-                {
-                    qsChangeCkeckBoxState(IDC_CH_MATCHCASE);
-                    return 1;
-                }
-                if ( wParam == g_Options.dwAltHighlightAll )
-                {
-                    qsChangeCkeckBoxState(IDC_CH_HIGHLIGHTALL);
-                    return 1;
-                }
-                if ( wParam == g_Options.dwAltWholeWord )
-                {
-                    qsChangeCkeckBoxState(IDC_CH_WHOLEWORD);
-                    return 1;
-                }
-                if ( wParam == g_Options.dwAltSearchMode )
-                {
-                    OnChWholeWordSrchMode();
-                    return 1;
-                }
-            }
-            //if ( LOBYTE(wParam) == LOBYTE(qs_dwHotKey) )
-            //{
-            //    bHotKeyPressed = isQSearchHotKeyPressed();
-            //    return 0;
-            //}
+            //qsearchDlgOnAltHotkey(hDlg, wParam);
             break;
         }
         //case WM_SYSKEYUP:
@@ -3290,25 +3387,34 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
         if ( g_Plugin.bOldWindows )
         {
             TOOLINFOA tiA;
+            char szHintA[128];
 
             fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, hEdit );
             // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_CANCEL), 
-              GetDlgItem(hDlg, IDC_BT_CANCEL) );
+            lstrcpyA( szHintA, qsearchGetHintA(IDC_BT_CANCEL) );
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_BT_CANCEL) );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_CH_MATCHCASE), 
-              GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
+            lstrcpyA( szHintA, qsearchGetHintA(IDC_CH_MATCHCASE) );
+            if ( g_Options.dwUseAltHotkeys )
+            {
+                strAppendAltHotkeyA( szHintA, g_Options.dwAltMatchCase );
+            }
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_CH_WHOLEWORD), 
-              GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hCheckbox"
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_CH_HIGHLIGHTALL), 
-              GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
+            lstrcpyA( szHintA, qsearchGetHintA(IDC_CH_HIGHLIGHTALL) );
+            if ( g_Options.dwUseAltHotkeys )
+            {
+                strAppendAltHotkeyA( szHintA, g_Options.dwAltHighlightAll );
+            }
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
             if ( g_Options.dwNewUI == QS_UI_NEW_01 || 
@@ -3333,25 +3439,34 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
         else
         {
             TOOLINFOW tiW;
+            wchar_t szHintW[128];
 
             fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, hEdit );
             // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_CANCEL), 
-              GetDlgItem(hDlg, IDC_BT_CANCEL) );
+            lstrcpyW( szHintW, qsearchGetHintW(IDC_BT_CANCEL) );
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_BT_CANCEL) );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_CH_MATCHCASE), 
-              GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
+            lstrcpyW( szHintW, qsearchGetHintW(IDC_CH_MATCHCASE) );
+            if ( g_Options.dwUseAltHotkeys )
+            {
+                strAppendAltHotkeyW( szHintW, g_Options.dwAltMatchCase );
+            }
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_CH_WHOLEWORD), 
-              GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hCheckbox"
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_CH_HIGHLIGHTALL), 
-              GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
+            lstrcpyW( szHintW, qsearchGetHintW(IDC_CH_HIGHLIGHTALL) );
+            if ( g_Options.dwUseAltHotkeys )
+            {
+                strAppendAltHotkeyW( szHintW, g_Options.dwAltHighlightAll );
+            }
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
             if ( g_Options.dwNewUI == QS_UI_NEW_01 ||

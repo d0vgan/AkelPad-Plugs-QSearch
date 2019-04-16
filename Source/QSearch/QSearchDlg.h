@@ -103,5 +103,7 @@ BOOL qsearchIsFindHistoryBeingSaved(void);
 BOOL qsearchIsSearchFlagsBeingSaved(void);
 BOOL qsearchIsSavingHistoryToStdLocation(void);
 
+INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
+
 //---------------------------------------------------------------------------
 #endif

@@ -276,14 +276,14 @@ Additional options (QSearch panel's popup menu or file
     highlight_state = 11
       When AkelPad starts, "Highlight all" is always checked.
 
-25) use_alt_hotkeys = 0
-     QSearch panel's additional accelerator keys are disabled.
-    use_alt_hotkeys = 1
+25) use_alt_hotkeys = 1
      The following additional accelerator keys are available in QSearch panel:
      Alt+alt_match_case    (Alt+C) - Match case on/off
      Alt+alt_whole_word    (Alt+W) - Whole word on/off
      Alt+alt_search_mode   (Alt+R) - Search mode (text/spec.symb/regexp)
      Alt+alt_highlight_all (Alt+H) - Highlight all on/off
+    use_alt_hotkeys = 0
+     QSearch panel's additional accelerator keys are disabled.
 
 26) alt_match_case = 67
      When 'use_alt_hotkeys' is enabled (set to 1), this parameter specifies
@@ -405,6 +405,7 @@ History:
 v.7.2 (April 2019)
  + "Find All" functionality (set new_ui=2)
  + "Auto Count All" functionality (set new_ui=2)
+ + now 'use_alt_hotkeys' is enabled by default
  * the UI has been slightly updated
 
 v.7.1 (December 2018)
