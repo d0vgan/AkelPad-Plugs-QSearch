@@ -378,7 +378,7 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                             g_QSearchDlg.uWmShowFlags = 0; // forbid to pick up selected text on WM_SHOWWINDOW
                         else
                             g_QSearchDlg.uWmShowFlags = QS_SF_CANPICKUPSELTEXT; // allow to pick up selected text on WM_SHOWWINDOW
-                        
+
                         SendMessage( g_Plugin.hMainWnd, AKD_DOCK, 
                           DK_SHOW, (LPARAM) g_QSearchDlg.pDockData );
 
@@ -1022,6 +1022,15 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                     return lResult;
                 }
+            }
+            break;
+        }
+        case AKDN_FRAME_DESTROY:
+        {
+            FRAMEDATA* pFrame = (FRAMEDATA *) lParam;
+            if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
+            {
+                g_QSearchDlg.pSearchResultsFrame = NULL;
             }
             break;
         }
@@ -2410,11 +2419,11 @@ int VersionCompare(DWORD dwVersion1, DWORD dwVersion2)
 void Debug_Output(const char* szFormat, ...)
 {
     char szBuf[1024];
-	va_list arg;
-	va_start(arg, szFormat);
-	wvsprintfA(szBuf, szFormat, arg);
-	va_end(arg);
+    va_list arg;
+    va_start(arg, szFormat);
+    wvsprintfA(szBuf, szFormat, arg);
+    va_end(arg);
 
-	OutputDebugString(szBuf);
+    OutputDebugString(szBuf);
 }
 #endif

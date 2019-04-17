@@ -74,23 +74,23 @@
     #define  MAX_TEXT_SIZE  120
 
     typedef struct tQSearchDlgState {
-        HWND    hDlg;
-        HWND    hFindEdit;
-        HWND    hBtnFindNext;
-        HWND    hBtnFindPrev;
-        HWND    hBtnFindAll;
-        HWND    hStInfo;
-        HMENU   hPopupMenu;
-        HMENU   hFindAllPopupMenu;
-        BOOL    bMatchCase;
-        //BOOL    bOnDlgStart;
-        BOOL    bQSearching;
-        BOOL    bIsQSearchingRightNow;
-        BOOL    bMouseJustLeavedFindEdit;
-        DOCK*   pDockData;
-        wchar_t szFindTextW[MAX_TEXT_SIZE];
-        UINT    uSearchOrigin; // see QS_SO_*
-        UINT    uWmShowFlags; // see QS_SF_*
+        HWND       hDlg;
+        HWND       hFindEdit;
+        HWND       hBtnFindNext;
+        HWND       hBtnFindPrev;
+        HWND       hBtnFindAll;
+        HWND       hStInfo;
+        HMENU      hPopupMenu;
+        HMENU      hFindAllPopupMenu;
+        BOOL       bMatchCase;
+        BOOL       bQSearching;
+        BOOL       bIsQSearchingRightNow;
+        BOOL       bMouseJustLeavedFindEdit;
+        DOCK*      pDockData;
+        FRAMEDATA* pSearchResultsFrame;
+        wchar_t    szFindTextW[MAX_TEXT_SIZE];
+        UINT       uSearchOrigin; // see QS_SO_*
+        UINT       uWmShowFlags; // see QS_SF_*
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
