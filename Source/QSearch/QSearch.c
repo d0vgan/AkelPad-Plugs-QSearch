@@ -947,6 +947,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         case AKDN_HOTKEYGLOBAL:
+        case AKDN_HOTKEY:
         {
             if ( g_Options.dwUseAltHotkeys && g_QSearchDlg.hDlg )
             {
@@ -966,6 +967,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             int* pKeyProcessing = (int *) lParam;
                             *pKeyProcessing = 1; // stop processing
                             qsearchDlgOnAltHotkey(g_QSearchDlg.hDlg, uKeyCode);
+                            return 0;
                         }
                     }
                 }
