@@ -280,8 +280,10 @@ static CRITICAL_SECTION csFindAllTimerId;
 // The reason is: Flexibility.
 
 // FindAllFlags
-#define QS_FAF_SPECCHAR 0x0001
-#define QS_FAF_REGEXP   0x0002
+#define QS_FAF_SPECCHAR  0x0001
+#define QS_FAF_REGEXP    0x0002
+#define QS_FAF_MATCHCASE 0x0010
+#define QS_FAF_WHOLEWORD 0x0020
 
 typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, const EDITINFO* pEditInfo);
 typedef void (*tShowFindResults_AddOccurrence)(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf);
@@ -341,6 +343,12 @@ static UINT_PTR formatSearchingForStringToBuf(tDynamicBuffer* pBuf, const wchar_
     chQuote = L'\"';
     if ( dwFindAllFlags & QS_FAF_REGEXP )
         chQuote = L'/';
+
+    //if ( dwFindAllFlags & QS_FAF_MATCHCASE )
+    //    ...
+
+    //if ( dwFindAllFlags & QS_FAF_WHOLEWORD )
+    //    ...
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
 
@@ -4632,6 +4640,10 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 dwFindAllFlags |= QS_FAF_SPECCHAR;
             else if ( dwSearchFlags & FRF_REGEXP )
                 dwFindAllFlags |= QS_FAF_REGEXP;
+            if ( dwSearchFlags & FR_MATCHCASE )
+                dwFindAllFlags |= QS_FAF_MATCHCASE;
+            if ( dwSearchFlags & FR_WHOLEWORD )
+                dwFindAllFlags |= QS_FAF_WHOLEWORD;
             pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf, &resultsBuf, dwFindAllFlags, &ei);
 
             while ( SendMessageW(ei.hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )

@@ -107,6 +107,7 @@ BEGIN
         MENUITEM "Search: Pick up selected text",                IDM_SRCHPICKUPSELECTION
         MENUITEM "Search: SelFind picks up selected text",       IDM_SRCHSELFINDPICKUP
         MENUITEM "Search: Stop at EOF (end of file)",            IDM_SRCHSTOPEOF
+        MENUITEM ""                                              -1
         MENUITEM "Window: Docked top",                           IDM_SRCHWNDDOCKEDTOP
         MENUITEM "Window: Select all when focused",              IDM_EDITFOCUSSELECTALL
         MENUITEM "Window: Catch main F3",                        IDM_CATCHMAINF3
