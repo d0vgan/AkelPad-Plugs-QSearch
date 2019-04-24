@@ -3118,7 +3118,16 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         }
         case QSM_SETNOTFOUND:
         {
+            UINT uFlags;
+
             qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, (BOOL) wParam, FALSE, FALSE );
+
+            uFlags = (UINT) lParam;
+            if ( uFlags & QS_SNF_SETINFOEMPTY )
+            {
+                setInfoEmpty();
+            }
+
             return 1;
         }
         case QSM_CHECKHIGHLIGHT:

@@ -1007,7 +1007,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if ( g_QSearchDlg.hDlg )
                     {
                         g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                        SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
+                        SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
                     }
                 }
             }
@@ -1095,7 +1095,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
             if ( g_QSearchDlg.hDlg )
             {
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
             }
             break;
         default:
