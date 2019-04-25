@@ -3127,6 +3127,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 setInfoEmpty();
             }
+            if ( uFlags & QS_SNF_FORCEFINDFIRST )
+            {
+                qs_bForceFindFirst = TRUE;
+                qs_bEditTextChanged = TRUE;
+            }
 
             return 1;
         }

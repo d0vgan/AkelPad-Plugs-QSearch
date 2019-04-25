@@ -53,6 +53,7 @@
 #define  QS_SF_DLGSWITCH         0x1000
 
 #define  QS_SNF_SETINFOEMPTY     0x0001
+#define  QS_SNF_FORCEFINDFIRST   0x0002
 
 
 // messages...
