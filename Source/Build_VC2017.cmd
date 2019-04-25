@@ -5,6 +5,7 @@ call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Bu
 set MSSDK=%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.1A
 set PATH=%MSSDK%\bin;%PATH%
 
+cd "%~dp0."
 if not exist "..\Plugs" mkdir "..\Plugs"
 cd .\QSearch
 

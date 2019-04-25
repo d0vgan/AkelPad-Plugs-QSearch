@@ -18,6 +18,7 @@ Set PATH=%VCDIR%\bin;%MSSDK%\bin;%VSCOMMON%;%PATH%
 Set INCLUDE=%MSSDK%\include;%VCDIR%\include;%INCLUDE%
 Set LIB=%MSSDK%\lib;%VCDIR%\lib;%LIB%
 
+cd "%~dp0."
 if not exist "..\Plugs" mkdir "..\Plugs"
 cd .\QSearch
 

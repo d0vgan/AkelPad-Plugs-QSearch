@@ -22,6 +22,7 @@ set "INCLUDE=%MSSDK%\include\um;%MSSDK%\include\shared;%VCDIR%\include;%INCLUDE%
 set "LIB=%MSSDK%\lib\winv6.3\um\x64;%VCDIR%\lib\amd64;%LIB%"
 set MACHINE=AMD64
 
+cd "%~dp0."
 if not exist "..\Plugs64" mkdir "..\Plugs64"
 cd .\QSearch
 
