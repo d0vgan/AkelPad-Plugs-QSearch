@@ -4147,11 +4147,14 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 if ( szInfoTextA[0] == 0 )
                 {
-                    bNeedsFindAllCountOnly = TRUE;
+                    if ( (dwParams & QSEARCH_SEL) == 0 )
+                        bNeedsFindAllCountOnly = TRUE;
                 }
                 else if ( dwParams & QSEARCH_FIRST )
                 {
-                    bNeedsFindAllCountOnly = TRUE;
+                    if ( (dwParams & QSEARCH_SEL) == 0 )
+                        bNeedsFindAllCountOnly = TRUE;
+
                     if ( (nLen < 3) || (lstrcmpA(szInfoTextA + nLen - 3, "...") != 0) )
                     {
                         lstrcatA(szInfoTextA, "...");
@@ -4185,11 +4188,14 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 if ( szInfoTextW[0] == 0 )
                 {
-                    bNeedsFindAllCountOnly = TRUE;
+                    if ( (dwParams & QSEARCH_SEL) == 0 )
+                        bNeedsFindAllCountOnly = TRUE;
                 }
                 else if ( dwParams & QSEARCH_FIRST )
                 {
-                    bNeedsFindAllCountOnly = TRUE;
+                    if ( (dwParams & QSEARCH_SEL) == 0 )
+                        bNeedsFindAllCountOnly = TRUE;
+
                     if ( (nLen < 3) || (lstrcmpW(szInfoTextW + nLen - 3, L"...") != 0) )
                     {
                         lstrcatW(szInfoTextW, L"...");
