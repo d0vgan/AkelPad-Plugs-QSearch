@@ -399,13 +399,16 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
 
     CallLogOutput( &loParams );
 
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        UINT_PTR nLen = formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo);
-        if ( nLen == 0 )
-            return; // failed
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+        {
+            UINT_PTR nLen = formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo);
+            if ( nLen == 0 )
+                return; // failed
 
-        LogOutput_AddText( (const wchar_t *) pBuf->ptr, nLen );
+            LogOutput_AddText( (const wchar_t *) pBuf->ptr, nLen );
+        }
     }
 }
 
@@ -429,9 +432,12 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        LogOutput_AddText(szText, nLen);
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+        {
+            LogOutput_AddText(szText, nLen);
+        }
     }
 
     if ( nLen > 0 )
@@ -445,13 +451,16 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 // FileOutput...
 static void qsShowFindResults_FileOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, const EDITINFO* pEditInfo)
 {
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        if ( formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo) == 0 )
-            return; // failed
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+        {
+            if ( formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo) == 0 )
+                return; // failed
 
-        tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
-        tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+            tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
+            tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+        }
     }
 }
 
@@ -481,9 +490,12 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
+        {
+            tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+        }
     }
 
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
@@ -573,64 +585,68 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     UINT_PTR nBytesToAllocate;
 
     nBytesToAllocate = pFindResult->nBytesStored;
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        nBytesToAllocate += 32*sizeof(wchar_t);
-    }
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
-    {
-        nBytesToAllocate += 16*sizeof(wchar_t);
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+        {
+            nBytesToAllocate += 32*sizeof(wchar_t);
+        }
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+        {
+            nBytesToAllocate += 16*sizeof(wchar_t);
+        }
     }
 
     if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
         return; // failed to allocate the memory
 
-    // the output string:
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+    // constructing the output string...
+    pBuf->nBytesStored = 0;
+
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        INT_X nLinePos;
-        int nUnwrappedLine;
-        AECHARINDEX ci;
-
-        if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-            nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
-        else
-            nUnwrappedLine = pcrFound->ciMin.nLine;
-
-        x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
-        nLinePos = AEC_WrapLineBegin(&ci);
-
-        pStr = (wchar_t *) pBuf->ptr;
-        pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
-    }
-    else
-    {
-        pBuf->nBytesStored = 0;
-    }
-
-    if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
-    {
-        int nLen;
-        AECHARINDEX ciBegin;
-        AECHARINDEX ciEnd;
-        AEINDEXSUBTRACT aeis;
-
-        x_mem_cpy( &ciBegin, &pcrFound->ciMin, sizeof(AECHARINDEX) );
-        x_mem_cpy( &ciEnd, &pcrFound->ciMax, sizeof(AECHARINDEX) );
-        aeis.ciChar1 = &ciEnd;
-        aeis.ciChar2 = &ciBegin;
-        aeis.bColumnSel = FALSE;
-        aeis.nNewLine = AELB_ASIS;
-        nLen = (int) SendMessage( hWndEdit, AEM_INDEXSUBTRACT, 0, (LPARAM) &aeis );
-
-        pStr = (wchar_t *) pBuf->ptr;
-        if ( pBuf->nBytesStored != 0 )
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
-            pBuf->nBytesStored -= sizeof(wchar_t); // exclude the trailing L'\t'
-            pStr += pBuf->nBytesStored/sizeof(wchar_t);
+            INT_X nLinePos;
+            int nUnwrappedLine;
+            AECHARINDEX ci;
+
+            if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
+            else
+                nUnwrappedLine = pcrFound->ciMin.nLine;
+
+            x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
+            nLinePos = AEC_WrapLineBegin(&ci);
+
+            pStr = (wchar_t *) pBuf->ptr;
+            pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
         }
 
-        pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d)\t", nLen );
+        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+        {
+            int nLen;
+            AECHARINDEX ciBegin;
+            AECHARINDEX ciEnd;
+            AEINDEXSUBTRACT aeis;
+
+            x_mem_cpy( &ciBegin, &pcrFound->ciMin, sizeof(AECHARINDEX) );
+            x_mem_cpy( &ciEnd, &pcrFound->ciMax, sizeof(AECHARINDEX) );
+            aeis.ciChar1 = &ciEnd;
+            aeis.ciChar2 = &ciBegin;
+            aeis.bColumnSel = FALSE;
+            aeis.nNewLine = AELB_ASIS;
+            nLen = (int) SendMessage( hWndEdit, AEM_INDEXSUBTRACT, 0, (LPARAM) &aeis );
+
+            pStr = (wchar_t *) pBuf->ptr;
+            if ( pBuf->nBytesStored != 0 )
+            {
+                pBuf->nBytesStored -= sizeof(wchar_t); // exclude the trailing L'\t'
+                pStr += pBuf->nBytesStored/sizeof(wchar_t);
+            }
+
+            pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d)\t", nLen );
+        }
     }
 
     tDynamicBuffer_Append(pBuf, pFindResult->ptr, pFindResult->nBytesStored);
@@ -2709,6 +2725,13 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_WHOLELINE )
                     g_Options.dwFindAllResult -= QS_FINDALL_RSLT_WHOLELINE;
             }
+            else if ( id == IDM_FINDALL_FILTERMODE )
+            {
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE )
+                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_FILTERMODE;
+                else
+                    g_Options.dwFindAllResult |= QS_FINDALL_RSLT_FILTERMODE;
+            }
             else if ( id == IDM_FINDALL_SETTINGSDLG )
             {
                 if ( g_Plugin.bOldWindows )
@@ -2947,6 +2970,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWMATCHONLY, MF_BYCOMMAND | MF_UNCHECKED );
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWLINE, MF_BYCOMMAND | MF_CHECKED );
                 }
+
+                uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) ? MF_CHECKED : MF_UNCHECKED;
+                CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_FILTERMODE, MF_BYCOMMAND | uCheck );
 
                 hPopMnu = g_QSearchDlg.hFindAllPopupMenu;
             }
