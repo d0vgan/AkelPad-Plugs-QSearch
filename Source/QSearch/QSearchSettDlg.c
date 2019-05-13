@@ -59,13 +59,13 @@ typedef struct sCheckBoxOptFlagItem {
 } tCheckBoxOptFlagItem;
 
 static const tCheckBoxOptFlagItem arrCheckBoxOptions[] = {
-    { IDC_CH_FA_HEADER,     QS_FINDALL_RSLT_SEARCHING  },
-    { IDC_CH_FA_POSITION,   QS_FINDALL_RSLT_POS        },
-    { IDC_CH_FA_LENGTH,     QS_FINDALL_RSLT_LEN        },
-    { IDC_CH_FA_FOOTER,     QS_FINDALL_RSLT_OCCFOUND   },
-    { IDC_CH_FA_FILTERMODE, QS_FINDALL_RSLT_FILTERMODE },
-    { IDC_CH_FA_COLORTHEME, QS_FINDALL_RSLT_CODERALIAS },
-    { 0,                    0 } // trailing "empty" item
+    { IDC_CH_FA_HEADER,      QS_FINDALL_RSLT_SEARCHING  },
+    { IDC_CH_FA_POSITION,    QS_FINDALL_RSLT_POS        },
+    { IDC_CH_FA_LENGTH,      QS_FINDALL_RSLT_LEN        },
+    { IDC_CH_FA_FOOTER,      QS_FINDALL_RSLT_OCCFOUND   },
+    { IDC_CH_FA_LACONICMODE, QS_FINDALL_RSLT_LACONICMODE },
+    { IDC_CH_FA_COLORTHEME,  QS_FINDALL_RSLT_CODERALIAS },
+    { 0,                     0 } // trailing "empty" item
 };
 
 static void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg);
@@ -102,7 +102,7 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             case IDC_CH_FA_FOOTER:
             case IDC_RB_FA_WHOLELINE:
             case IDC_RB_FA_MATCHONLY:
-            case IDC_CH_FA_FILTERMODE:
+            case IDC_CH_FA_LACONICMODE:
             {
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
@@ -165,7 +165,7 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     szMatch2[0] = 0;
 
     dwFindAllResultFlags = getFindAllResultFlags(hDlg);
-    if ( (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (dwFindAllResultFlags & QS_FINDALL_RSLT_LACONICMODE) == 0 )
     {
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
         {
@@ -205,7 +205,7 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
         tDynamicBuffer_Append(&infoBuf, szMatch2, lstrlenW(szMatch2)*sizeof(wchar_t));
     }
 
-    if ( (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (dwFindAllResultFlags & QS_FINDALL_RSLT_LACONICMODE) == 0 )
     {
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_OCCFOUND )
         {
