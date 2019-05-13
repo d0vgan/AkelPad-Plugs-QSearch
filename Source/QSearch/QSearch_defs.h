@@ -72,7 +72,7 @@
 #define  QS_FINDALL_TOTAL_TYPES        5 // Only "Find All" types
 #define  QS_FINDALL_SHOWLINE           5
 #define  QS_FINDALL_SHOWMATCHONLY      6
-#define  QS_FINDALL_LACONICMODE        7
+#define  QS_FINDALL_MINIMALMODE        7
 #define  QS_FINDALL_SETTINGSDLG        8
 #define  QS_FINDALL_TOTAL              9 // All items of the "Find All" menu
 #define  QS_FINDALL_MASK               0x000F
@@ -80,7 +80,7 @@
 
 #define  QS_FINDALL_RSLT_WHOLELINE     0x0000
 #define  QS_FINDALL_RSLT_MATCHONLY     0x0001
-#define  QS_FINDALL_RSLT_LACONICMODE   0x0002
+#define  QS_FINDALL_RSLT_MINIMALMODE   0x0002
 #define  QS_FINDALL_RSLT_POS           0x0010
 #define  QS_FINDALL_RSLT_LEN           0x0020
 #define  QS_FINDALL_RSLT_SEARCHING     0x0100
