@@ -399,7 +399,7 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
 
     CallLogOutput( &loParams );
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
         {
@@ -432,7 +432,7 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
         {
@@ -451,7 +451,7 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
 // FileOutput...
 static void qsShowFindResults_FileOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, const EDITINFO* pEditInfo)
 {
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
         {
@@ -490,7 +490,7 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
         {
@@ -585,7 +585,7 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     UINT_PTR nBytesToAllocate;
 
     nBytesToAllocate = pFindResult->nBytesStored;
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
@@ -603,7 +603,7 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     // constructing the output string...
     pBuf->nBytesStored = 0;
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) == 0 )
+    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
@@ -2725,12 +2725,12 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_WHOLELINE )
                     g_Options.dwFindAllResult -= QS_FINDALL_RSLT_WHOLELINE;
             }
-            else if ( id == IDM_FINDALL_LACONICMODE )
+            else if ( id == IDM_FINDALL_FILTERMODE )
             {
-                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE )
-                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_LACONICMODE;
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE )
+                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_FILTERMODE;
                 else
-                    g_Options.dwFindAllResult |= QS_FINDALL_RSLT_LACONICMODE;
+                    g_Options.dwFindAllResult |= QS_FINDALL_RSLT_FILTERMODE;
             }
             else if ( id == IDM_FINDALL_SETTINGSDLG )
             {
@@ -2971,8 +2971,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWLINE, MF_BYCOMMAND | MF_CHECKED );
                 }
 
-                uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_LACONICMODE) ? MF_CHECKED : MF_UNCHECKED;
-                CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_LACONICMODE, MF_BYCOMMAND | uCheck );
+                uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) ? MF_CHECKED : MF_UNCHECKED;
+                CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_FILTERMODE, MF_BYCOMMAND | uCheck );
 
                 hPopMnu = g_QSearchDlg.hFindAllPopupMenu;
             }
