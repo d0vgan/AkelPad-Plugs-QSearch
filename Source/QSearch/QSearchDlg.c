@@ -428,8 +428,8 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     LogOutput_AddText( (const wchar_t*) pResultsBuf->ptr, nLen );
 
+    // the szText is also used in g_QSearchDlg.hStInfo
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
     if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
@@ -487,15 +487,19 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
         szCoderAlias[0] = 0;
     }
 
+    // the szText is also used in g_QSearchDlg.hStInfo
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nOccurrences);
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( ((g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0) &&
+         (g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND) )
     {
-        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
-        {
-            tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
-        }
+        tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+    }
+    else
+    {
+        if ( pResultsBuf->nBytesStored != 0 )
+            pResultsBuf->nBytesStored -= sizeof(wchar_t); // exclude the trailing '\r'
     }
 
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
