@@ -388,7 +388,7 @@ Additional options (QSearch panel's popup menu or file
      The value will be the sum of the following numbers:
       0 - Include the line with the occurrence
       1 - Include only the match (occurrence) itself
-      2 - Minimal mode: pure text without header/footer/position
+      2 - Laconic mode: pure text without header/footer/position
       16 - Include the position: (Ln,Pos)
       32 - Include the match length: (Len)
       256 - Include the header: "Searching for %s ..."
