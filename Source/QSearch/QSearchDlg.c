@@ -4646,8 +4646,12 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         }
         else // pFindAll
         {
-            unsigned int         nMatches;
             DWORD                dwFindAllFlags;
+            unsigned int         nMatches;
+            unsigned int         nTotalMatches;  // all files
+            FRAMEDATA*           pFrameInitial;  // all files
+            FRAMEDATA*           pFrame;         // all files
+            EDITINFO*            pEditInfo;
             tDynamicBuffer       resultsBuf;
             AEFINDTEXTW          aeftW;
             wchar_t              szFindAllW[2*MAX_TEXT_SIZE];
@@ -4677,13 +4681,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 lstrcpyW(szFindAllW, szFindTextW);
             aeftW.pText = szFindAllW;
             aeftW.dwTextLen = lstrlenW(szFindAllW);
-
             aeftW.nNewLine = AELB_ASIS;
-
-            SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
-            SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
-
-            nMatches = 0;
 
             dwFindAllFlags = 0;
             if ( bSearchEx )
@@ -4694,26 +4692,63 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 dwFindAllFlags |= QS_FAF_MATCHCASE;
             if ( dwSearchFlags & FR_WHOLEWORD )
                 dwFindAllFlags |= QS_FAF_WHOLEWORD;
-            pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf, &resultsBuf, dwFindAllFlags, &ei);
 
-            while ( SendMessageW(ei.hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+            nTotalMatches = 0;
+
+            if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
             {
-                ++nMatches;
+                pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
+                pFrameInitial = pFrame;
+            }
+            else
+            {
+                pFrame = NULL;
+                pFrameInitial = NULL;
+            }
 
-                if ( pFindAll->pfnFindResultCallback )
-                    pFindAll->pfnFindResultCallback(ei.hWndEdit, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
+            for ( ; ; )
+            {
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+                    pEditInfo = &pFrame->ei;
+                else
+                    pEditInfo = &ei;
 
-                x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
+                SendMessageW( pEditInfo->hWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
+                SendMessageW( pEditInfo->hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+
+                nMatches = 0;
+                
+                pFindAll->ShowFindResults.pfnInit(szFindTextW, &pFindAll->buf, &resultsBuf, dwFindAllFlags, pEditInfo);
+
+                while ( SendMessageW(pEditInfo->hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+                {
+                    ++nMatches;
+                    ++nTotalMatches;
+
+                    if ( pFindAll->pfnFindResultCallback )
+                        pFindAll->pfnFindResultCallback(pEditInfo->hWndEdit, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
+
+                    x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
+                }
+
+                pFindAll->ShowFindResults.pfnDone(nMatches, &resultsBuf);
+
+                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+                {
+                    pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFrame);
+                    if ( pFrame == pFrameInitial )
+                        break;
+                }
+                else
+                    break;
             }
 
             tDynamicBuffer_Free(&pFindAll->buf);
             tDynamicBuffer_Free(&pFindAll->buf2);
 
-            pFindAll->ShowFindResults.pfnDone(nMatches, &resultsBuf);
-
             tDynamicBuffer_Free(&resultsBuf);
 
-            if ( nMatches == 0 )
+            if ( nTotalMatches == 0 )
             {
                 bNotFound = TRUE;
                 if ( (dwSearchFlags & FRF_REGEXP) && (aeftW.nCompileErrorOffset > 0) )
