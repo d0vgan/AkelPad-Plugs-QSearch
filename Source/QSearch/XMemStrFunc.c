@@ -249,3 +249,8 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
     pBuf->nBytesStored = nBytesToStore;
     return nBytesToStore; // OK
 }
+
+void tDynamicBuffer_Clear(tDynamicBuffer* pBuf)
+{
+    pBuf->nBytesStored = 0;
+}

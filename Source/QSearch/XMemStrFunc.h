@@ -32,10 +32,11 @@ typedef struct sDynamicBuffer {
     UINT_PTR nBytesStored; // number of bytes currently stored in ptr
 } tDynamicBuffer;
 
-void tDynamicBuffer_Init(tDynamicBuffer* pBuf);
-void tDynamicBuffer_Free(tDynamicBuffer* pBuf);
+void tDynamicBuffer_Init(tDynamicBuffer* pBuf); // initializer
+void tDynamicBuffer_Free(tDynamicBuffer* pBuf); // frees the memory
 BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
 UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR nBytes);
+void tDynamicBuffer_Clear(tDynamicBuffer* pBuf); // sets nBytesStored=0
 
 //---------------------------------------------------------------------------
 #endif
