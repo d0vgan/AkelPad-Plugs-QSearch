@@ -320,6 +320,9 @@ typedef void (*tShowFindResults_Init)(const wchar_t* cszFindWhat, tDynamicBuffer
 typedef void (*tShowFindResults_AddOccurrence)(const tDynamicBuffer* pOccurrence, tDynamicBuffer* pResultsBuf);
 typedef void (*tShowFindResults_Done)(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf);
 
+typedef void (*tShowFindResults_AllFiles_Init)(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, unsigned int nTotalFiles);
+typedef void (*tShowFindResults_AllFiles_Done)(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf);
+
 // CountOnly...
 static void qsShowFindResults_CountOnly_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, const EDITINFO* pEditInfo)
 {
@@ -334,6 +337,16 @@ static void qsShowFindResults_CountOnly_AddOccurrence(const tDynamicBuffer* pOcc
 static void qsShowFindResults_CountOnly_Done(unsigned int nOccurrences, tDynamicBuffer* pResultsBuf)
 {
     qsSetInfoOccurrencesFound(nOccurrences);
+}
+
+static void qsShowFindResults_CountOnly_AllFiles_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, unsigned int nTotalFiles)
+{
+    // empty
+}
+
+static void qsShowFindResults_CountOnly_AllFiles_Done(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf)
+{
+    // empty
 }
 
 // LogOutput...
@@ -392,6 +405,34 @@ static UINT_PTR formatSearchingForStringToBuf(tDynamicBuffer* pBuf, const wchar_
     return nLen;
 }
 
+static UINT_PTR formatAllFilesSearchingForStringToBuf(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, DWORD dwFindAllFlags, unsigned int nTotalFiles)
+{
+    wchar_t* pszText;
+    const wchar_t* cszTextFormat;
+    wchar_t chQuote;
+    UINT_PTR nBytesToAllocate;
+    UINT_PTR nLen;
+
+    chQuote = L'\"';
+    if ( dwFindAllFlags & QS_FAF_REGEXP )
+        chQuote = L'/';
+
+    cszTextFormat = L"Searching for %c%s%c in %u files ...";
+
+    nBytesToAllocate = lstrlenW(cszTextFormat);
+    nBytesToAllocate += lstrlenW(cszFindWhat);
+    nBytesToAllocate += 10;
+    nBytesToAllocate *= sizeof(wchar_t);
+
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
+        return 0; // failed to allocate the memory
+
+    pszText = (wchar_t *) pBuf->ptr;
+    nLen = (UINT_PTR) wsprintfW(pszText, cszTextFormat, chQuote, cszFindWhat, chQuote, nTotalFiles);
+    pBuf->nBytesStored = nLen*sizeof(wchar_t);
+    return nLen;
+}
+
 static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, const EDITINFO* pEditInfo)
 {
     DLLECLOG_OUTPUT_1 loParams;
@@ -426,11 +467,10 @@ static void qsShowFindResults_LogOutput_Init(const wchar_t* cszFindWhat, tDynami
     {
         if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
         {
-            UINT_PTR nLen = formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo);
-            if ( nLen == 0 )
+            if ( formatSearchingForStringToBuf(pBuf, cszFindWhat, dwFindAllFlags, pEditInfo) == 0 )
                 return; // failed
 
-            LogOutput_AddText( (const wchar_t *) pBuf->ptr, nLen );
+            LogOutput_AddText( (const wchar_t *) pBuf->ptr, pBuf->nBytesStored/sizeof(wchar_t) );
         }
     }
 }
@@ -467,6 +507,26 @@ static void qsShowFindResults_LogOutput_Done(unsigned int nOccurrences, tDynamic
     {
         qsSetInfoOccurrencesFound(nOccurrences);
     }
+}
+
+static void qsShowFindResults_LogOutput_AllFiles_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, unsigned int nTotalFiles)
+{
+    if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
+        return; // failed
+
+    LogOutput_AddText( (const wchar_t *) pBuf->ptr, pBuf->nBytesStored/sizeof(wchar_t) );
+}
+
+static void qsShowFindResults_LogOutput_AllFiles_Done(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf)
+{
+    const wchar_t* cszTextFormat;
+    UINT_PTR nLen;
+    wchar_t szText[128];
+
+    cszTextFormat = L"Total found: %u.";
+    nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
+
+    LogOutput_AddText(szText, nLen);
 }
 
 // FileOutput...
@@ -594,10 +654,50 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
     }
 }
 
+static void qsShowFindResults_FileOutput_AllFiles_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, unsigned int nTotalFiles)
+{
+    if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
+        return; // failed
+
+    tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
+    tDynamicBuffer_Append( pResultsBuf, L"\r", 1*sizeof(wchar_t) );
+}
+
+static void qsShowFindResults_FileOutput_AllFiles_Done(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf)
+{
+    EDITINFO  ei;
+
+    ei.hWndEdit = NULL;
+    SendMessageW( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
+    if ( ei.hWndEdit )
+    {
+        const wchar_t* cszTextFormat;
+        UINT_PTR nLen;
+        wchar_t  szText[128];
+        AEAPPENDTEXTW aeatW;
+        AECHARINDEX aeci;
+
+        cszTextFormat = L"Total found: %u.";
+        szText[0] = L'\r';
+        nLen = (UINT_PTR) wsprintfW(szText + 1, cszTextFormat, nTotalOccurrences);
+        ++nLen; // the leading '\r'
+
+        aeatW.pText = szText;
+        aeatW.dwTextLen = nLen;
+        aeatW.nNewLine = AELB_ASINPUT;
+        SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+
+        SendMessageW( ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeci );
+        SendMessageW( ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeci, (LPARAM) &aeci );
+    }
+}
+
 typedef struct sShowFindResults {
     tShowFindResults_Init pfnInit;                   // can't be NULL
     tShowFindResults_AddOccurrence pfnAddOccurrence; // can't be NULL
     tShowFindResults_Done pfnDone;                   // can't be NULL
+    tShowFindResults_AllFiles_Init pfnAllFilesInit;  // can't be NULL
+    tShowFindResults_AllFiles_Done pfnAllFilesDone;  // can't be NULL
 } tShowFindResults;
 
 typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
@@ -2703,7 +2803,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     }
                 }
             }
-            else if ( id == IDM_FINDALL_START )
+            else if ( id == IDM_FINDALL_AUTO_COUNT )
             {
                 if ( g_QSearchDlg.hFindAllPopupMenu )
                 {
@@ -2717,7 +2817,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         g_Options.dwFindAllMode |= QS_FINDALL_AUTO_COUNT_FLAG;
                 }
             }
-            else if ( (id > IDM_FINDALL_START) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL_TYPES) )
+            else if ( (id >= IDM_FINDALL_START + QS_FINDALL_COUNTONLY) && (id < IDM_FINDALL_START + QS_FINDALL_TOTAL_TYPES) )
             {
                 DWORD dwFlags = 0;
                 if ( g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG )
@@ -3060,6 +3160,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_LogOutput_AddOccurrence;
                     qsfa.ShowFindResults.pfnDone = qsShowFindResults_LogOutput_Done;
+                    qsfa.ShowFindResults.pfnAllFilesInit = qsShowFindResults_LogOutput_AllFiles_Init;
+                    qsfa.ShowFindResults.pfnAllFilesDone = qsShowFindResults_LogOutput_AllFiles_Done;
                 }
                 else if ( dwFindAllMode == QS_FINDALL_FILEOUTPUT_MULT ||
                           dwFindAllMode == QS_FINDALL_FILEOUTPUT_SNGL )
@@ -3075,6 +3177,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_FileOutput_Init;
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_FileOutput_AddOccurrence;
                     qsfa.ShowFindResults.pfnDone = qsShowFindResults_FileOutput_Done;
+                    qsfa.ShowFindResults.pfnAllFilesInit = qsShowFindResults_FileOutput_AllFiles_Init;
+                    qsfa.ShowFindResults.pfnAllFilesDone = qsShowFindResults_FileOutput_AllFiles_Done;
                 }
                 else
                 {
@@ -3083,6 +3187,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_CountOnly_Init;
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_CountOnly_AddOccurrence;
                     qsfa.ShowFindResults.pfnDone = qsShowFindResults_CountOnly_Done;
+                    qsfa.ShowFindResults.pfnAllFilesInit = qsShowFindResults_CountOnly_AllFiles_Init;
+                    qsfa.ShowFindResults.pfnAllFilesDone = qsShowFindResults_CountOnly_AllFiles_Done;
                 }
                 pqsfa = &qsfa;
             }
@@ -4669,6 +4775,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             unsigned int         nMatches;
             unsigned int         nCurrentMatches; // current (initial) file
             unsigned int         nTotalMatches;   // all files
+            unsigned int         nTotalFiles;     // all files
             FRAMEDATA*           pFrameInitial;   // all files
             FRAMEDATA*           pFrame;          // all files
             EDITINFO*            pEditInfo;
@@ -4715,6 +4822,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             nCurrentMatches = 0;
             nTotalMatches = 0;
+            nTotalFiles = 0;
 
             if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) &&
                  (pFindAll->pfnFindResultCallback != NULL) ) // not CountOnly
@@ -4728,19 +4836,29 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             {
                 pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
                 pFrameInitial = pFrame;
+                pEditInfo = &pFrame->ei;
+
+                nTotalFiles = (unsigned int) SendMessage(g_Plugin.hMainWnd, AKD_FRAMESTATS, FWS_COUNTALL, 0);
+                pFindAll->ShowFindResults.pfnAllFilesInit(szFindTextW, &pFindAll->buf, &resultsBuf, dwFindAllFlags, nTotalFiles);
             }
             else
             {
                 pFrame = NULL;
                 pFrameInitial = NULL;
+                pEditInfo = &ei;
             }
 
             for ( ; ; )
             {
-                if ( bAllFiles )
-                    pEditInfo = &pFrame->ei;
-                else
-                    pEditInfo = &ei;
+                if ( bAllFiles && pFrame == g_QSearchDlg.pSearchResultsFrame )
+                {
+                    // skip the pSearchResultsFrame
+                    pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFrame);
+                    if ( pFrame != pFrameInitial )
+                        pEditInfo = &pFrame->ei;
+                    else
+                        break;
+                }
 
                 SendMessageW( pEditInfo->hWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
                 SendMessageW( pEditInfo->hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
@@ -4771,7 +4889,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 if ( bAllFiles )
                 {
                     pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFrame);
-                    if ( pFrame == pFrameInitial )
+                    if ( pFrame != pFrameInitial )
+                        pEditInfo = &pFrame->ei;
+                    else
                         break;
                 }
                 else
@@ -4780,7 +4900,14 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             if ( bAllFiles )
             {
-                qsSetInfoOccurrencesFound(nCurrentMatches);
+                bNeedsFindAllCountOnly = FALSE;
+
+                if ( pFrameInitial != g_QSearchDlg.pSearchResultsFrame )
+                    qsSetInfoOccurrencesFound(nCurrentMatches);
+                else
+                    qsSetInfoEmpty();
+
+                pFindAll->ShowFindResults.pfnAllFilesDone(nTotalMatches, &pFindAll->buf);
             }
 
             tDynamicBuffer_Free(&pFindAll->buf);
