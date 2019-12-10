@@ -7,16 +7,17 @@
 #include "XMemStrFunc.h"
 
 
-#define  QSEARCH_FIRST       0x000001
-#define  QSEARCH_NEXT        0x000002
-#define  QSEARCH_FINDALL     0x000010
-#define  QSEARCH_SEL         0x000100
-#define  QSEARCH_SEL_FINDUP  0x000200
-#define  QSEARCH_NOFINDUP    0x001000
-#define  QSEARCH_NOFINDBEGIN 0x002000
-#define  QSEARCH_FINDUP      0x004000
-#define  QSEARCH_FINDBEGIN   0x008000
-#define  QSEARCH_USEDELAY    0x010000
+#define  QSEARCH_FIRST          0x000001
+#define  QSEARCH_NEXT           0x000002
+#define  QSEARCH_FINDALL        0x000010
+#define  QSEARCH_SEL            0x000100
+#define  QSEARCH_SEL_FINDUP     0x000200
+#define  QSEARCH_NOFINDUP       0x001000
+#define  QSEARCH_NOFINDBEGIN    0x002000
+#define  QSEARCH_FINDUP         0x004000
+#define  QSEARCH_FINDBEGIN      0x008000
+#define  QSEARCH_USEDELAY       0x010000
+#define  QSEARCH_NOSETSEL_FIRST 0x100000
 
 #define  QSEARCH_EOF_DOWN    0x0001
 #define  QSEARCH_EOF_UP      0x0002
@@ -2011,6 +2012,10 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             else if ( wParam == VK_TAB )
             {
+                // if ( GetKeyState(VK_CONTROL) & 0x80 ) // Ctrl+Tab, Ctrl+Shift+Tab, ...
+                // {
+                //
+                // }
                 return 0;
             }
             else if ( wParam == 0x41 ) // 'A'
@@ -3202,6 +3207,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 getEditFindText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW );
                 qsearchFindHistoryAdd( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW, 0 );
                 qsPickUpSelection( g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE );
+                dwSearch |= QSEARCH_NOSETSEL_FIRST;
             }
             getEditFindText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW );
             if ( qs_bForceFindFirst || qs_bEditTextChanged )
@@ -4431,7 +4437,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
     if ( dwParams & QSEARCH_FIRST )
     {
-        if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] && !pFindAll )
+        if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] && !pFindAll && 
+             (dwParams & QSEARCH_NOSETSEL_FIRST) == 0 )
         {
             CHARRANGE_X cr = {0, 0};
 
