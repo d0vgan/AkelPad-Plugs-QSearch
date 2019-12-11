@@ -2830,13 +2830,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 g_Options.dwFindAllMode = id - IDM_FINDALL_START;
                 g_Options.dwFindAllMode |= dwFlags;
             }
-            else if ( id == IDM_FINDALL_ALLFILES )
-            {
-                if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
-                    g_Options.dwFindAllResult -= QS_FINDALL_RSLT_ALLFILES;
-                else
-                    g_Options.dwFindAllResult |= QS_FINDALL_RSLT_ALLFILES;
-            }
             else if ( id == IDM_FINDALL_SHOWLINE )
             {
                 g_Options.dwFindAllResult |= QS_FINDALL_RSLT_WHOLELINE;
@@ -3094,9 +3087,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWMATCHONLY, MF_BYCOMMAND | MF_UNCHECKED );
                     CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_SHOWLINE, MF_BYCOMMAND | MF_CHECKED );
                 }
-
-                uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) ? MF_CHECKED : MF_UNCHECKED;
-                CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_ALLFILES, MF_BYCOMMAND | uCheck );
 
                 uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) ? MF_CHECKED : MF_UNCHECKED;
                 CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_FILTERMODE, MF_BYCOMMAND | uCheck );

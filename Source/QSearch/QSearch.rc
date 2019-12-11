@@ -128,8 +128,6 @@ BEGIN
         MENUITEM "Find All: File Output (N tabs)",               IDM_FINDALL_FILEOUTPUT_MULT
         MENUITEM "Find All: File Output (1 tab)",                IDM_FINDALL_FILEOUTPUT_SNGL
         MENUITEM "",                                             -1
-        MENUITEM "Find In All Files",                            IDM_FINDALL_ALLFILES
-        MENUITEM "",                                             -1
         MENUITEM "Output: Whole line",                           IDM_FINDALL_SHOWLINE
         MENUITEM "Output: Match only",                           IDM_FINDALL_SHOWMATCHONLY
         MENUITEM "Output: Filter mode",                          IDM_FINDALL_FILTERMODE
