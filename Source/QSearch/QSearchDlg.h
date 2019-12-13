@@ -38,11 +38,14 @@
 #endif
 
 
-#define  QS_UU_WHOLEWORD    0x0001 // show/hide whole word check-box
-#define  QS_UU_FIND         0x0002 // set edit or combo-box find control
-#define  QS_UU_ALL          0xFFFF // update all the controls
+#define  QS_UU_WHOLEWORD     0x0001 // show/hide whole word check-box
+#define  QS_UU_FIND          0x0002 // set edit or combo-box find control
+#define  QS_UU_ALL           0xFFFF // update all the controls
 
-#define  QS_FF_NOPICKUPSEL  0x0001 // do not pick up selection
+#define  QS_FF_NOPICKUPSEL   0x0001 // do not pick up selection
+#define  QS_FF_NOSETSELFIRST 0x0002 // see QSEARCH_NOSETSEL_FIRST
+
+#define  QS_PS_UPDATEHISTORY  0x01
 
 #define  QS_SO_UNKNOWN        0
 #define  QS_SO_QSEARCH        1
@@ -61,7 +64,7 @@
 #define  QSM_FINDNEXT       (WM_USER + 1002) /*  (BOOL) bFindPrev, QS_FF_... */
 #define  QSM_FINDALL        (WM_USER + 1003) /*  (DWORD) dwFindAllMode, 0    */
 #define  QSM_SELFIND        (WM_USER + 1011) /*  (BOOL) bFindPrev, 0         */
-#define  QSM_PICKUPSELTEXT  (WM_USER + 1015) /*  0, (BOOL *) &bPickedUp      */
+#define  QSM_PICKUPSELTEXT  (WM_USER + 1015) /*  QS_PS_.., (BOOL*)&bPickedUp */
 #define  QSM_GETHWNDEDIT    (WM_USER + 1021) /*  0, (HWND *) &hWnd           */
 #define  QSM_GETHWNDCOMBO   (WM_USER + 1022) /*  0, (HWND *) &hWnd           */
 #define  QSM_SHOWHIDE       (WM_USER + 1052) /*  (BOOL) bShow, QS_SF_...     */

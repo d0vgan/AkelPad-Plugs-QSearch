@@ -3154,6 +3154,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             tQSFindAll* pqsfa;
 
             dwSearch = 0;
+            if ( lParam & QS_FF_NOSETSELFIRST )
+            {
+                dwSearch |= QSEARCH_NOSETSEL_FIRST;
+            }
 
             if ( uMsg == QSM_FINDALL )
             {
@@ -3267,7 +3271,13 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         }
         case QSM_PICKUPSELTEXT:
         {
-            BOOL bPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
+            BOOL bPickedUp;
+            if ( wParam & QS_PS_UPDATEHISTORY )
+            {
+                getEditFindText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW );
+                qsearchFindHistoryAdd( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW, 0 );
+            }
+            bPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
             if ( lParam )
                 *((BOOL *)lParam) = bPickedUp;
             return 1;

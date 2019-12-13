@@ -298,6 +298,23 @@ LRESULT CALLBACK NewFrameProc(HWND, UINT, WPARAM, LPARAM);
 void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
+static BOOL IsExtCallParamValid(LPARAM lParam, int nIndex)
+{
+    if ( lParam )
+    {
+        if ( *((INT_PTR *)lParam) >= (INT_PTR)((nIndex + 1) * sizeof(INT_PTR)) )
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static INT_PTR GetExtCallParam(LPARAM lParam, int nIndex)
+{
+    if ( IsExtCallParamValid(lParam, nIndex) )
+        return *(((INT_PTR *)lParam) + nIndex);
+    return 0;
+}
+
 static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 {
     if ( !g_Plugin.bInitialized )
@@ -485,6 +502,112 @@ void __declspec(dllexport) QSearch(PLUGINDATA* pd)
     g_Plugin.nDockedDlgIsWaitingForOnStart = pd->bOnStart ? 1 : 0;
 
     pd->nUnload = doQSearch(pd, FALSE);
+}
+
+// Plugin extern function
+void __declspec(dllexport) FindNext(PLUGINDATA* pd)
+{
+    pd->dwSupport |= PDS_SUPPORTALL;
+    if ( pd->dwSupport & PDS_GETSUPPORT )
+        return;
+
+    doQSearch(pd, TRUE);
+    if ( !pd->bOnStart )
+    {
+        if ( g_QSearchDlg.hDlg )
+        {
+            BOOL bWordSelected = FALSE;
+
+            switch ( GetExtCallParam(pd->lParam, 1) )
+            {
+                case 1:
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
+                    break;
+            }
+
+            if ( !bWordSelected )
+            {
+                // TODO!!!
+                // Currently "Highlight All" does not work until the QSearchDlg is shown.
+                // It's because some initialization is done in WM_SHOWWINDOW and, moreover,
+                // the states of the checkboxes (e.g. IDC_CH_HIGHLIGHTALL) are checked.
+                // Obviously, these checkboxes do not have proper states until the
+                // QSearchDlg is shown. This needs to be changed.
+                SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, FALSE, QS_FF_NOSETSELFIRST );
+            }
+        }
+    }
+
+    // Stay in memory, and show as non-active
+    pd->nUnload = UD_NONUNLOAD_NONACTIVE;
+}
+
+// Plugin extern function
+void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
+{
+    pd->dwSupport |= PDS_NOAUTOLOAD;
+    if ( pd->dwSupport & PDS_GETSUPPORT )
+        return;
+
+    doQSearch(pd, TRUE);
+    if ( g_QSearchDlg.hDlg )
+    {
+        BOOL bWordSelected = FALSE;
+
+        switch ( GetExtCallParam(pd->lParam, 1) )
+        {
+            case 1:
+                bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
+                break;
+        }
+
+        if ( !bWordSelected )
+        {
+            SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, TRUE, QS_FF_NOSETSELFIRST );
+        }
+    }
+
+    // Stay in memory, and show as non-active
+    pd->nUnload = UD_NONUNLOAD_NONACTIVE;
+}
+
+// Plugin extern function
+void __declspec(dllexport) FindAll(PLUGINDATA* pd)
+{
+    pd->dwSupport |= PDS_NOAUTOLOAD;
+    if ( pd->dwSupport & PDS_GETSUPPORT )
+        return;
+
+    doQSearch(pd, TRUE);
+    if ( g_QSearchDlg.hDlg )
+    {
+        EDITINFO ei;
+        DWORD dwAdditionalFlags = 0;
+
+        if ( IsExtCallParamValid(pd->lParam, 1) )
+        {
+            switch ( GetExtCallParam(pd->lParam, 1) )
+            {
+                case 1:
+                    dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
+                    break;
+            }
+        }
+
+        SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | dwAdditionalFlags, 0 );
+
+        ei.hWndEdit = NULL;
+        SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
+        if ( ei.hWndEdit )
+        {
+           SetFocus(ei.hWndEdit);
+        }
+    }
+
+    // Stay in memory, and show as non-active
+    pd->nUnload = UD_NONUNLOAD_NONACTIVE;
 }
 
 // Plugin extern function
