@@ -3397,6 +3397,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         case WM_INITDIALOG:
         {
             HWND hDlgItm;
+            HWND hChHighlightAll;
 
             InitializeCriticalSection(&csFindAllTimerId);
 
@@ -3517,6 +3518,14 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 Debug_Output("qsearchDlgProc, WM_INITDIALOG, if (!SelectAll), SETSEL(0, -1)\n");
 #endif
             }
+
+            g_bHighlightPlugin = isHighlightMainActive();
+
+            hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
+            EnableWindow( hChHighlightAll, g_bHighlightPlugin );
+            SendMessage( hChHighlightAll, BM_SETCHECK, 
+              (((g_Options.dwHighlightState & HLS_IS_CHECKED) == HLS_IS_CHECKED) ? 
+                   BST_CHECKED : BST_UNCHECKED), 0 );
 
             break;
         }

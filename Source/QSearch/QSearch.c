@@ -279,6 +279,7 @@ QSearchOpt      g_Options;
 QSearchOpt      g_Options0;
 wchar_t         g_szFunctionQSearchW[128] = { 0 };
 BOOL            g_bHighlightPlugin = FALSE;
+BOOL            g_bFrameActivated = FALSE;
 
 
 // funcs
@@ -528,12 +529,11 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
 
             if ( !bWordSelected )
             {
-                // TODO!!!
-                // Currently "Highlight All" does not work until the QSearchDlg is shown.
-                // It's because some initialization is done in WM_SHOWWINDOW and, moreover,
-                // the states of the checkboxes (e.g. IDC_CH_HIGHLIGHTALL) are checked.
-                // Obviously, these checkboxes do not have proper states until the
-                // QSearchDlg is shown. This needs to be changed.
+                if ( g_bFrameActivated )
+                {
+                    g_bFrameActivated = FALSE;
+                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
+                }
                 SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, FALSE, QS_FF_NOSETSELFIRST );
             }
         }
@@ -565,6 +565,11 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
 
         if ( !bWordSelected )
         {
+            if ( g_bFrameActivated )
+            {
+                g_bFrameActivated = FALSE;
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
+            }
             SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, TRUE, QS_FF_NOSETSELFIRST );
         }
     }
@@ -1133,6 +1138,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
                     }
                 }
+                g_bFrameActivated = TRUE;
             }
             if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] )
             {
@@ -1219,6 +1225,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
             {
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                g_bFrameActivated = TRUE;
             }
             break;
         default:
