@@ -601,6 +601,11 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
             }
         }
 
+        if ( g_bFrameActivated )
+        {
+            g_bFrameActivated = FALSE;
+            SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
+        }
         SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | dwAdditionalFlags, 0 );
 
         ei.hWndEdit = NULL;
