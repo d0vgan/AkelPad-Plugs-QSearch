@@ -521,7 +521,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
 
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
-                case 1:
+                case 1: // Pick up the selected text
                     bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
                     SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                     break;
@@ -557,7 +557,7 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
 
         switch ( GetExtCallParam(pd->lParam, 1) )
         {
-            case 1:
+            case 1: // Pick up the selected text
                 bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
                 SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                 break;
@@ -590,29 +590,42 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
     {
         EDITINFO ei;
         DWORD dwAdditionalFlags = 0;
+        BOOL bWordSelected = FALSE;
 
         if ( IsExtCallParamValid(pd->lParam, 1) )
         {
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
-                case 1:
+                case 1: // Pick up the selected text
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
+                    break;
+                case 2: // Find All in All Files
+                    dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
+                    break;
+                case 3: // Pick up the selected text + Find All in All Files
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                     dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
                     break;
             }
         }
 
-        if ( g_bFrameActivated )
+        if ( !bWordSelected )
         {
-            g_bFrameActivated = FALSE;
-            SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
-        }
-        SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | dwAdditionalFlags, 0 );
+            if ( g_bFrameActivated )
+            {
+                g_bFrameActivated = FALSE;
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
+            }
+            SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | dwAdditionalFlags, 0 );
 
-        ei.hWndEdit = NULL;
-        SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-        if ( ei.hWndEdit )
-        {
-           SetFocus(ei.hWndEdit);
+            ei.hWndEdit = NULL;
+            SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
+            if ( ei.hWndEdit )
+            {
+               SetFocus(ei.hWndEdit);
+            }
         }
     }
 
