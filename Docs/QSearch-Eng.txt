@@ -7,16 +7,72 @@ The plugin function (QSearch::QSearch) is assumed to be assigned
 with a hot-key (for example, F7).
 
 QSearch panel's keys:
-Enter, F3       - find next (down)
-Shift+Enter     - find previous (up)
-Alt+Enter       - find from file's beginning
-Alt+Shift+Enter - find all
-Ctrl+Enter      - pick up selected text
-Esc             - hide the panel
-Ctrl+Del        - edit control: erase the text after the caret (to the right)
-Ctrl+BS         - edit control: erase the text before the caret (to the left)
-Ctrl+A          - edit control: select all the text
+Enter, F3        - find next (down)
+Shift+Enter      - find previous (up)
+Alt+Enter        - find from file's beginning
+Alt+Shift+Enter  - find all
+Ctrl+Shift+Enter - find all (in all files)
+Ctrl+Enter       - pick up selected text
+Esc              - hide the panel
+Ctrl+Del         - edit control: erase the text after the caret (to the right)
+Ctrl+BS          - edit control: erase the text before the caret (to the left)
+Ctrl+A           - edit control: select all the text
 See also 'use_alt_hotkeys' below.
+Note: the "Find all" button has its own popup menu.
+
+The functions FindNext, FindPrev and FindAll allow to assign the hot-keys
+to be used from the editor, as well as can be called from the Hotkeys plugin
+and from the scripts (via the Scripts plugin).
+Let's look at these functions in detail.
+
+FindNext - find next (down).
+Recommended hot-key - F3.
+This function supports the autoload in order to silently load the QSearch
+plugin when AkelPad starts. (The purpose of that is to have all the plugin's
+capabilities available at the very start of AkelPad rather than only after
+the QSearch'es panel is activated).
+The additional abilities by the example of the Hotkeys plugin:
+ -------------------------------------------------------------
+ Name             |  Command                       |  Hotkey
+ -------------------------------------------------------------
+ Quick Find Next  |  Call("QSearch::FindNext", 1)  |  Ctrl+F3
+ -------------------------------------------------------------
+Assigns Ctrl+F3 to the action "pick up the selected text and find next".
+If no selection, the current word is selected (according to the option
+'select_by_f3').
+
+FindPrev - find previous (up).
+Recommended hot-key - Shift+F3.
+The additional abilities by the example of the Hotkeys plugin:
+ -------------------------------------------------------------------
+ Name             |  Command                       |  Hotkey
+ -------------------------------------------------------------------
+ Quick Find Prev  |  Call("QSearch::FindPrev", 1)  |  Ctrl+Shift+F3
+ -------------------------------------------------------------------
+Assigns Ctrl+Shift+F3 to the action "pick up the selected text and find
+previous (up)".
+If no selection, the current word is selected (according to the option
+'select_by_f3').
+
+FindAll - find all.
+It is recommended to use it from the Hotkeys plugin.
+The additional abilities by the example of the Hotkeys plugin:
+ -------------------------------------------------------------------------
+ Name                |  Command                      |  Hotkey
+ -------------------------------------------------------------------------
+ Quick Find All (1)  |  Call("QSearch::FindAll", 1)  |  Ctrl+Alt+F3
+ Quick Find All (2)  |  Call("QSearch::FindAll", 2)  |  Alt+Shift+F3
+ Quick Find All (3)  |  Call("QSearch::FindAll", 3)  |  Ctrl+Alt+Shift+F3
+ -------------------------------------------------------------------------
+(1) Assigns Ctrl+Alt+F3 to the action "pick up the selected text and find all
+in the current document".
+If no selection, the current word is selected (according to the option
+'select_by_f3').
+(2) Assigns Alt+Shift+F3 to the action "find all in all documents".
+(3) Assigns Ctrl+Alt+Shift+F3 to the action "pick up the selected text and
+find all in all documents".
+If no selection, the current word is selected (according to the option
+'select_by_f3').
 
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text 
