@@ -329,11 +329,14 @@ const wchar_t* szHintBtFindPrevW[INLNG_COUNT] = {
 
 const wchar_t* szHintBtFindAllW[INLNG_COUNT] = {
     /* eng */
-    ( L"Find all" ),
+    ( L"Find all\n" \
+          L"(Shift+click - in all files)" ),
     /* rus */
-    ( L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435" ),
+    ( L"\x041D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435\n" \
+          L"(Shift+\x043A\x043B\x0438\x043A - \x0432\x043E\x0020\x0432\x0441\x0435\x0445\x0020\x0444\x0430\x0439\x043B\x0430\x0445)" ),
     /* ukr */
-    ( L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435" )
+    ( L"\x0417\x043D\x0430\x0439\x0442\x0438\x0020\x0432\x0441\x0435\n" \
+          L"(Shift+\x043A\x043B\x0456\x043A - \x0432\x0020\x0443\x0441\x0456\x0445\x0020\x0444\x0430\x0439\x043B\x0430\x0445)" )
 };
 
 const wchar_t* szHintChMatchCaseW[INLNG_COUNT][2] = {
@@ -399,7 +402,7 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"Shift+Enter\t-  Find previous (up)\r\n" \
       L"Alt+Enter\t-  Find from beginning\r\n" \
       L"Alt+Shift+Enter\t-  Find all\r\n" \
-      L"Alt+Ctrl+Enter\t-  Find all (in all files)\r\n" \
+      L"Ctrl+Shift+Enter\t-  Find all (in all files)\r\n" \
       L"Ctrl+Enter \t-  Pick up selected text" ),
     /* rus */
     ( L"Enter, F3 \t-  \x0418\x0441\x043A\x0430\x0442\x044C\x0020\x0441\x043B" \
@@ -411,7 +414,7 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"\x0020\x043D\x0430\x0447\x0430\x043B\x0430\r\n" \
       L"Alt+Shift+Enter\t-  \x041D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435\r\n" \
-      L"Alt+Ctrl+Enter\t-  \x041D\x0430\x0439\x0442\x0438\x0020" \
+      L"Ctrl+Shift+Enter\t-  \x041D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435 (\x0432\x043E\x0020\x0432\x0441\x0435\x0445" \
       L"\x0020\x0444\x0430\x0439\x043B\x0430\x0445)\r\n" \
       L"Ctrl+Enter \t-  \x041F\x043E\x0434\x0445\x0432\x0430\x0442\x0438\x0442" \
@@ -428,7 +431,7 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"\x0020\x043F\x043E\x0447\x0430\x0442\x043A\x0443\r\n" \
       L"Alt+Shift+Enter\t-  \x0417\x043D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435\r\n" \
-      L"Alt+Ctrl+Enter\t-  \x0417\x043D\x0430\x0439\x0442\x0438\x0020" \
+      L"Ctrl+Shift+Enter\t-  \x0417\x043D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435 (\x0432\x0020\x0443\x0441\x0456\x0445\x0020" \
       L"\x0444\x0430\x0439\x043B\x0430\x0445)\r\n" \
       L"Ctrl+Enter \t-  \x041F\x0069\x0434\x0445\x043E\x043F\x0438\x0442\x0438" \

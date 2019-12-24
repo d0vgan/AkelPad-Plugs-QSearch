@@ -1443,6 +1443,37 @@ static LRESULT CALLBACK btnFindWndProc(HWND hBtn,
             }
             break;
         }
+        case WM_NOTIFY:
+        {
+            if ( hBtn == g_QSearchDlg.hBtnFindAll )
+            {
+                if ( g_Plugin.bOldWindows )
+                {
+                    if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
+                    {
+                        LPNMTTDISPINFOA lpnmdiA;
+
+                        lpnmdiA = (LPNMTTDISPINFOA) lParam;
+                        SendMessageA(lpnmdiA->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                        lpnmdiA->lpszText = (LPSTR) qsearchGetHintA(IDC_BT_FINDALL);
+                        return 0;
+                    }
+                }
+                else
+                {
+                    if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
+                    {
+                        LPNMTTDISPINFOW lpnmdiW;
+
+                        lpnmdiW = (LPNMTTDISPINFOW) lParam;
+                        SendMessageW(lpnmdiW->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
+                        lpnmdiW->lpszText = (LPWSTR) qsearchGetHintW(IDC_BT_FINDALL);
+                        return 0;
+                    }
+                }
+            }
+            break;
+        }
         default:
             break;
     }
@@ -1875,7 +1906,7 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
         {
             SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode, 0 );
         }
-        else if ( isFindBegin && isPickupText )
+        else if ( isPickupText && isFindUp )
         {
             SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | QS_FINDALL_RSLT_ALLFILES, 0 );
         }
@@ -3663,8 +3694,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
 
                 if ( g_Options.dwNewUI == QS_UI_NEW_02 )
                 {
-                    fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDALL), 
-                      GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, GetDlgItem(hDlg, IDC_BT_FINDALL) );
                     SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
                 }
             }
@@ -3715,8 +3745,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
 
                 if ( g_Options.dwNewUI == QS_UI_NEW_02 )
                 {
-                    fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDALL), 
-                      GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, GetDlgItem(hDlg, IDC_BT_FINDALL) );
                     SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
                 }
             }
@@ -4883,6 +4912,25 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 pEditInfo = &pFrame->ei;
 
                 nTotalFiles = (unsigned int) SendMessage(g_Plugin.hMainWnd, AKD_FRAMESTATS, FWS_COUNTALL, 0);
+                if ( ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) ||
+                     ((g_Options.dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_MULT) )
+                {
+                    FRAMEDATA* pFr;
+
+                    pFr = pFrameInitial;
+                    for ( ; ; )
+                    {
+                        if ( pFr == g_QSearchDlg.pSearchResultsFrame )
+                        {
+                            --nTotalFiles;
+                            break;
+                        }
+
+                        pFr = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFr);
+                        if ( pFr == pFrameInitial )
+                            break;
+                    }
+                }
                 pFindAll->ShowFindResults.pfnAllFilesInit(szFindTextW, &pFindAll->buf, &resultsBuf, dwFindAllFlags, nTotalFiles);
             }
             else
