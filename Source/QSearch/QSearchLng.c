@@ -399,7 +399,7 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"Shift+Enter\t-  Find previous (up)\r\n" \
       L"Alt+Enter\t-  Find from beginning\r\n" \
       L"Alt+Shift+Enter\t-  Find all\r\n" \
-      L"Alt+Ctrl+Enter\t-  Find all (all files)\r\n" \
+      L"Alt+Ctrl+Enter\t-  Find all (in all files)\r\n" \
       L"Ctrl+Enter \t-  Pick up selected text" ),
     /* rus */
     ( L"Enter, F3 \t-  \x0418\x0441\x043A\x0430\x0442\x044C\x0020\x0441\x043B" \
@@ -411,7 +411,9 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"\x0020\x043D\x0430\x0447\x0430\x043B\x0430\r\n" \
       L"Alt+Shift+Enter\t-  \x041D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435\r\n" \
-      L"Alt+Ctrl+Enter\t-  Find all (all files)\r\n" \
+      L"Alt+Ctrl+Enter\t-  \x041D\x0430\x0439\x0442\x0438\x0020" \
+      L"\x0432\x0441\x0435 (\x0432\x043E\x0020\x0432\x0441\x0435\x0445" \
+      L"\x0020\x0444\x0430\x0439\x043B\x0430\x0445)\r\n" \
       L"Ctrl+Enter \t-  \x041F\x043E\x0434\x0445\x0432\x0430\x0442\x0438\x0442" \
       L"\x044C\x0020\x0432\x044B\x0434\x0435\x043B\x0435\x043D\x043D\x044B" \
       L"\x0439\x0020\x0442\x0435\x043A\x0441\x0442" ),
@@ -426,7 +428,9 @@ const wchar_t* szHintEdTextW[INLNG_COUNT] = {
       L"\x0020\x043F\x043E\x0447\x0430\x0442\x043A\x0443\r\n" \
       L"Alt+Shift+Enter\t-  \x0417\x043D\x0430\x0439\x0442\x0438\x0020" \
       L"\x0432\x0441\x0435\r\n" \
-      L"Alt+Ctrl+Enter\t-  Find all (all files)\r\n" \
+      L"Alt+Ctrl+Enter\t-  \x0417\x043D\x0430\x0439\x0442\x0438\x0020" \
+      L"\x0432\x0441\x0435 (\x0432\x0020\x0443\x0441\x0456\x0445\x0020" \
+      L"\x0444\x0430\x0439\x043B\x0430\x0445)\r\n" \
       L"Ctrl+Enter \t-  \x041F\x0069\x0434\x0445\x043E\x043F\x0438\x0442\x0438" \
       L"\x0020\x0432\x0438\x0434\x0069\x043B\x0435\x043D\x0438\x0439\x0020" \
       L"\x0442\x0435\x043A\x0441\x0442" )
@@ -1008,6 +1012,32 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
                 L"%u \x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E."
             };
             return szFindAllOccurrencesFoundW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_SEARCHINGFORINFILES:
+        {
+            static const wchar_t* szFindAllSearchingForInFilesW[INLNG_COUNT] = {
+                /* eng */
+                L"Searching for %c%s%c in %u files ...",
+                /* rus */
+                L"\x0418\x0449\x0435\x043C %c%s%c \x0432 %u \x0444\x0430\x0439\x043B\x0430\x0445 ...",
+                /* ukr */
+                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E %c%s%c \x0443 %u \x0444\x0430\x0439\x043B\x0430\x0445 ..."
+            };
+            return szFindAllSearchingForInFilesW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES:
+        {
+            static const wchar_t* szFindAllOccurrencesFoundInFilesW[INLNG_COUNT] = {
+                /* eng */
+                L"Total found: %u.",
+                /* rus */
+                L"\x0412\x0441\x0435\x0433\x043E\x0020\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u.",
+                /* ukr */
+                L"\x0423\x0441\x044C\x043E\x0433\x043E\x0020\x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u."
+            };
+            return szFindAllOccurrencesFoundInFilesW[uInternalLng];
         }
 
     };

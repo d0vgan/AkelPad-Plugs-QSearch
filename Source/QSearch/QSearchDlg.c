@@ -419,7 +419,7 @@ static UINT_PTR formatAllFilesSearchingForStringToBuf(const wchar_t* cszFindWhat
     if ( dwFindAllFlags & QS_FAF_REGEXP )
         chQuote = L'/';
 
-    cszTextFormat = L"Searching for %c%s%c in %u files ...";
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFORINFILES);
 
     nBytesToAllocate = lstrlenW(cszTextFormat);
     nBytesToAllocate += lstrlenW(cszFindWhat);
@@ -525,7 +525,7 @@ static void qsShowFindResults_LogOutput_AllFiles_Done(unsigned int nTotalOccurre
     UINT_PTR nLen;
     wchar_t szText[128];
 
-    cszTextFormat = L"Total found: %u.";
+    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
     nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
 
     LogOutput_AddText(szText, nLen);
@@ -679,7 +679,7 @@ static void qsShowFindResults_FileOutput_AllFiles_Done(unsigned int nTotalOccurr
         AEAPPENDTEXTW aeatW;
         AECHARINDEX aeci;
 
-        cszTextFormat = L"Total found: %u.";
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
         szText[0] = L'\r';
         nLen = (UINT_PTR) wsprintfW(szText + 1, cszTextFormat, nTotalOccurrences);
         ++nLen; // the leading '\r'
