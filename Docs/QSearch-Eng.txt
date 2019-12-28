@@ -459,6 +459,10 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.7.4
+ + added: Find All in All Files
+ + added: functions FindNext, FindPrev, FindAll
+
 v.7.3 (May 2019)
  * improved: a few small things in "Find All"
  + added: "Filter mode" in "Find All"
