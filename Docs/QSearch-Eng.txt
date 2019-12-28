@@ -449,7 +449,7 @@ Additional options (QSearch panel's popup menu or file
       32 - Include the match length: (Len)
       256 - Include the header: "Searching for %s ..."
       512 - Include the footer: "%d found."
-      4096 - Apply the Coder alias
+      4096 - Apply the Coder alias (syntax theme)
 
 37) findall_count_delay = 400
      Delay, in milliseconds, before starting to count all the occurrences

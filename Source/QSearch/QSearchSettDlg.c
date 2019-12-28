@@ -59,13 +59,13 @@ typedef struct sCheckBoxOptFlagItem {
 } tCheckBoxOptFlagItem;
 
 static const tCheckBoxOptFlagItem arrCheckBoxOptions[] = {
-    { IDC_CH_FA_HEADER,     QS_FINDALL_RSLT_SEARCHING  },
-    { IDC_CH_FA_POSITION,   QS_FINDALL_RSLT_POS        },
-    { IDC_CH_FA_LENGTH,     QS_FINDALL_RSLT_LEN        },
-    { IDC_CH_FA_FOOTER,     QS_FINDALL_RSLT_OCCFOUND   },
-    { IDC_CH_FA_FILTERMODE, QS_FINDALL_RSLT_FILTERMODE },
-    { IDC_CH_FA_COLORTHEME, QS_FINDALL_RSLT_CODERALIAS },
-    { 0,                    0 } // trailing "empty" item
+    { IDC_CH_FA_HEADER,      QS_FINDALL_RSLT_SEARCHING  },
+    { IDC_CH_FA_POSITION,    QS_FINDALL_RSLT_POS        },
+    { IDC_CH_FA_LENGTH,      QS_FINDALL_RSLT_LEN        },
+    { IDC_CH_FA_FOOTER,      QS_FINDALL_RSLT_OCCFOUND   },
+    { IDC_CH_FA_FILTERMODE,  QS_FINDALL_RSLT_FILTERMODE },
+    { IDC_CH_FA_SYNTAXTHEME, QS_FINDALL_RSLT_CODERALIAS },
+    { 0,                     0 } // trailing "empty" item
 };
 
 static void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg);

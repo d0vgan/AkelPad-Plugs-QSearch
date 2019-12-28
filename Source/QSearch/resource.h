@@ -37,7 +37,7 @@
 #define  IDC_RB_FA_WHOLELINE        3011
 #define  IDC_RB_FA_MATCHONLY        3012
 #define  IDC_CH_FA_FILTERMODE       3018
-#define  IDC_CH_FA_COLORTHEME       3021
+#define  IDC_CH_FA_SYNTAXTHEME      3021
 #define  IDC_ST_FA_EXAMPLE          3031
 #define  IDC_ST_FA_EXAMPLE_DATA     3032
 
