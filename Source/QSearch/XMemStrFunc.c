@@ -157,6 +157,35 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
     return TRUE;
 }
 
+int xitoaW(INT_PTR nNumber, wchar_t *wszStr)
+{
+    wchar_t wszReverse[128];
+    int a;
+    int b = 0;
+
+    if (nNumber == 0)
+    {
+        if (wszStr) wszStr[b] = L'0';
+        ++b;
+    }
+    else if (nNumber < 0)
+    {
+        if (wszStr) wszStr[b] = L'-';
+        ++b;
+        nNumber = 0 - nNumber;
+    }
+    for (a = 0; nNumber != 0; ++a)
+    {
+        wszReverse[a] = (wchar_t) (nNumber % 10) + L'0';
+        nNumber = nNumber / 10;
+    }
+    if (!wszStr) return a + b + 1;
+
+    while (--a >= 0) wszStr[b++] = wszReverse[a];
+    wszStr[b] = L'\0';
+    return b;
+}
+
 // tDynamicBuffer
 void tDynamicBuffer_Init(tDynamicBuffer* pBuf)
 {

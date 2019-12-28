@@ -25,6 +25,8 @@ void  x_mem_free(void* ptr);
 BOOL x_wstr_startswith(const WCHAR* str, const WCHAR* substr);
 BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSubstrLen);
 
+int xitoaW(INT_PTR nNumber, wchar_t *wszStr);
+
 // tDynamicBuffer
 typedef struct sDynamicBuffer {
     void* ptr; // pointer to the allocated memory

@@ -453,11 +453,16 @@ static void initLogOutput(DWORD dwFindAllResult)
     loParams.nAction = 1;
     loParams.pszProgram = NULL;
     loParams.pszWorkDir = NULL;
-    // TODO:
-    //   dwFindAllResult & QS_FINDALL_RSLT_ALLFILES
-    //   "^\\((\\d+) (\\d+),(\\d+)\\)", "/FRAME=\\1 /GOTOLINE=\\2:\\3"
-    loParams.pszRePattern = L"^\\((\\d+),(\\d+)\\)"; // corresponds to the output string format:
-    loParams.pszReTags = L"/GOTOLINE=\\1:\\2";
+    if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+    {
+        loParams.pszRePattern = L"^[ ]*\\((\\d+) (\\d+),(\\d+)\\)"; // corresponds to the output string format
+        loParams.pszReTags = L"/FRAME=\\1 /GOTOLINE=\\2:\\3";
+    }
+    else
+    {
+        loParams.pszRePattern = L"^[ ]*\\((\\d+),(\\d+)\\)"; // corresponds to the output string format
+        loParams.pszReTags = L"/GOTOLINE=\\1:\\2";
+    }
     loParams.nInputCodepage = -2;
     loParams.nOutputCodepage = -2;
     loParams.nFlags = 2; // 2 = no input line
@@ -728,21 +733,25 @@ typedef struct sShowFindResults {
     tShowFindResults_AllFiles_Done pfnAllFilesDone;  // can't be NULL
 } tShowFindResults;
 
-typedef void (*tStoreResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
+typedef void (*tStoreResultCallback)(HWND hWndEdit, DWORD dwFindAllResult, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+static void qsStoreResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AECHARRANGE* pcrFound, const tDynamicBuffer* pFindResult, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     wchar_t* pStr;
     UINT_PTR nBytesToAllocate;
 
     nBytesToAllocate = pFindResult->nBytesStored;
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+        if ( dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
+            if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+            {
+                nBytesToAllocate += 24*sizeof(wchar_t);
+            }
             nBytesToAllocate += 32*sizeof(wchar_t);
         }
-        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+        if ( dwFindAllResult & QS_FINDALL_RSLT_LEN )
         {
             nBytesToAllocate += 16*sizeof(wchar_t);
         }
@@ -754,13 +763,31 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
     // constructing the output string...
     pBuf->nBytesStored = 0;
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
-        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_POS )
+        if ( dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
             INT_X nLinePos;
             int nUnwrappedLine;
+            int nLen;
             AECHARINDEX ci;
+
+            pStr = (wchar_t *) pBuf->ptr;
+
+            *(pStr++) = L'(';
+            pBuf->nBytesStored += sizeof(wchar_t);
+
+            if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+            {
+                FRAMEDATA* pFrame;
+
+                pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_BYEDITWINDOW, (LPARAM) hWndEdit);
+                nLen = xitoaW( (INT_PTR) pFrame, pStr );
+                pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) nLen;
+                pStr += nLen;
+                *(pStr++) = L' ';
+                pBuf->nBytesStored += sizeof(wchar_t);
+            }
 
             if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
                 nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
@@ -770,11 +797,10 @@ static void qsStoreResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, co
             x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
             nLinePos = AEC_WrapLineBegin(&ci);
 
-            pStr = (wchar_t *) pBuf->ptr;
-            pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
+            pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
         }
 
-        if ( g_Options.dwFindAllResult & QS_FINDALL_RSLT_LEN )
+        if ( dwFindAllResult & QS_FINDALL_RSLT_LEN )
         {
             int nLen;
             AECHARINDEX ciBegin;
@@ -819,9 +845,9 @@ typedef struct sGetFindResultPolicy {
 // nBefore=0 and nAfter=0 with nMode=QSFRM_LINE means: whole line
 // nBefore=0 and nAfter=0 with nMode=QSFRM_CHAR means: just the matching word
 
-typedef void (*tFindResultCallback)(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
+typedef void (*tFindResultCallback)(HWND hWndEdit, DWORD dwFindAllResult, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     AETEXTRANGEW tr;
 
@@ -831,7 +857,7 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
 
-    if ( (g_Options.dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
     {
         // TODO: check pfrPolicy->nMaxLineLen
         if ( pfrPolicy->nMode == QSFRM_CHAR )
@@ -930,7 +956,7 @@ static void qsFindResultCallback(HWND hWndEdit, const AECHARRANGE* pcrFound, con
     tr.pBuffer = (wchar_t *) pBuf->ptr;
     tr.pBuffer[0] = 0;
     pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
-    pfrPolicy->pfnStoreResultCallback( hWndEdit, pcrFound, pBuf, pBuf2, pResultsBuf, pfnAddOccurrence );
+    pfrPolicy->pfnStoreResultCallback( hWndEdit, dwFindAllResult, pcrFound, pBuf, pBuf2, pResultsBuf, pfnAddOccurrence );
 }
 
 typedef struct sQSFindAll {
@@ -3230,8 +3256,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         dwSearch |= QSEARCH_FINDALLFILES;
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
                     qsfa.GetFindResultPolicy.nMode = QSFRM_CHARINLINE;
-                    qsfa.GetFindResultPolicy.nBefore = 80;
-                    qsfa.GetFindResultPolicy.nAfter = 80;
+                    qsfa.GetFindResultPolicy.nBefore = 100;
+                    qsfa.GetFindResultPolicy.nAfter = 100;
                     qsfa.GetFindResultPolicy.nMaxLineLen = 0;
                     qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
@@ -4991,7 +5017,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                     ++nTotalMatches;
 
                     if ( pFindAll->pfnFindResultCallback )
-                        pFindAll->pfnFindResultCallback(pEditInfo->hWndEdit, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
+                        pFindAll->pfnFindResultCallback(pEditInfo->hWndEdit, dwFindAllResult, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->buf, &pFindAll->buf2, &resultsBuf, pFindAll->ShowFindResults.pfnAddOccurrence);
 
                     x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
                 }
