@@ -36,6 +36,15 @@
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearch options >>>>>>>>>>>>>>>>>>>>>>>> */
+    typedef struct tFindResultsOutputPolicy {
+        int nMode;   // see tGetFindResultPolicy.nMode
+        int nBefore; // see tGetFindResultPolicy.nBefore
+        int nAfter;  // see tGetFindResultPolicy.nAfter
+    } FindResultsOutputPolicy;
+
+    void initializeFRP(FindResultsOutputPolicy* pFRP);
+    BOOL equalFRP(const FindResultsOutputPolicy* pFRP1, const FindResultsOutputPolicy* pFRP2);
+
     typedef struct tQSearchOpt {
         DWORD    dwFlags[OPTF_COUNT];
         RECT     dockRect;
@@ -58,6 +67,8 @@
         DWORD    dwFindAllMode;
         DWORD    dwFindAllResult;
         DWORD    dwFindAllCountDelay;
+        FindResultsOutputPolicy LogOutputFRP;
+        FindResultsOutputPolicy FileOutputFRP;
     } QSearchOpt;
 
     void initializeOptions(QSearchOpt* pOptions);

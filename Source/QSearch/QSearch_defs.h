@@ -42,7 +42,14 @@
 #define  OPT_FINDALL_RESULT           35
 #define  OPT_FINDALL_COUNT_DELAY      36
 
-#define  OPT_TOTALCOUNT               37
+#define  OPT_LOGOUTPUT_FRP_MODE       37
+#define  OPT_LOGOUTPUT_FRP_BEFORE     38
+#define  OPT_LOGOUTPUT_FRP_AFTER      39
+#define  OPT_FILEOUTPUT_FRP_MODE      40
+#define  OPT_FILEOUTPUT_FRP_BEFORE    41
+#define  OPT_FILEOUTPUT_FRP_AFTER     42
+
+#define  OPT_TOTALCOUNT               43
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

@@ -831,9 +831,6 @@ static void qsStoreResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AE
     pfnAddOccurrence(pBuf, pResultsBuf);
 }
 
-#define QSFRM_LINE       1 // number of lines
-#define QSFRM_CHAR       2 // number of chars
-#define QSFRM_CHARINLINE 3 // number of chars within the current line
 
 typedef struct sGetFindResultPolicy {
     short int nMode;       // one of QSFRM_*
@@ -3255,9 +3252,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     if ( wParam & QS_FINDALL_RSLT_ALLFILES )
                         dwSearch |= QSEARCH_FINDALLFILES;
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
-                    qsfa.GetFindResultPolicy.nMode = QSFRM_CHARINLINE;
-                    qsfa.GetFindResultPolicy.nBefore = 100;
-                    qsfa.GetFindResultPolicy.nAfter = 100;
+                    qsfa.GetFindResultPolicy.nMode = g_Options.LogOutputFRP.nMode;
+                    qsfa.GetFindResultPolicy.nBefore = g_Options.LogOutputFRP.nBefore;
+                    qsfa.GetFindResultPolicy.nAfter = g_Options.LogOutputFRP.nAfter;
                     qsfa.GetFindResultPolicy.nMaxLineLen = 0;
                     qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
@@ -3274,9 +3271,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     if ( wParam & QS_FINDALL_RSLT_ALLFILES )
                         dwSearch |= QSEARCH_FINDALLFILES;
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
-                    qsfa.GetFindResultPolicy.nMode = QSFRM_LINE;
-                    qsfa.GetFindResultPolicy.nBefore = 0;
-                    qsfa.GetFindResultPolicy.nAfter = 0;
+                    qsfa.GetFindResultPolicy.nMode = g_Options.FileOutputFRP.nMode;
+                    qsfa.GetFindResultPolicy.nBefore = g_Options.FileOutputFRP.nBefore;
+                    qsfa.GetFindResultPolicy.nAfter = g_Options.FileOutputFRP.nAfter;
                     qsfa.GetFindResultPolicy.nMaxLineLen = 0;
                     qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_FileOutput_Init;

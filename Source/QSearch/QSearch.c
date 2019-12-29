@@ -53,6 +53,7 @@ void CloseLog(void)
 
 
 #define  WRONG_DWORD_VALUE           0xFEDC
+#define  WRONG_INT_VALUE             0xFEDC
 #define  WRONG_COLOR_VALUE           0xFFFFFFFFL
 #define  DEFAULT_COLOR_NOTFOUND      RGB(0xFF, 0xE0, 0xE0)
 #define  DEFAULT_COLOR_NOTREGEXP     RGB(0xF8, 0xE8, 0xF8)
@@ -74,6 +75,14 @@ void CloseLog(void)
 #define  DEFAULT_FINDALL_COUNT_DELAY 400
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
+
+#define LOGOUTPUT_FRP_MODE     QSFRM_CHARINLINE
+#define LOGOUTPUT_FRP_BEFORE   100
+#define LOGOUTPUT_FRP_AFTER    100
+
+#define FILEOUTPUT_FRP_MODE    QSFRM_LINE
+#define FILEOUTPUT_FRP_BEFORE  0
+#define FILEOUTPUT_FRP_AFTER   0
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> plugin state >>>>>>>>>>>>>>>>>>>>>>>> */
@@ -104,6 +113,24 @@ void CloseLog(void)
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearch options >>>>>>>>>>>>>>>>>>>>>>>> */
+    void initializeFRP(FindResultsOutputPolicy* pFRP)
+    {
+        pFRP->nMode = WRONG_INT_VALUE;
+        pFRP->nBefore = WRONG_INT_VALUE;
+        pFRP->nAfter = WRONG_INT_VALUE;
+    }
+
+    BOOL equalFRP(const FindResultsOutputPolicy* pFRP1, const FindResultsOutputPolicy* pFRP2)
+    {
+        if ( (pFRP1->nMode   != pFRP2->nMode)   ||
+             (pFRP1->nBefore != pFRP2->nBefore) ||
+             (pFRP1->nAfter  != pFRP2->nAfter) )
+        {
+            return FALSE;
+        }
+        return TRUE;
+    }
+
     void initializeOptions(QSearchOpt* pOptions)
     {
         int i;
@@ -134,6 +161,8 @@ void CloseLog(void)
         pOptions->dwFindAllMode = WRONG_DWORD_VALUE;
         pOptions->dwFindAllResult = WRONG_DWORD_VALUE;
         pOptions->dwFindAllCountDelay = WRONG_DWORD_VALUE;
+        initializeFRP(&pOptions->LogOutputFRP);
+        initializeFRP(&pOptions->FileOutputFRP);
     }
 
     void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[])
@@ -177,7 +206,9 @@ void CloseLog(void)
              (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp) ||
              (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)      ||
              (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)    ||
-             (pOpt1->dwFindAllCountDelay != pOpt2->dwFindAllCountDelay) )
+             (pOpt1->dwFindAllCountDelay != pOpt2->dwFindAllCountDelay) ||
+             !equalFRP(&pOpt1->LogOutputFRP,  &pOpt2->LogOutputFRP)     ||
+             !equalFRP(&pOpt1->FileOutputFRP, &pOpt2->FileOutputFRP) )
         {
             return FALSE;
         }
@@ -228,7 +259,13 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_ADJ_INCOMPL_REGEXP       33 */  "adj_incompl_regexp",
   /* OPT_FINDALL_MODE             34 */  "findall_mode",
   /* OPT_FINDALL_RESULT           35 */  "findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      36 */  "findall_count_delay"
+  /* OPT_FINDALL_COUNT_DELAY      36 */  "findall_count_delay",
+  /* OPT_LOGOUTPUT_FRP_MODE       37 */  "logoutput_frp_mode",
+  /* OPT_LOGOUTPUT_FRP_BEFORE     38 */  "logoutput_frp_before",
+  /* OPT_LOGOUTPUT_FRP_AFTER      39 */  "logoutput_frp_after",
+  /* OPT_FILEOUTPUT_FRP_MODE      40 */  "fileoutput_frp_mode",
+  /* OPT_FILEOUTPUT_FRP_BEFORE    41 */  "fileoutput_frp_before",
+  /* OPT_FILEOUTPUT_FRP_AFTER     42 */  "fileoutput_frp_after"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -268,7 +305,13 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_ADJ_INCOMPL_REGEXP       33 */  L"adj_incompl_regexp",
   /* OPT_FINDALL_MODE             34 */  L"findall_mode",
   /* OPT_FINDALL_RESULT           35 */  L"findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      36 */  L"findall_count_delay"
+  /* OPT_FINDALL_COUNT_DELAY      36 */  L"findall_count_delay",
+  /* OPT_LOGOUTPUT_FRP_MODE       37 */  L"logoutput_frp_mode",
+  /* OPT_LOGOUTPUT_FRP_BEFORE     38 */  L"logoutput_frp_before",
+  /* OPT_LOGOUTPUT_FRP_AFTER      39 */  L"logoutput_frp_after",
+  /* OPT_FILEOUTPUT_FRP_MODE      40 */  L"fileoutput_frp_mode",
+  /* OPT_FILEOUTPUT_FRP_BEFORE    41 */  L"fileoutput_frp_before",
+  /* OPT_FILEOUTPUT_FRP_AFTER     42 */  L"fileoutput_frp_after"
 };
 
 
@@ -1384,6 +1427,24 @@ void ReadOptions(void)
             g_Options.dwFindAllCountDelay = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY], WRONG_DWORD_VALUE );
 
+            g_Options.LogOutputFRP.nMode = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE], WRONG_INT_VALUE );
+
+            g_Options.LogOutputFRP.nBefore = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE], WRONG_INT_VALUE );
+
+            g_Options.LogOutputFRP.nAfter = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nMode = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nBefore = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nAfter = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1462,6 +1523,24 @@ void ReadOptions(void)
 
             g_Options.dwFindAllCountDelay = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY], WRONG_DWORD_VALUE );
+
+            g_Options.LogOutputFRP.nMode = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE], WRONG_INT_VALUE );
+
+            g_Options.LogOutputFRP.nBefore = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE], WRONG_INT_VALUE );
+
+            g_Options.LogOutputFRP.nAfter = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nMode = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nBefore = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nAfter = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1587,6 +1666,24 @@ void ReadOptions(void)
 
     if ( g_Options.dwFindAllCountDelay == WRONG_DWORD_VALUE )
         g_Options.dwFindAllCountDelay = DEFAULT_FINDALL_COUNT_DELAY;
+
+    if ( g_Options.LogOutputFRP.nMode == WRONG_INT_VALUE )
+        g_Options.LogOutputFRP.nMode = LOGOUTPUT_FRP_MODE;
+
+    if ( g_Options.LogOutputFRP.nBefore == WRONG_INT_VALUE )
+        g_Options.LogOutputFRP.nBefore = LOGOUTPUT_FRP_BEFORE;
+
+    if ( g_Options.LogOutputFRP.nAfter == WRONG_INT_VALUE )
+        g_Options.LogOutputFRP.nAfter = LOGOUTPUT_FRP_AFTER;
+
+    if ( g_Options.FileOutputFRP.nMode == WRONG_INT_VALUE )
+        g_Options.FileOutputFRP.nMode = FILEOUTPUT_FRP_MODE;
+
+    if ( g_Options.FileOutputFRP.nBefore == WRONG_INT_VALUE )
+        g_Options.FileOutputFRP.nBefore = FILEOUTPUT_FRP_BEFORE;
+
+    if ( g_Options.FileOutputFRP.nAfter == WRONG_INT_VALUE )
+        g_Options.FileOutputFRP.nAfter = FILEOUTPUT_FRP_AFTER;
 }
 
 void SaveOptions(void)
@@ -1709,6 +1806,24 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
                   g_Options.dwFindAllCountDelay );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
+                  g_Options.LogOutputFRP.nMode );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
+                  g_Options.LogOutputFRP.nBefore );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
+                  g_Options.LogOutputFRP.nAfter );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
+                  g_Options.FileOutputFRP.nMode );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
+                  g_Options.FileOutputFRP.nBefore );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
+                  g_Options.FileOutputFRP.nAfter );
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -1799,6 +1914,24 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
                   g_Options.dwFindAllCountDelay );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
+                  g_Options.LogOutputFRP.nMode );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
+                  g_Options.LogOutputFRP.nBefore );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
+                  g_Options.LogOutputFRP.nAfter );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
+                  g_Options.FileOutputFRP.nMode );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
+                  g_Options.FileOutputFRP.nBefore );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
+                  g_Options.FileOutputFRP.nAfter );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);

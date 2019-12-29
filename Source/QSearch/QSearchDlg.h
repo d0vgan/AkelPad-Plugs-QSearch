@@ -76,6 +76,12 @@
 #define  QSN_DLGSWITCH      (WM_USER + 1501) /*  0, 0                        */
 
 
+// tGetFindResultPolicy.nMode
+#define QSFRM_LINE       1 // number of lines
+#define QSFRM_CHAR       2 // number of chars
+#define QSFRM_CHARINLINE 3 // number of chars within the current line
+
+
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     #define  MAX_TEXT_SIZE  120
 
