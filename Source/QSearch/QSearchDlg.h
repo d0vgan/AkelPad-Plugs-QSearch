@@ -77,9 +77,10 @@
 
 
 // tGetFindResultPolicy.nMode
-#define QSFRM_LINE       1 // number of lines
-#define QSFRM_CHAR       2 // number of chars
-#define QSFRM_CHARINLINE 3 // number of chars within the current line
+#define QSFRM_LINE        1 // number of lines
+#define QSFRM_CHAR        2 // number of chars
+#define QSFRM_CHARINLINE  3 // number of chars within the current line
+#define QSFRM_LINE_CR     4 // number of lines + trailing '\r'
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */

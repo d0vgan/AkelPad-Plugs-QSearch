@@ -847,6 +847,7 @@ typedef void (*tFindResultCallback)(HWND hWndEdit, DWORD dwFindAllResult, const 
 static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pBuf, tDynamicBuffer* pBuf2, tDynamicBuffer* pResultsBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     AETEXTRANGEW tr;
+    UINT_PTR nBytesToAllocate;
 
     if ( !pfrPolicy->pfnStoreResultCallback )
         return; // no sense to retrieve the find result
@@ -890,7 +891,7 @@ static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AEC
             else
                 tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
         }
-        else // QSFRM_LINE
+        else // QSFRM_LINE or QSFRM_LINE_CR
         {
             if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
             {
@@ -900,39 +901,41 @@ static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AEC
             else
             {
                 INT_X  nLineStartPos;
-                int    nUnwrappedLine;
+                int    nLine;
                 int    nLineCount;
+                int    nLineLen;
 
                 if ( pfrPolicy->nBefore > 0 )
                 {
-                    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                        nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
-                    else
-                        nUnwrappedLine = tr.cr.ciMin.nLine;
+                    //if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                    //    nLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
+                    //else
+                        nLine = tr.cr.ciMin.nLine;
 
-                    if ( nUnwrappedLine > pfrPolicy->nBefore )
-                        nUnwrappedLine -= pfrPolicy->nBefore;
+                    if ( nLine > pfrPolicy->nBefore )
+                        nLine -= pfrPolicy->nBefore;
                     else
-                        nUnwrappedLine = 0;
+                        nLine = 0;
 
-                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
+                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nLine, 0 );
                     SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMin );
                 }
                 if ( pfrPolicy->nAfter > 0)
                 {
-                    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                        nUnwrappedLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
-                    else
-                        nUnwrappedLine = tr.cr.ciMax.nLine;
+                    //if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+                    //    nLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
+                    //else
+                        nLine = tr.cr.ciMax.nLine;
 
                     nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
-                    if ( nUnwrappedLine + pfrPolicy->nAfter < nLineCount )
-                        nUnwrappedLine += pfrPolicy->nAfter;
+                    if ( nLine + pfrPolicy->nAfter < nLineCount )
+                        nLine += pfrPolicy->nAfter;
                     else
-                        nUnwrappedLine = nLineCount;
+                        nLine = nLineCount;
 
-                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nUnwrappedLine, 0 );
-                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMax );
+                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nLine, 0 );
+                    nLineLen = (int) SendMessage( hWndEdit, EM_LINELENGTH, nLineStartPos, 0 );
+                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) (nLineStartPos + nLineLen), (LPARAM) &tr.cr.ciMax );
                 }
             }
         }
@@ -947,12 +950,22 @@ static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AEC
     if ( tr.dwBufferMax == 0 )
         return; // no text to retrieve
 
-    if ( !tDynamicBuffer_Allocate(pBuf, sizeof(wchar_t) * tr.dwBufferMax) )
-            return; // failed to allocate the memory
+    nBytesToAllocate = sizeof(wchar_t) * tr.dwBufferMax;
+    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+        nBytesToAllocate += sizeof(wchar_t); // for the trailing '\r'
+
+    if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
+        return; // failed to allocate the memory
 
     tr.pBuffer = (wchar_t *) pBuf->ptr;
     tr.pBuffer[0] = 0;
     pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+    {
+        tr.pBuffer += pBuf->nBytesStored / sizeof(wchar_t);
+        *tr.pBuffer = L'\r'; // the trailing '\r'
+        pBuf->nBytesStored += sizeof(wchar_t); // includes the trailing '\r'
+    }
     pfrPolicy->pfnStoreResultCallback( hWndEdit, dwFindAllResult, pcrFound, pBuf, pBuf2, pResultsBuf, pfnAddOccurrence );
 }
 
