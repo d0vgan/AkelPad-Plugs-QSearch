@@ -547,10 +547,13 @@ static void qsShowFindResults_LogOutput_AllFiles_Init(const wchar_t* cszFindWhat
 {
     initLogOutput(dwFindAllResult);
 
-    if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
-        return; // failed
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    {
+        if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
+            return; // failed
 
-    LogOutput_AddText( (const wchar_t *) pBuf->ptr, pBuf->nBytesStored/sizeof(wchar_t) );
+        LogOutput_AddText( (const wchar_t *) pBuf->ptr, pBuf->nBytesStored/sizeof(wchar_t) );
+    }
 }
 
 static void qsShowFindResults_LogOutput_AllFiles_Done(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllResult)
@@ -563,10 +566,12 @@ static void qsShowFindResults_LogOutput_AllFiles_Done(unsigned int nTotalOccurre
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     LogOutput_AddText( (const wchar_t*) pResultsBuf->ptr, nLen );
 
-    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
-    nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
-
-    LogOutput_AddText(szText, nLen);
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    {
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
+        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
+        LogOutput_AddText(szText, nLen);
+    }
 }
 
 // FileOutput...
@@ -704,11 +709,14 @@ static void qsShowFindResults_FileOutput_Done(unsigned int nOccurrences, tDynami
 
 static void qsShowFindResults_FileOutput_AllFiles_Init(const wchar_t* cszFindWhat, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllFlags, DWORD dwFindAllResult, unsigned int nTotalFiles)
 {
-    if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
-        return; // failed
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    {
+        if ( formatAllFilesSearchingForStringToBuf(cszFindWhat, pBuf, dwFindAllFlags, nTotalFiles) == 0 )
+            return; // failed
 
-    tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
-    tDynamicBuffer_Append( pResultsBuf, L"\r\r", 2*sizeof(wchar_t) ); // doubled new line
+        tDynamicBuffer_Append( pResultsBuf, pBuf->ptr, pBuf->nBytesStored );
+        tDynamicBuffer_Append( pResultsBuf, L"\r\r", 2*sizeof(wchar_t) ); // doubled new line
+    }
 }
 
 static void qsShowFindResults_FileOutput_AllFiles_Done(unsigned int nTotalOccurrences, tDynamicBuffer* pBuf, tDynamicBuffer* pResultsBuf, DWORD dwFindAllResult)
@@ -717,9 +725,12 @@ static void qsShowFindResults_FileOutput_AllFiles_Done(unsigned int nTotalOccurr
     UINT_PTR nLen;
     wchar_t  szText[128];
 
-    cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
-    nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
-    tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+    if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    {
+        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
+        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, nTotalOccurrences);
+        tDynamicBuffer_Append( pResultsBuf, szText, nLen*sizeof(wchar_t) );
+    }
 
     tDynamicBuffer_Append( pResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     addResultToFileOutput(pResultsBuf, dwFindAllResult);
