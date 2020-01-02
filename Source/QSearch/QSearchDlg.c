@@ -4967,8 +4967,16 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             nTotalFiles = 0;
 
             dwFindAllResult = g_Options.dwFindAllResult;
-            if ( dwParams & QSEARCH_FINDALLFILES )
-                dwFindAllResult |= QS_FINDALL_RSLT_ALLFILES;
+            if ( g_Plugin.nMDI == WMD_SDI )
+            {
+                if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+                    dwFindAllResult ^= QS_FINDALL_RSLT_ALLFILES;
+            }
+            else // MDI, PMDI
+            {
+                if ( dwParams & QSEARCH_FINDALLFILES )
+                    dwFindAllResult |= QS_FINDALL_RSLT_ALLFILES;
+            }
 
             if ( (dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) &&
                  (pFindAll->pfnFindResultCallback != NULL) ) // not CountOnly
@@ -5020,7 +5028,13 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                     // skip the pSearchResultsFrame
                     pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFrame);
                     if ( pFrame != pFrameInitial )
+                    {
+                        if ( g_Plugin.nMDI == WMD_PMDI )
+                        {
+                            SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrame);
+                        }
                         pEditInfo = &pFrame->ei;
+                    }
                     else
                         break;
                 }
@@ -5054,7 +5068,13 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 {
                     pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) pFrame);
                     if ( pFrame != pFrameInitial )
+                    {
+                        if ( g_Plugin.nMDI == WMD_PMDI )
+                        {
+                            SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrame);
+                        }
                         pEditInfo = &pFrame->ei;
+                    }
                     else
                         break;
                 }
@@ -5067,6 +5087,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             if ( bAllFiles )
             {
+                if ( g_Plugin.nMDI == WMD_PMDI )
+                {
+                    SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrameInitial);
+                }
+
                 bNeedsFindAllCountOnly = FALSE;
 
                 if ( pFrameInitial != g_QSearchDlg.pSearchResultsFrame )
