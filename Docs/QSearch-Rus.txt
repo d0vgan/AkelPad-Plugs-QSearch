@@ -530,7 +530,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 --------
 История:
 --------
-v.7.4
+v.7.4 (Январь 2020)
  + добавлено: Найти Все во Всех Файлах
  + добавлено: функции FindNext, FindPrev, FindAll
  + добавлено: 'logoutput_frp_*', 'fileoutput_frp_*'
@@ -820,7 +820,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - May 2019, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Jan 2020, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Этот плагин является бесплатным (бесплатным как для частного, так и для

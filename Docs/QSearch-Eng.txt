@@ -77,7 +77,7 @@ If no selection, the current word is selected (according to the option
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text
 right in the editor window.
-The behavior of these functions depends on general QSearch'es options
+The behaviour of these functions depends on general QSearch'es options
 (in its popup menu or in the ini-file, see below).
 Furthermore, the functions QSearch::QSearch and QSearch::SelFindNext/Prev
 may search for different text (QSearch::QSearch - for text entered in the
@@ -224,7 +224,7 @@ Additional options (QSearch panel's popup menu or file
      plugin continues searching if there was no previous call to AkelPad's
      standard Find or Replace Dialog.
    catch_main_f3 = 0
-     Standard AkelPad behavior.
+     Standard AkelPad behaviour.
 
 12) "Window: Catch main Esc"
    catch_main_esc = 1
@@ -232,7 +232,7 @@ Additional options (QSearch panel's popup menu or file
      panel is visible, it becomes hidden.
    catch_main_esc = 0
      The QSearch'es panel does not catch the Esc key; it is processed by
-     AkelPad (default behavior).
+     AkelPad (default behaviour).
    Also you can manually set one of the following values:
    catch_main_esc = 10
      When Esc key is pressed in QSearch'es panel, it is passed to AkelPad
@@ -505,7 +505,7 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
-v.7.4
+v.7.4 (January 2020)
  + added: Find All in All Files
  + added: functions FindNext, FindPrev, FindAll
  + added: 'logoutput_frp_*', 'fileoutput_frp_*'
@@ -621,7 +621,7 @@ v.5.1 (October 2012)
 v.5.0 (October 2012)
  * 5th anniversary of QSearch :)
  * AkelPad 4.7.9+
- - fixed: wrong behavior of docked window on autoload
+ - fixed: wrong behaviour of docked window on autoload
  - fixed: QSearch panel's popup menu on 2nd monitor
  + silent instant searching by F3 (see the details above)
 
@@ -674,7 +674,7 @@ v.3.8 (September 2010)
 
 v.3.7 (September 2010)
  * 3rd anniversary of QSearch :)
- * 'srch_pickup_selection' behavior changed
+ * 'srch_pickup_selection' behaviour changed
  + added: 'editor_autofocus'
 
 v.3.6 (September 2010)
@@ -731,7 +731,7 @@ v.2.4 (September 2009)
 v.2.3 (September 2009)
  * 2nd anniversary of QSearch :)
  + added: "Highlight all" state is saved
- - fixed: incorrect behavior when Shift pressed while searching on-the-fly
+ - fixed: incorrect behaviour when Shift pressed while searching on-the-fly
  - fixed: sometimes QSearch proceeded to search when the hot-key was pressed
 
 v.2.2 (August 2009)
@@ -792,7 +792,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - May 2019, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Jan 2020, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
