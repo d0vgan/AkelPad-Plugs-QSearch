@@ -248,10 +248,20 @@ Additional options (QSearch panel's popup menu or file
    hotkey_hides_panel = 1
      When you press the plugin hot-key in QSearch'es panel, the panel
      is closed (becomes hidden - the same as when Esc is pressed).
-     Repeated call of QSearch::QSearch also closes the panel.
+     Repeated call of QSearch::QSearch also closes the panel. (The same
+     as when the plugin hotkey is pressed in AkelPad's editing window).
    hotkey_hides_panel = 0
      When you press the plugin hot-key in QSearch'es panel, the AkelPad's
      editor window becomes focused.
+   hotkey_hides_panel = 11
+     When you press the plugin hot-key in QSearch'es panel, the panel
+     is closed (becomes hidden - the same as when Esc is pressed).
+     When the plugin hotkey is pressed in AkelPad's editing window, the
+     QSearch'es panel becomes active.
+   hotkey_hides_panel = 10
+     Works in the same way as hotkey_hides_panel = 0.
+     When "Window: Hotkey hides the panel" is checked, the value of
+     'hotkey_hides_panel' becomes 11.
 
 14) "Window: Editor auto-focus (on mouse move)"
    editor_autofocus = 1
@@ -509,6 +519,7 @@ v.7.4 (January 2020)
  + added: Find All in All Files
  + added: functions FindNext, FindPrev, FindAll
  + added: 'logoutput_frp_*', 'fileoutput_frp_*'
+ + added: hotkey_hides_panel=11
 
 v.7.3 (May 2019)
  * improved: a few small things in "Find All"

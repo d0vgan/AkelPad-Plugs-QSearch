@@ -63,6 +63,9 @@
 #define  ESC_CATCH_FROM_MAIN           1
 #define  ESC_THROW_TO_MAIN            10
 
+#define  HOTKEY_HIDES_PANEL_ALWAYS     1
+#define  HOTKEY_HIDES_PANEL_FOCUSED   11
+
 #define  AUTOFOCUS_EDITOR              1
 #define  AUTOFOCUS_QSEARCH            10
 #define  AUTOFOCUS_EDITOR_ALWAYS     100

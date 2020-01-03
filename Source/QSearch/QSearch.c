@@ -457,14 +457,28 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
     }
     else if ( !bInternalCall )
     {
-        if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] )
+        if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] & 0x01 )
         {
             if ( IsWindowVisible(g_QSearchDlg.hDlg) )
             {
-                SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, FALSE, 0 );
+                BOOL bHide = TRUE;
 
-                // Stay in memory, and show as non-active
-                return UD_NONUNLOAD_NONACTIVE;
+                if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] == HOTKEY_HIDES_PANEL_FOCUSED )
+                {
+                    HWND hFocusedWnd = GetFocus();
+                    if ( (hFocusedWnd != g_QSearchDlg.hDlg) && !IsChild(g_QSearchDlg.hDlg, hFocusedWnd) )
+                    {
+                        bHide = FALSE;
+                    }
+                }
+
+                if (bHide)
+                {
+                    SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, FALSE, 0 );
+
+                    // Stay in memory, and show as non-active
+                    return UD_NONUNLOAD_NONACTIVE;
+                }
             }
         }
         SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, TRUE, QS_SF_CANPICKUPSELTEXT ); // allow to pick up selected text

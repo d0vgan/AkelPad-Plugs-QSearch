@@ -2202,7 +2202,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 bHotKeyPressed = FALSE;
                 if ( !qs_bHotKeyPressedOnShow )
                 {
-                    if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] )
+                    if ( g_Options.dwFlags[OPTF_HOTKEY_HIDES_PANEL] & 0x01 )
                     {
                         SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, FALSE, 0 );
                     }
@@ -2846,6 +2846,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         case OPTF_SRCH_PICKUP_SELECTION:
                         case OPTF_SRCH_STOP_EOF:
                         case OPTF_CATCH_MAIN_ESC:
+                        case OPTF_HOTKEY_HIDES_PANEL:
                         case OPTF_EDITOR_AUTOFOCUS_MOUSE:
                             if ( (state & MF_CHECKED) == MF_CHECKED )
                             {
@@ -3225,6 +3226,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         case OPTF_SRCH_PICKUP_SELECTION:
                         case OPTF_SRCH_STOP_EOF:
                         case OPTF_CATCH_MAIN_ESC:
+                        case OPTF_HOTKEY_HIDES_PANEL:
                         case OPTF_EDITOR_AUTOFOCUS_MOUSE:
                             uCheck = ((g_Options.dwFlags[i] & 0x01) ? MF_CHECKED : MF_UNCHECKED);
                             break;
