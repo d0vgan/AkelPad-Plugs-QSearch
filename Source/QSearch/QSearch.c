@@ -69,6 +69,8 @@ void CloseLog(void)
 #define  DEFAULT_HISTORY_SAVE        0x03
 #define  DEFAULT_QS_UI               QS_UI_NEW_02
 #define  DEFAULT_SELECT_BY_F3        2
+#define  DEFAULT_SELECT_BY_FND       1
+#define  DEFAULT_SELECT_BY_SELFND    1
 #define  DEFAULT_ADJ_INCOMPL_REGEXP  1
 #define  DEFAULT_FINDALL_MODE        QS_FINDALL_LOGOUTPUT
 #define  DEFAULT_FINDALL_RESULT      QS_FINDALL_RSLT_WHOLELINE | QS_FINDALL_RSLT_POS | QS_FINDALL_RSLT_SEARCHING | QS_FINDALL_RSLT_OCCFOUND
@@ -157,6 +159,8 @@ void CloseLog(void)
         pOptions->dwHistorySave = WRONG_DWORD_VALUE;
         pOptions->dwNewUI = WRONG_DWORD_VALUE;
         pOptions->dwSelectByF3 = WRONG_DWORD_VALUE;
+        pOptions->dwSelectByFnd = WRONG_DWORD_VALUE;
+        pOptions->dwSelectBySelFnd = WRONG_DWORD_VALUE;
         pOptions->dwAdjIncomplRegExp = WRONG_DWORD_VALUE;
         pOptions->dwFindAllMode = WRONG_DWORD_VALUE;
         pOptions->dwFindAllResult = WRONG_DWORD_VALUE;
@@ -203,6 +207,8 @@ void CloseLog(void)
              (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)      ||
              (pOpt1->dwNewUI             !=  pOpt2->dwNewUI)            ||
              (pOpt1->dwSelectByF3        !=  pOpt2->dwSelectByF3)       ||
+             (pOpt1->dwSelectByFnd       !=  pOpt2->dwSelectByFnd)      ||
+             (pOpt1->dwSelectBySelFnd    !=  pOpt2->dwSelectBySelFnd)   ||
              (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp) ||
              (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)      ||
              (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)    ||
@@ -256,16 +262,18 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_HISTORY_SAVE             30 */  "history_save",
   /* OPT_NEW_UI                   31 */  "new_ui",
   /* OPT_SELECT_BY_F3             32 */  "select_by_f3",
-  /* OPT_ADJ_INCOMPL_REGEXP       33 */  "adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             34 */  "findall_mode",
-  /* OPT_FINDALL_RESULT           35 */  "findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      36 */  "findall_count_delay",
-  /* OPT_LOGOUTPUT_FRP_MODE       37 */  "logoutput_frp_mode",
-  /* OPT_LOGOUTPUT_FRP_BEFORE     38 */  "logoutput_frp_before",
-  /* OPT_LOGOUTPUT_FRP_AFTER      39 */  "logoutput_frp_after",
-  /* OPT_FILEOUTPUT_FRP_MODE      40 */  "fileoutput_frp_mode",
-  /* OPT_FILEOUTPUT_FRP_BEFORE    41 */  "fileoutput_frp_before",
-  /* OPT_FILEOUTPUT_FRP_AFTER     42 */  "fileoutput_frp_after"
+  /* OPT_SELECT_BY_FND            33 */  "select_by_fnd",
+  /* OPT_SELECT_BY_SELFND         34 */  "select_by_selfnd",
+  /* OPT_ADJ_INCOMPL_REGEXP       35 */  "adj_incompl_regexp",
+  /* OPT_FINDALL_MODE             36 */  "findall_mode",
+  /* OPT_FINDALL_RESULT           37 */  "findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      38 */  "findall_count_delay",
+  /* OPT_LOGOUTPUT_FRP_MODE       39 */  "logoutput_frp_mode",
+  /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  "logoutput_frp_before",
+  /* OPT_LOGOUTPUT_FRP_AFTER      41 */  "logoutput_frp_after",
+  /* OPT_FILEOUTPUT_FRP_MODE      42 */  "fileoutput_frp_mode",
+  /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  "fileoutput_frp_before",
+  /* OPT_FILEOUTPUT_FRP_AFTER     44 */  "fileoutput_frp_after"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -302,16 +310,18 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
   /* OPT_HISTORY_SAVE             30 */  L"history_save",
   /* OPT_NEW_UI                   31 */  L"new_ui",
   /* OPT_SELECT_BY_F3             32 */  L"select_by_f3",
-  /* OPT_ADJ_INCOMPL_REGEXP       33 */  L"adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             34 */  L"findall_mode",
-  /* OPT_FINDALL_RESULT           35 */  L"findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      36 */  L"findall_count_delay",
-  /* OPT_LOGOUTPUT_FRP_MODE       37 */  L"logoutput_frp_mode",
-  /* OPT_LOGOUTPUT_FRP_BEFORE     38 */  L"logoutput_frp_before",
-  /* OPT_LOGOUTPUT_FRP_AFTER      39 */  L"logoutput_frp_after",
-  /* OPT_FILEOUTPUT_FRP_MODE      40 */  L"fileoutput_frp_mode",
-  /* OPT_FILEOUTPUT_FRP_BEFORE    41 */  L"fileoutput_frp_before",
-  /* OPT_FILEOUTPUT_FRP_AFTER     42 */  L"fileoutput_frp_after"
+  /* OPT_SELECT_BY_FND            33 */  L"select_by_fnd",
+  /* OPT_SELECT_BY_SELFND         34 */  L"select_by_selfnd",
+  /* OPT_ADJ_INCOMPL_REGEXP       35 */  L"adj_incompl_regexp",
+  /* OPT_FINDALL_MODE             36 */  L"findall_mode",
+  /* OPT_FINDALL_RESULT           37 */  L"findall_result",
+  /* OPT_FINDALL_COUNT_DELAY      38 */  L"findall_count_delay",
+  /* OPT_LOGOUTPUT_FRP_MODE       39 */  L"logoutput_frp_mode",
+  /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  L"logoutput_frp_before",
+  /* OPT_LOGOUTPUT_FRP_AFTER      41 */  L"logoutput_frp_after",
+  /* OPT_FILEOUTPUT_FRP_MODE      42 */  L"fileoutput_frp_mode",
+  /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  L"fileoutput_frp_before",
+  /* OPT_FILEOUTPUT_FRP_AFTER     44 */  L"fileoutput_frp_after"
 };
 
 
@@ -488,13 +498,25 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
     return UD_NONUNLOAD_ACTIVE;
 }
 
-#define  SELECT_MODE_F3     0x01
-#define  SELECT_MODE_FORCE  0x02
+#define  SELECT_MODE_F3      0x01
+#define  SELECT_MODE_FND     0x02
+#define  SELECT_MODE_SELFND  0x04
+#define  SELECT_MODE_FORCE   0x10
 
 static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNewSelection)
 {
-    if ( (!(uSelectMode & SELECT_MODE_F3)) || 
-         (g_Options.dwSelectByF3 != 0) )
+    DWORD dwSelectWord;
+
+    if ( uSelectMode & SELECT_MODE_F3 )
+        dwSelectWord = g_Options.dwSelectByF3;
+    else if ( uSelectMode & SELECT_MODE_FND )
+        dwSelectWord = g_Options.dwSelectByFnd;
+    else if ( uSelectMode & SELECT_MODE_SELFND )
+        dwSelectWord = g_Options.dwSelectBySelFnd;
+    else
+        dwSelectWord = 1; // enabled
+
+    if ( dwSelectWord != 0 )
     {
         CHARRANGE_X cr = {0, 0};
 
@@ -514,7 +536,7 @@ static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 crWord.cpMax = (INT_X) SendMessage(hEdit, EM_FINDWORDBREAK, WB_RIGHTBREAK, crWord.cpMin);
             }
             if ( (crWord.cpMax >= cr.cpMin) && 
-                 ( (g_Options.dwSelectByF3 == 1) ||
+                 ( (dwSelectWord == 1) ||
                    ((cr.cpMin > crWord.cpMin) && (cr.cpMin < crWord.cpMax)) )
                )
             {
@@ -579,7 +601,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
                 case 1: // Pick up the selected text
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
                     SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                     break;
             }
@@ -615,7 +637,7 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
         switch ( GetExtCallParam(pd->lParam, 1) )
         {
             case 1: // Pick up the selected text
-                bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
                 SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                 break;
         }
@@ -654,14 +676,14 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
                 case 1: // Pick up the selected text
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
                     SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                     break;
                 case 2: // Find All in All Files
                     dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
                     break;
                 case 3: // Pick up the selected text + Find All in All Files
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, 0, NULL);
+                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
                     SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
                     dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
                     break;
@@ -707,7 +729,7 @@ void __declspec(dllexport) SelFindNext(PLUGINDATA* pd)
     }
     else
     {
-        if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_F3, NULL) )
+        if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL) )
         {
             doQSearch(pd, TRUE);
             if ( g_QSearchDlg.hDlg )
@@ -728,7 +750,7 @@ void __declspec(dllexport) SelFindPrev(PLUGINDATA* pd)
     if ( pd->dwSupport & PDS_GETSUPPORT )
         return;
 
-    if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_F3, NULL) )
+    if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL) )
     {
         doQSearch(pd, TRUE);
         if ( g_QSearchDlg.hDlg )
@@ -1429,6 +1451,12 @@ void ReadOptions(void)
             g_Options.dwSelectByF3 = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_SELECT_BY_F3], WRONG_DWORD_VALUE );
 
+            g_Options.dwSelectByFnd = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_SELECT_BY_FND], WRONG_DWORD_VALUE );
+
+            g_Options.dwSelectBySelFnd = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_SELECT_BY_SELFND], WRONG_DWORD_VALUE );
+
             g_Options.dwAdjIncomplRegExp = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
 
@@ -1525,6 +1553,12 @@ void ReadOptions(void)
 
             g_Options.dwSelectByF3 = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_SELECT_BY_F3], WRONG_DWORD_VALUE );
+
+            g_Options.dwSelectByFnd = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_SELECT_BY_FND], WRONG_DWORD_VALUE );
+
+            g_Options.dwSelectBySelFnd = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_SELECT_BY_SELFND], WRONG_DWORD_VALUE );
 
             g_Options.dwAdjIncomplRegExp = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP], WRONG_DWORD_VALUE );
@@ -1669,6 +1703,12 @@ void ReadOptions(void)
     if ( g_Options.dwSelectByF3 == WRONG_DWORD_VALUE )
         g_Options.dwSelectByF3 = DEFAULT_SELECT_BY_F3;
 
+    if ( g_Options.dwSelectByFnd == WRONG_DWORD_VALUE )
+        g_Options.dwSelectByFnd = DEFAULT_SELECT_BY_FND;
+
+    if ( g_Options.dwSelectBySelFnd == WRONG_DWORD_VALUE )
+        g_Options.dwSelectBySelFnd = DEFAULT_SELECT_BY_SELFND;
+
     if ( g_Options.dwAdjIncomplRegExp == WRONG_DWORD_VALUE )
         g_Options.dwAdjIncomplRegExp = DEFAULT_ADJ_INCOMPL_REGEXP;
 
@@ -1808,6 +1848,12 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_F3],
                   g_Options.dwSelectByF3 );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_FND],
+                  g_Options.dwSelectByFnd );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_SELFND],
+                  g_Options.dwSelectBySelFnd );
+
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
                   g_Options.dwAdjIncomplRegExp );
 
@@ -1916,6 +1962,12 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_F3],
                   g_Options.dwSelectByF3 );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_FND],
+                  g_Options.dwSelectByFnd );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_SELFND],
+                  g_Options.dwSelectBySelFnd );
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
                   g_Options.dwAdjIncomplRegExp );

@@ -37,19 +37,21 @@
 #define  OPT_HISTORY_SAVE             30
 #define  OPT_NEW_UI                   31
 #define  OPT_SELECT_BY_F3             32
-#define  OPT_ADJ_INCOMPL_REGEXP       33
-#define  OPT_FINDALL_MODE             34
-#define  OPT_FINDALL_RESULT           35
-#define  OPT_FINDALL_COUNT_DELAY      36
+#define  OPT_SELECT_BY_FND            33
+#define  OPT_SELECT_BY_SELFND         34
+#define  OPT_ADJ_INCOMPL_REGEXP       35
+#define  OPT_FINDALL_MODE             36
+#define  OPT_FINDALL_RESULT           37
+#define  OPT_FINDALL_COUNT_DELAY      38
 
-#define  OPT_LOGOUTPUT_FRP_MODE       37
-#define  OPT_LOGOUTPUT_FRP_BEFORE     38
-#define  OPT_LOGOUTPUT_FRP_AFTER      39
-#define  OPT_FILEOUTPUT_FRP_MODE      40
-#define  OPT_FILEOUTPUT_FRP_BEFORE    41
-#define  OPT_FILEOUTPUT_FRP_AFTER     42
+#define  OPT_LOGOUTPUT_FRP_MODE       39
+#define  OPT_LOGOUTPUT_FRP_BEFORE     40
+#define  OPT_LOGOUTPUT_FRP_AFTER      41
+#define  OPT_FILEOUTPUT_FRP_MODE      42
+#define  OPT_FILEOUTPUT_FRP_BEFORE    43
+#define  OPT_FILEOUTPUT_FRP_AFTER     44
 
-#define  OPT_TOTALCOUNT               43
+#define  OPT_TOTALCOUNT               45
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

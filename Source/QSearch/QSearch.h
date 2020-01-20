@@ -63,6 +63,8 @@
         DWORD    dwHistorySave;
         DWORD    dwNewUI;
         DWORD    dwSelectByF3;
+        DWORD    dwSelectByFnd;
+        DWORD    dwSelectBySelFnd;
         DWORD    dwAdjIncomplRegExp;
         DWORD    dwFindAllMode;
         DWORD    dwFindAllResult;
