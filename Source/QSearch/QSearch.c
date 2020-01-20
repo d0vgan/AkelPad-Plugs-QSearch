@@ -229,99 +229,99 @@ const char*    CSZ_QSEARCH = "QSearch";
 const wchar_t* CWSZ_QSEARCH = L"QSearch";
 
 const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
-  /* OPTF_SRCH_ONTHEFLY_MODE       0 */  "srch_onthefly_mode",
-  /* OPTF_SRCH_FROM_BEGINNING      1 */  "srch_from_beginning",
-  /* OPTF_SRCH_USE_SPECIALCHARS    2 */  "srch_use_specialchars",
-  /* OPTF_SRCH_USE_REGEXP          3 */  "srch_use_regexp",
-  /* OPTF_SRCH_REGEXP_DOT_NEWLINE  4 */  "srch_regexp_dot_newline",
-  /* OPTF_SRCH_PICKUP_SELECTION    5 */  "srch_pickup_selection",
-  /* OPTF_SRCH_SELFIND_PICKUP      6 */  "srch_selfind_pickup",
-  /* OPTF_SRCH_STOP_EOF            7 */  "srch_stop_eof",
-  /* OPTF_SRCH_WND_DOCKEDTOP       8 */  "srch_wnd_dockedtop",
-  /* OPTF_EDIT_FOCUS_SELECTALL     9 */  "edit_focus_selectall",
-  /* OPTF_CATCH_MAIN_F3           10 */  "catch_main_f3",
-  /* OPTF_CATCH_MAIN_ESC          11 */  "catch_main_esc",
-  /* OPTF_HOTKEY_HIDES_PANEL      12 */  "hotkey_hides_panel",
-  /* OPTF_EDITOR_AUTOFOCUS_MOUSE  13 */  "editor_autofocus",
-  /* OPTF_QSEARCH_AUTOFOCUS_MOUSE 14 */  "qsearch_autofocus",
-  /* OPTF_QSEARCH_AUTOFOCUS_FILE  15 */  "qsearch_autofocus_file",
-  /* OPTF_DOCK_RECT_DISABLED      16 */  "dock_rect_disabled",
-  /* OPT_DOCK_RECT                17 */  "dock_rect",
-  /* OPT_COLOR_NOTFOUND           18 */  "color_notfound",
-  /* OPT_COLOR_NOTREGEXP          19 */  "color_notregexp",
-  /* OPT_COLOR_EOF                20 */  "color_eof",
-  /* OPT_COLOR_HIGHLIGHT          21 */  "color_highlight",
-  /* OPT_HIGHLIGHT_MARK_ID        22 */  "highlight_mark_id",
-  /* OPT_HIGHLIGHT_STATE          23 */  "highlight_state",
-  /* OPT_USE_ALT_HOTKEYS          24 */  "use_alt_hotkeys",
-  /* OPT_ALT_MATCHCASE            25 */  "alt_match_case",
-  /* OPT_ALT_WHOLEWORD            26 */  "alt_whole_word",
-  /* OPT_ALT_SEARCHMODE           27 */  "alt_search_mode",
-  /* OPT_ALT_HIGHLIGHTALL         28 */  "alt_highlight_all",
-  /* OPT_FIND_HISTORY_ITEMS       29 */  "find_history_items",
-  /* OPT_HISTORY_SAVE             30 */  "history_save",
-  /* OPT_NEW_UI                   31 */  "new_ui",
-  /* OPT_SELECT_BY_F3             32 */  "select_by_f3",
-  /* OPT_SELECT_BY_FND            33 */  "select_by_fnd",
-  /* OPT_SELECT_BY_SELFND         34 */  "select_by_selfnd",
-  /* OPT_ADJ_INCOMPL_REGEXP       35 */  "adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             36 */  "findall_mode",
-  /* OPT_FINDALL_RESULT           37 */  "findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      38 */  "findall_count_delay",
-  /* OPT_LOGOUTPUT_FRP_MODE       39 */  "logoutput_frp_mode",
-  /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  "logoutput_frp_before",
-  /* OPT_LOGOUTPUT_FRP_AFTER      41 */  "logoutput_frp_after",
-  /* OPT_FILEOUTPUT_FRP_MODE      42 */  "fileoutput_frp_mode",
-  /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  "fileoutput_frp_before",
-  /* OPT_FILEOUTPUT_FRP_AFTER     44 */  "fileoutput_frp_after"
+    /* OPTF_SRCH_ONTHEFLY_MODE       0 */  "srch_onthefly_mode",
+    /* OPTF_SRCH_FROM_BEGINNING      1 */  "srch_from_beginning",
+    /* OPTF_SRCH_USE_SPECIALCHARS    2 */  "srch_use_specialchars",
+    /* OPTF_SRCH_USE_REGEXP          3 */  "srch_use_regexp",
+    /* OPTF_SRCH_REGEXP_DOT_NEWLINE  4 */  "srch_regexp_dot_newline",
+    /* OPTF_SRCH_PICKUP_SELECTION    5 */  "srch_pickup_selection",
+    /* OPTF_SRCH_SELFIND_PICKUP      6 */  "srch_selfind_pickup",
+    /* OPTF_SRCH_STOP_EOF            7 */  "srch_stop_eof",
+    /* OPTF_SRCH_WND_DOCKEDTOP       8 */  "srch_wnd_dockedtop",
+    /* OPTF_EDIT_FOCUS_SELECTALL     9 */  "edit_focus_selectall",
+    /* OPTF_CATCH_MAIN_F3           10 */  "catch_main_f3",
+    /* OPTF_CATCH_MAIN_ESC          11 */  "catch_main_esc",
+    /* OPTF_HOTKEY_HIDES_PANEL      12 */  "hotkey_hides_panel",
+    /* OPTF_EDITOR_AUTOFOCUS_MOUSE  13 */  "editor_autofocus",
+    /* OPTF_QSEARCH_AUTOFOCUS_MOUSE 14 */  "qsearch_autofocus",
+    /* OPTF_QSEARCH_AUTOFOCUS_FILE  15 */  "qsearch_autofocus_file",
+    /* OPTF_DOCK_RECT_DISABLED      16 */  "dock_rect_disabled",
+    /* OPT_DOCK_RECT                17 */  "dock_rect",
+    /* OPT_COLOR_NOTFOUND           18 */  "color_notfound",
+    /* OPT_COLOR_NOTREGEXP          19 */  "color_notregexp",
+    /* OPT_COLOR_EOF                20 */  "color_eof",
+    /* OPT_COLOR_HIGHLIGHT          21 */  "color_highlight",
+    /* OPT_HIGHLIGHT_MARK_ID        22 */  "highlight_mark_id",
+    /* OPT_HIGHLIGHT_STATE          23 */  "highlight_state",
+    /* OPT_USE_ALT_HOTKEYS          24 */  "use_alt_hotkeys",
+    /* OPT_ALT_MATCHCASE            25 */  "alt_match_case",
+    /* OPT_ALT_WHOLEWORD            26 */  "alt_whole_word",
+    /* OPT_ALT_SEARCHMODE           27 */  "alt_search_mode",
+    /* OPT_ALT_HIGHLIGHTALL         28 */  "alt_highlight_all",
+    /* OPT_FIND_HISTORY_ITEMS       29 */  "find_history_items",
+    /* OPT_HISTORY_SAVE             30 */  "history_save",
+    /* OPT_NEW_UI                   31 */  "new_ui",
+    /* OPT_SELECT_BY_F3             32 */  "select_by_f3",
+    /* OPT_SELECT_BY_FND            33 */  "select_by_fnd",
+    /* OPT_SELECT_BY_SELFND         34 */  "select_by_selfnd",
+    /* OPT_ADJ_INCOMPL_REGEXP       35 */  "adj_incompl_regexp",
+    /* OPT_FINDALL_MODE             36 */  "findall_mode",
+    /* OPT_FINDALL_RESULT           37 */  "findall_result",
+    /* OPT_FINDALL_COUNT_DELAY      38 */  "findall_count_delay",
+    /* OPT_LOGOUTPUT_FRP_MODE       39 */  "logoutput_frp_mode",
+    /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  "logoutput_frp_before",
+    /* OPT_LOGOUTPUT_FRP_AFTER      41 */  "logoutput_frp_after",
+    /* OPT_FILEOUTPUT_FRP_MODE      42 */  "fileoutput_frp_mode",
+    /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  "fileoutput_frp_before",
+    /* OPT_FILEOUTPUT_FRP_AFTER     44 */  "fileoutput_frp_after"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
-  /* OPTF_SRCH_ONTHEFLY_MODE       0 */  L"srch_onthefly_mode",
-  /* OPTF_SRCH_FROM_BEGINNING      1 */  L"srch_from_beginning",
-  /* OPTF_SRCH_USE_SPECIALCHARS    2 */  L"srch_use_specialchars",
-  /* OPTF_SRCH_USE_REGEXP          3 */  L"srch_use_regexp",
-  /* OPTF_SRCH_REGEXP_DOT_NEWLINE  4 */  L"srch_regexp_dot_newline",
-  /* OPTF_SRCH_PICKUP_SELECTION    5 */  L"srch_pickup_selection",
-  /* OPTF_SRCH_SELFIND_PICKUP      6 */  L"srch_selfind_pickup",
-  /* OPTF_SRCH_STOP_EOF            7 */  L"srch_stop_eof",
-  /* OPTF_SRCH_WND_DOCKEDTOP       8 */  L"srch_wnd_dockedtop",
-  /* OPTF_EDIT_FOCUS_SELECTALL     9 */  L"edit_focus_selectall",
-  /* OPTF_CATCH_MAIN_F3           10 */  L"catch_main_f3",
-  /* OPTF_CATCH_MAIN_ESC          11 */  L"catch_main_esc",
-  /* OPTF_HOTKEY_HIDES_PANEL      12 */  L"hotkey_hides_panel",
-  /* OPTF_EDITOR_AUTOFOCUS_MOUSE  13 */  L"editor_autofocus",
-  /* OPTF_QSEARCH_AUTOFOCUS_MOUSE 14 */  L"qsearch_autofocus",
-  /* OPTF_QSEARCH_AUTOFOCUS_FILE  15 */  L"qsearch_autofocus_file",
-  /* OPTF_DOCK_RECT_DISABLED      16 */  L"dock_rect_disabled",
-  /* OPT_DOCK_RECT                17 */  L"dock_rect",
-  /* OPT_COLOR_NOTFOUND           18 */  L"color_notfound",
-  /* OPT_COLOR_NOTREGEXP          19 */  L"color_notregexp",
-  /* OPT_COLOR_EOF                20 */  L"color_eof",
-  /* OPT_COLOR_HIGHLIGHT          21 */  L"color_highlight",
-  /* OPT_HIGHLIGHT_MARK_ID        22 */  L"highlight_mark_id",
-  /* OPT_HIGHLIGHT_STATE          23 */  L"highlight_state",
-  /* OPT_USE_ALT_HOTKEYS          24 */  L"use_alt_hotkeys",
-  /* OPT_ALT_MATCHCASE            25 */  L"alt_match_case",
-  /* OPT_ALT_WHOLEWORD            26 */  L"alt_whole_word",
-  /* OPT_ALT_SEARCHMODE           27 */  L"alt_search_mode",
-  /* OPT_ALT_HIGHLIGHTALL         28 */  L"alt_highlight_all",
-  /* OPT_FIND_HISTORY_ITEMS       29 */  L"find_history_items",
-  /* OPT_HISTORY_SAVE             30 */  L"history_save",
-  /* OPT_NEW_UI                   31 */  L"new_ui",
-  /* OPT_SELECT_BY_F3             32 */  L"select_by_f3",
-  /* OPT_SELECT_BY_FND            33 */  L"select_by_fnd",
-  /* OPT_SELECT_BY_SELFND         34 */  L"select_by_selfnd",
-  /* OPT_ADJ_INCOMPL_REGEXP       35 */  L"adj_incompl_regexp",
-  /* OPT_FINDALL_MODE             36 */  L"findall_mode",
-  /* OPT_FINDALL_RESULT           37 */  L"findall_result",
-  /* OPT_FINDALL_COUNT_DELAY      38 */  L"findall_count_delay",
-  /* OPT_LOGOUTPUT_FRP_MODE       39 */  L"logoutput_frp_mode",
-  /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  L"logoutput_frp_before",
-  /* OPT_LOGOUTPUT_FRP_AFTER      41 */  L"logoutput_frp_after",
-  /* OPT_FILEOUTPUT_FRP_MODE      42 */  L"fileoutput_frp_mode",
-  /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  L"fileoutput_frp_before",
-  /* OPT_FILEOUTPUT_FRP_AFTER     44 */  L"fileoutput_frp_after"
+    /* OPTF_SRCH_ONTHEFLY_MODE       0 */  L"srch_onthefly_mode",
+    /* OPTF_SRCH_FROM_BEGINNING      1 */  L"srch_from_beginning",
+    /* OPTF_SRCH_USE_SPECIALCHARS    2 */  L"srch_use_specialchars",
+    /* OPTF_SRCH_USE_REGEXP          3 */  L"srch_use_regexp",
+    /* OPTF_SRCH_REGEXP_DOT_NEWLINE  4 */  L"srch_regexp_dot_newline",
+    /* OPTF_SRCH_PICKUP_SELECTION    5 */  L"srch_pickup_selection",
+    /* OPTF_SRCH_SELFIND_PICKUP      6 */  L"srch_selfind_pickup",
+    /* OPTF_SRCH_STOP_EOF            7 */  L"srch_stop_eof",
+    /* OPTF_SRCH_WND_DOCKEDTOP       8 */  L"srch_wnd_dockedtop",
+    /* OPTF_EDIT_FOCUS_SELECTALL     9 */  L"edit_focus_selectall",
+    /* OPTF_CATCH_MAIN_F3           10 */  L"catch_main_f3",
+    /* OPTF_CATCH_MAIN_ESC          11 */  L"catch_main_esc",
+    /* OPTF_HOTKEY_HIDES_PANEL      12 */  L"hotkey_hides_panel",
+    /* OPTF_EDITOR_AUTOFOCUS_MOUSE  13 */  L"editor_autofocus",
+    /* OPTF_QSEARCH_AUTOFOCUS_MOUSE 14 */  L"qsearch_autofocus",
+    /* OPTF_QSEARCH_AUTOFOCUS_FILE  15 */  L"qsearch_autofocus_file",
+    /* OPTF_DOCK_RECT_DISABLED      16 */  L"dock_rect_disabled",
+    /* OPT_DOCK_RECT                17 */  L"dock_rect",
+    /* OPT_COLOR_NOTFOUND           18 */  L"color_notfound",
+    /* OPT_COLOR_NOTREGEXP          19 */  L"color_notregexp",
+    /* OPT_COLOR_EOF                20 */  L"color_eof",
+    /* OPT_COLOR_HIGHLIGHT          21 */  L"color_highlight",
+    /* OPT_HIGHLIGHT_MARK_ID        22 */  L"highlight_mark_id",
+    /* OPT_HIGHLIGHT_STATE          23 */  L"highlight_state",
+    /* OPT_USE_ALT_HOTKEYS          24 */  L"use_alt_hotkeys",
+    /* OPT_ALT_MATCHCASE            25 */  L"alt_match_case",
+    /* OPT_ALT_WHOLEWORD            26 */  L"alt_whole_word",
+    /* OPT_ALT_SEARCHMODE           27 */  L"alt_search_mode",
+    /* OPT_ALT_HIGHLIGHTALL         28 */  L"alt_highlight_all",
+    /* OPT_FIND_HISTORY_ITEMS       29 */  L"find_history_items",
+    /* OPT_HISTORY_SAVE             30 */  L"history_save",
+    /* OPT_NEW_UI                   31 */  L"new_ui",
+    /* OPT_SELECT_BY_F3             32 */  L"select_by_f3",
+    /* OPT_SELECT_BY_FND            33 */  L"select_by_fnd",
+    /* OPT_SELECT_BY_SELFND         34 */  L"select_by_selfnd",
+    /* OPT_ADJ_INCOMPL_REGEXP       35 */  L"adj_incompl_regexp",
+    /* OPT_FINDALL_MODE             36 */  L"findall_mode",
+    /* OPT_FINDALL_RESULT           37 */  L"findall_result",
+    /* OPT_FINDALL_COUNT_DELAY      38 */  L"findall_count_delay",
+    /* OPT_LOGOUTPUT_FRP_MODE       39 */  L"logoutput_frp_mode",
+    /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  L"logoutput_frp_before",
+    /* OPT_LOGOUTPUT_FRP_AFTER      41 */  L"logoutput_frp_after",
+    /* OPT_FILEOUTPUT_FRP_MODE      42 */  L"fileoutput_frp_mode",
+    /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  L"fileoutput_frp_before",
+    /* OPT_FILEOUTPUT_FRP_AFTER     44 */  L"fileoutput_frp_after"
 };
 
 
@@ -498,12 +498,17 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
     return UD_NONUNLOAD_ACTIVE;
 }
 
+#define  SELECT_MODE_NONE    0x00
 #define  SELECT_MODE_F3      0x01
 #define  SELECT_MODE_FND     0x02
 #define  SELECT_MODE_SELFND  0x04
 #define  SELECT_MODE_FORCE   0x10
 
-static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNewSelection)
+#define  SCW_FALSE           0x00  //  did not do anything
+#define  SCW_TRUE            0x01  //  tried to select a word
+#define  SCW_WORDSELECTED    0x02  //  selected a word
+
+static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNewSelection)
 {
     DWORD dwSelectWord;
 
@@ -525,6 +530,7 @@ static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
         {
             // Implemented acccording to "WordCaretSelect.js" by FeyFre & VladSh
             // cr.cpMin==nPos; crWord.cpMin==nWordBeg; crWord.cpMax==nWordEnd
+            UINT nResult = SCW_TRUE;
             CHARRANGE_X crWord;
 
             crWord.cpMin = (INT_X) SendMessage(hEdit, EM_FINDWORDBREAK, WB_LEFT, cr.cpMin);
@@ -546,6 +552,10 @@ static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                     pcrNewSelection->cpMin = crWord.cpMin;
                     pcrNewSelection->cpMax = crWord.cpMax;
                 }
+                if ( crWord.cpMin != crWord.cpMax )
+                {
+                    nResult |= SCW_WORDSELECTED; // selected a word
+                }
             }
             else
             {
@@ -556,11 +566,11 @@ static BOOL doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 }
             }
 
-            return TRUE;
+            return nResult;
         }
     }
 
-    return FALSE;
+    return SCW_FALSE;
 }
 
 // Identification
@@ -596,17 +606,34 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
     {
         if ( g_QSearchDlg.hDlg )
         {
-            BOOL bWordSelected = FALSE;
+            UINT uSelectMode = SELECT_MODE_NONE;
+            UINT nWordSelected = 0;
 
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
                 case 1: // Pick up the selected text
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
-                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
+                    uSelectMode = SELECT_MODE_FND;
+                    break;
+                case 0: // default: Find Next
+                    if ( g_Options.dwFlags[OPTF_CATCH_MAIN_F3] &&
+                         (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01) )
+                    {
+                        uSelectMode = SELECT_MODE_F3;
+                    }
                     break;
             }
 
-            if ( !bWordSelected )
+            if ( uSelectMode != SELECT_MODE_NONE )
+            {
+                UINT nPickedUp = 0;
+                nWordSelected = doSelectCurrentWord(pd->hWndEdit, uSelectMode, NULL);
+                SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, (LPARAM) &nPickedUp );
+                if ( nPickedUp & QS_PSF_TEXTCHANGED )
+                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+            }
+
+            if ( (nWordSelected == 0) ||
+                 ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
             {
                 if ( g_bFrameActivated )
                 {
@@ -632,17 +659,34 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
     doQSearch(pd, TRUE);
     if ( g_QSearchDlg.hDlg )
     {
-        BOOL bWordSelected = FALSE;
+        UINT uSelectMode = SELECT_MODE_NONE;
+        UINT nWordSelected = 0;
 
         switch ( GetExtCallParam(pd->lParam, 1) )
         {
             case 1: // Pick up the selected text
-                bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
-                SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
+                uSelectMode = SELECT_MODE_FND;
+                break;
+            case 0: // default: Find Prev
+                if ( g_Options.dwFlags[OPTF_CATCH_MAIN_F3] &&
+                     (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01) )
+                {
+                    uSelectMode = SELECT_MODE_F3;
+                }
                 break;
         }
 
-        if ( !bWordSelected )
+        if ( uSelectMode != SELECT_MODE_NONE )
+        {
+            UINT nPickedUp = 0;
+            nWordSelected = doSelectCurrentWord(pd->hWndEdit, uSelectMode, NULL);
+            SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, (LPARAM) &nPickedUp );
+            if ( nPickedUp & QS_PSF_TEXTCHANGED )
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+        }
+
+        if ( (nWordSelected == 0) ||
+             ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
         {
             if ( g_bFrameActivated )
             {
@@ -669,28 +713,41 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
     {
         EDITINFO ei;
         DWORD dwAdditionalFlags = 0;
-        BOOL bWordSelected = FALSE;
+        UINT uSelectMode = SELECT_MODE_NONE;
+        UINT nWordSelected = 0;
 
-        if ( IsExtCallParamValid(pd->lParam, 1) )
+        switch ( GetExtCallParam(pd->lParam, 1) )
         {
-            switch ( GetExtCallParam(pd->lParam, 1) )
-            {
-                case 1: // Pick up the selected text
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
-                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
-                    break;
-                case 2: // Find All in All Files
-                    dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
-                    break;
-                case 3: // Pick up the selected text + Find All in All Files
-                    bWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_FND, NULL);
-                    SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, 0 );
-                    dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
-                    break;
-            }
+            case 1: // Pick up the selected text
+                uSelectMode = SELECT_MODE_FND;
+                break;
+            case 2: // Find All in All Files
+                dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
+                break;
+            case 3: // Pick up the selected text + Find All in All Files
+                uSelectMode = SELECT_MODE_FND;
+                dwAdditionalFlags = QS_FINDALL_RSLT_ALLFILES;
+                break;
+            case 0: // default: Find All
+                if ( g_Options.dwFlags[OPTF_CATCH_MAIN_F3] &&
+                     (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01) )
+                {
+                    uSelectMode = SELECT_MODE_F3;
+                }
+                break;
         }
 
-        if ( !bWordSelected )
+        if ( uSelectMode != SELECT_MODE_NONE )
+        {
+            UINT nPickedUp = 0;
+            nWordSelected = doSelectCurrentWord(pd->hWndEdit, uSelectMode, NULL);
+            SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, (LPARAM) &nPickedUp );
+            if ( nPickedUp & QS_PSF_TEXTCHANGED )
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+        }
+
+        if ( (nWordSelected == 0) ||
+             ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
         {
             if ( g_bFrameActivated )
             {
@@ -1145,12 +1202,9 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                   AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
                                 if ( ei.hWndEdit )
                                 {
-                                    CHARRANGE_X crNew = { 0, 0 };
-
-                                    if ( doSelectCurrentWord(ei.hWndEdit, SELECT_MODE_F3, &crNew) )
+                                    if ( doSelectCurrentWord(ei.hWndEdit, SELECT_MODE_F3, NULL) & SCW_WORDSELECTED )
                                     {
-                                        if ( crNew.cpMin != crNew.cpMax )
-                                            return 0; // just select current word - and nothing more
+                                        return 0; // just select current word - and nothing more
                                     }
                                 }
                             }

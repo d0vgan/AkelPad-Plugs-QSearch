@@ -1815,8 +1815,9 @@ static LRESULT CALLBACK chWholeWordWndProc(HWND hCh,
     return callWndProc(prev_chWholeWordWndProc, hCh, uMsg, wParam, lParam);
 }
 
-BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll)
+UINT qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll)
 {
+    UINT nResult = 0;
     wchar_t prevFindTextW[MAX_TEXT_SIZE];
 
     if ( g_Plugin.bOldWindows )
@@ -1881,12 +1882,14 @@ BOOL qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll
             }
             else
                 qs_bForceFindFirst = TRUE;
+
+            nResult |= QS_PSF_TEXTCHANGED;
         }
 
-        return TRUE;
+        nResult |= QS_PSF_PICKEDUP;
     }
 
-    return FALSE;
+    return nResult;
 }
 
 void qsChangeCkeckBoxState(WORD idCheckBox)
@@ -2588,7 +2591,7 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
 {
     HWND hChHighlightAll;
     BOOL bHighlightAllChecked = FALSE;
-    BOOL bProcessed = FALSE;
+    UINT nPickedUp = 0;
 
     hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
     if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
@@ -2600,12 +2603,12 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
         g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
     {
         qs_bForceFindFirst = TRUE;
-        bProcessed = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
+        nPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE) & QS_PSF_PICKEDUP;
     }
 
     qsSetInfoEmpty();
 
-    if ( !bProcessed )
+    if ( !nPickedUp )
     {
         qs_bForceFindFirst = TRUE;
         qs_bEditTextChanged = TRUE;
@@ -2765,7 +2768,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 {
                     HWND hChHighlightAll;
                     BOOL bHighlightAllChecked = FALSE;
-                    BOOL bProcessed = FALSE;
+                    UINT nPickedUp = 0;
 
                     hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
                     if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
@@ -2777,12 +2780,12 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                          g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_ALWAYS )
                     {
                         g_Options.dwHighlightState |= HLS_IS_CHECKED;
-                        bProcessed = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, TRUE);
+                        nPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, TRUE) & QS_PSF_PICKEDUP;
                     }
 
                     qsSetInfoEmpty();
 
-                    if ( !bProcessed )
+                    if ( !nPickedUp )
                     {
                         if ( bHighlightAllChecked )
                         {
@@ -3377,15 +3380,15 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         }
         case QSM_PICKUPSELTEXT:
         {
-            BOOL bPickedUp;
+            UINT nPickedUp;
             if ( wParam & QS_PS_UPDATEHISTORY )
             {
                 getEditFindText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW );
                 qsearchFindHistoryAdd( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW, 0 );
             }
-            bPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
+            nPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE);
             if ( lParam )
-                *((BOOL *)lParam) = bPickedUp;
+                *((UINT *)lParam) = nPickedUp; // see QS_PSF_*
             return 1;
         }
         case QSM_GETHWNDEDIT:
@@ -5168,7 +5171,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
     g_QSearchDlg.bIsQSearchingRightNow = FALSE;
 
-    if ( bNeedsFindAllCountOnly && !pFindAll )
+    if ( bNeedsFindAllCountOnly && !pFindAll && IsWindowVisible(g_QSearchDlg.hDlg) )
     {
         UINT nDelayMs;
         UINT_PTR nTimerId;
