@@ -39,7 +39,7 @@ The additional abilities by the example of the Hotkeys plugin:
  -------------------------------------------------------------
 Assigns Ctrl+F3 to the action "pick up the selected text and find next".
 If no selection, the current word is selected (according to the option
-'select_by_f3').
+'select_by_fnd').
 
 FindPrev - find previous (up).
 Recommended hot-key - Shift+F3.
@@ -52,7 +52,7 @@ The additional abilities by the example of the Hotkeys plugin:
 Assigns Ctrl+Shift+F3 to the action "pick up the selected text and find
 previous (up)".
 If no selection, the current word is selected (according to the option
-'select_by_f3').
+'select_by_fnd').
 
 FindAll - find all.
 It is recommended to use it from the Hotkeys plugin.
@@ -67,16 +67,18 @@ The additional abilities by the example of the Hotkeys plugin:
 (1) Assigns Ctrl+Alt+F3 to the action "pick up the selected text and find all
 in the current document".
 If no selection, the current word is selected (according to the option
-'select_by_f3').
+'select_by_fnd').
 (2) Assigns Alt+Shift+F3 to the action "find all in all documents".
 (3) Assigns Ctrl+Alt+Shift+F3 to the action "pick up the selected text and
 find all in all documents".
 If no selection, the current word is selected (according to the option
-'select_by_f3').
+'select_by_fnd').
 
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text
 right in the editor window.
+If no selection, the current word is selected (according to the option
+'select_by_selfnd').
 The behaviour of these functions depends on general QSearch'es options
 (in its popup menu or in the ini-file, see below).
 Furthermore, the functions QSearch::QSearch and QSearch::SelFindNext/Prev
@@ -423,7 +425,30 @@ Additional options (QSearch panel's popup menu or file
      last character.
      (Example: w|ord, wo|rd, wor|d - but not word| or |word.)
 
-34) adj_incompl_regexp = 1
+34) select_by_fnd = 1
+     This option controls how a word is selected by
+      Call("QSearch::FindNext", 1), Call("QSearch::FindPrev", 1),
+      Call("QSearch::FindAll", 1) and Call("QSearch::FindAll", 3)
+     when there is no selection.
+     The value of 1 selects a word close to the caret (example: w|ord, word|,
+     |word).
+     The value of 2 selects a word if the caret is located somewhere within
+     the word - i.e. not before the word's first character or after the word's
+     last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
+     The value of 0 does select a word.
+
+35) select_by_selfnd = 1
+     This option controls how a word is selected by
+      QSearch::SelFindNext and QSearch::SelFindPrev
+     when there is no selection.
+     The value of 1 selects a word close to the caret (example: w|ord, word|,
+     |word).
+     The value of 2 selects a word if the caret is located somewhere within
+     the word - i.e. not before the word's first character or after the word's
+     last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
+     The value of 0 does not select a word.
+
+36) adj_incompl_regexp = 1
      Adjusts "incomplete" RegExp: the symbols "+", "*", "+?" and "*?" at the
      end of RegExp are ignored to avoid selection till the end of the file.
      The purpose of this is highly noticeable in the On-the-fly mode, when
@@ -436,7 +461,7 @@ Additional options (QSearch panel's popup menu or file
     adj_incompl_regexp = 0
      Does not adjust "incomplete" RegExp.
 
-35) findall_mode = 2
+37) findall_mode = 2
      Responsible for the "Find All" mode.
      Its lower byte can be one of:
       1 - Count Only
@@ -449,7 +474,7 @@ Additional options (QSearch panel's popup menu or file
       * Auto Count All (count all occurrences while searching)
       * Log Output (output to Log::Output when "Find All" is pressed)
 
-36) findall_result = 816
+38) findall_result = 816
      Represents the "Find All Results Format" dialog.
      The value will be the sum of the following numbers:
       0 - Include the line with the occurrence
@@ -461,11 +486,11 @@ Additional options (QSearch panel's popup menu or file
       512 - Include the footer: "%d found."
       4096 - Apply the Coder alias (syntax theme)
 
-37) findall_count_delay = 400
+39) findall_count_delay = 400
      Delay, in milliseconds, before starting to count all the occurrences
      when both the "Auto Count All" and On-the-fly mode are on.
 
-38) logoutput_frp_mode = 3
+40) logoutput_frp_mode = 3
      Sets the FindResultsPolicy mode for the Log Output.
      It defines the meaning of the 'frp_before' and 'frp_after' parameters.
      Its value can be one of:
@@ -474,7 +499,7 @@ Additional options (QSearch panel's popup menu or file
       3 (QSFRM_CHARINLINE) - number of characters within the current line
       4 (QSFRM_LINE_CR)    - number of lines + trailing new line
 
-39) logoutput_frp_before = 100
+41) logoutput_frp_before = 100
      Depending on 'logoutput_frp_mode', specifies the number of lines or
      characters to be shown _before_ each occurrence in the Log Output.
       In case of logoutput_frp_mode = 1, it is the number of lines. And
@@ -492,21 +517,21 @@ Additional options (QSearch panel's popup menu or file
      the trailing new line character will be added to the Log Output after
      each occurrence shown.
 
-40) logoutput_frp_after = 100
+42) logoutput_frp_after = 100
      Depending on 'logoutput_frp_mode', specifies the number of lines or
      characters to be shown _after_ each occurrence in the Log Output.
      See 'logoutput_frp_before' for details.
 
-41) fileoutput_frp_mode = 1
+43) fileoutput_frp_mode = 1
      Sets the FindResultsPolicy mode for the File Output.
      See 'logoutput_frp_mode' for details.
 
-42) fileoutput_frp_before = 0
+44) fileoutput_frp_before = 0
      Depending on 'fileoutput_frp_mode', specifies the number of lines or
      characters to be shown _before_ each occurrence in the File Output.
      See 'logoutput_frp_before' for details.
 
-43) fileoutput_frp_after = 0
+45) fileoutput_frp_after = 0
      Depending on 'fileoutput_frp_mode', specifies the number of lines or
      characters to be shown _after_ each occurrence in the File Output.
      See 'logoutput_frp_before' for details.
@@ -515,6 +540,9 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.7.5
+ + added: 'select_by_fnd', 'select_by_selfnd'
+
 v.7.4 (January 2020)
  + added: Find All in All Files
  + added: functions FindNext, FindPrev, FindAll
