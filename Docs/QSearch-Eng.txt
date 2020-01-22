@@ -40,6 +40,9 @@ The additional abilities by the example of the Hotkeys plugin:
 Assigns Ctrl+F3 to the action "pick up the selected text and find next".
 If no selection, the current word is selected (according to the option
 'select_by_fnd').
+When both "Search: Pick up selected text" and "Window: Catch main F3" are
+checked, FindNext picks up the selected text or selects the current word
+according to the option 'select_by_f3'.
 
 FindPrev - find previous (up).
 Recommended hot-key - Shift+F3.
@@ -53,6 +56,9 @@ Assigns Ctrl+Shift+F3 to the action "pick up the selected text and find
 previous (up)".
 If no selection, the current word is selected (according to the option
 'select_by_fnd').
+When both "Search: Pick up selected text" and "Window: Catch main F3" are
+checked, FindPrev picks up the selected text or selects the current word
+according to the option 'select_by_f3'.
 
 FindAll - find all.
 It is recommended to use it from the Hotkeys plugin.
@@ -73,6 +79,9 @@ If no selection, the current word is selected (according to the option
 find all in all documents".
 If no selection, the current word is selected (according to the option
 'select_by_fnd').
+When both "Search: Pick up selected text" and "Window: Catch main F3" are
+checked, FindAll picks up the selected text or selects the current word
+according to the option 'select_by_f3'.
 
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text
