@@ -157,6 +157,31 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
     return TRUE;
 }
 
+INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext)
+{
+    INT_PTR nNumber = 0;
+    BOOL bMinus = FALSE;
+
+    while (*wpStr == ' ' || *wpStr == '\t')
+        ++wpStr;
+    if (*wpStr == '+')
+        ++wpStr;
+    else if (*wpStr == '-')
+    {
+        bMinus = TRUE;
+        ++wpStr;
+    }
+
+    while (*wpStr >= '0' && *wpStr <= '9')
+    {
+        nNumber = (nNumber * 10) + (*wpStr - '0');
+        ++wpStr;
+    }
+    if (bMinus == TRUE) nNumber = 0 - nNumber;
+    if (wpNext) *wpNext = wpStr;
+    return nNumber;
+}
+
 int xitoaW(INT_PTR nNumber, wchar_t *wszStr)
 {
     wchar_t wszReverse[128];

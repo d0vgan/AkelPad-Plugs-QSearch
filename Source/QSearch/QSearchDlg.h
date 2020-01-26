@@ -85,6 +85,13 @@
 #define QSFRM_CHARINLINE  3 // number of chars within the current line
 #define QSFRM_LINE_CR     4 // number of lines + trailing '\r'
 
+// Regular Expressions for Find All (All Files)
+#define QS_FINDALL_REPATTERN_ALLFILES    L"^[ ]*\\((\\d+) (\\d+):(\\d+)\\)"
+#define QS_FINDALL_RETAGS_ALLFILES       L"/FRAME=\\1 /GOTOLINE=\\2:\\3"
+// Regular Expressions for Find All (Single File)
+#define QS_FINDALL_REPATTERN_SINGLEFILE  L"^[ ]*\\((\\d+):(\\d+)\\)"
+#define QS_FINDALL_RETAGS_SINGLEFILE     L"/GOTOLINE=\\1:\\2"
+
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     #define  MAX_TEXT_SIZE  120

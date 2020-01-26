@@ -455,13 +455,13 @@ static void initLogOutput(DWORD dwFindAllResult)
     loParams.pszWorkDir = NULL;
     if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
     {
-        loParams.pszRePattern = L"^[ ]*\\((\\d+) (\\d+),(\\d+)\\)"; // corresponds to the output string format
-        loParams.pszReTags = L"/FRAME=\\1 /GOTOLINE=\\2:\\3";
+        loParams.pszRePattern = QS_FINDALL_REPATTERN_ALLFILES; // corresponds to the output string format
+        loParams.pszReTags = QS_FINDALL_RETAGS_ALLFILES;
     }
     else
     {
-        loParams.pszRePattern = L"^[ ]*\\((\\d+),(\\d+)\\)"; // corresponds to the output string format
-        loParams.pszReTags = L"/GOTOLINE=\\1:\\2";
+        loParams.pszRePattern = QS_FINDALL_REPATTERN_SINGLEFILE; // corresponds to the output string format
+        loParams.pszReTags = QS_FINDALL_RETAGS_SINGLEFILE;
     }
     loParams.nInputCodepage = -2;
     loParams.nOutputCodepage = -2;
@@ -750,13 +750,28 @@ static void qsStoreResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AE
 {
     wchar_t* pStr;
     UINT_PTR nBytesToAllocate;
+    BOOL bAddFramePtr;
 
+    bAddFramePtr = FALSE;
     nBytesToAllocate = pFindResult->nBytesStored;
     if ( (dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
             if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+            {
+                bAddFramePtr = TRUE;
+            }
+            else if ( g_Plugin.nMDI != WMD_SDI )
+            {
+                DWORD dwFindAllMode = (g_Options.dwFindAllMode & QS_FINDALL_MASK);
+                if ( (dwFindAllMode == QS_FINDALL_FILEOUTPUT_SNGL) ||
+                     (dwFindAllMode == QS_FINDALL_FILEOUTPUT_MULT) )
+                {
+                    bAddFramePtr = TRUE;
+                }
+            }
+            if ( bAddFramePtr )
             {
                 nBytesToAllocate += 24*sizeof(wchar_t);
             }
@@ -788,7 +803,7 @@ static void qsStoreResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AE
             *(pStr++) = L'(';
             pBuf->nBytesStored += sizeof(wchar_t);
 
-            if ( dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
+            if ( bAddFramePtr )
             {
                 FRAMEDATA* pFrame;
 
@@ -808,7 +823,7 @@ static void qsStoreResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AE
             x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
             nLinePos = AEC_WrapLineBegin(&ci);
 
-            pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"%d,%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
+            pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"%d:%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
         }
 
         if ( dwFindAllResult & QS_FINDALL_RSLT_LEN )

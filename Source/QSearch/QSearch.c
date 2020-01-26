@@ -2,6 +2,7 @@
 #include "QSearchDlg.h"
 #include "DialogSwitcher.h"
 #include "XMemStrFunc.h"
+#include "RegExpFunc.h"
 
 
 #define TEST_UNINIT 0
@@ -1075,6 +1076,9 @@ void Uninitialize(void)
 
 #define xbr_diff(a, b) (((a) > (b)) ? ((a) - (b)) : ((b) - (a)))
 
+static BOOL GetLineAtIndex(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf);
+static BOOL PatOpenLine(HWND hWndEdit);
+
 LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch ( uMsg )
@@ -1148,10 +1152,25 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             }
                         }
                         g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
-//#ifdef _DEBUG
-//                        Debug_Output("QSearch.c, NewEditProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
-//#endif
+                        //#ifdef _DEBUG
+                        //  Debug_Output("QSearch.c, NewEditProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
+                        //#endif
                     }
+                }
+            }
+            break;
+
+        case WM_LBUTTONDBLCLK:
+            if ( g_QSearchDlg.pSearchResultsFrame &&
+                 SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
+            {
+                FRAMEDATA* pFrame;
+
+                pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_BYEDITWINDOW, (LPARAM) hWnd);
+                if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
+                {
+                    if ( PatOpenLine(hWnd) )
+                        return 0;
                 }
             }
             break;
@@ -2830,3 +2849,166 @@ void Debug_Output(const char* szFormat, ...)
     OutputDebugString(szBuf);
 }
 #endif
+
+// The functions below are based on "Log.c":
+//
+// if (uMsg == WM_LBUTTONDBLCLK)
+// {
+//     AETEXTRANGEW tr;
+//     AESELECTION aes;
+//     AECHARINDEX ciCaret;
+
+//     SendMessage(hWnd, AEM_GETINDEX, AEGI_CARETCHAR, (LPARAM)&ciCaret);
+//     if (PatOpenLine(hWnd, &oe, &ciCaret, &tr))
+//     {
+//         aes.crSel.ciMin=tr.cr.ciMin;
+//         aes.crSel.ciMax=tr.cr.ciMax;
+//         aes.dwFlags=AESELT_LOCKSCROLL;
+//         aes.dwType=0;
+//         SendMessage(hWnd, AEM_SETSEL, (WPARAM)&aes.crSel.ciMin, (LPARAM)&aes);
+//         SetFocus(hMainWnd);
+//         return TRUE;
+//     }
+// }
+//
+BOOL GetLineAtIndex(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf)
+{
+    AEC_WrapLineBeginEx(ciChar, &tr->cr.ciMin);
+    AEC_WrapLineEndEx(ciChar, &tr->cr.ciMax);
+    tr->bColumnSel = FALSE;
+    tr->pBuffer = NULL;
+    tr->dwBufferMax = 0;
+    tr->nNewLine = AELB_ASOUTPUT;
+    tr->bFillSpaces = FALSE;
+
+    tr->dwBufferMax = SendMessage(hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) tr);
+    if ( tr->dwBufferMax != 0 )
+    {
+        if ( tDynamicBuffer_Allocate(pTextBuf, sizeof(wchar_t) * tr->dwBufferMax) )
+        {
+            tr->pBuffer = (wchar_t *) pTextBuf->ptr;
+            tr->dwBufferMax = SendMessage(hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) tr);
+            if ( tr->dwBufferMax != 0 )
+            {
+                pTextBuf->nBytesStored = sizeof(wchar_t) * tr->dwBufferMax;
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+//
+static unsigned int MatchRePattern(const wchar_t* wszPattern, const AETEXTRANGEW* tr, wchar_t* wszGroups[])
+{
+    unsigned int nGroups;
+    PATEXEC pe;
+    REGROUP* pReGroup;
+
+    // Fill the structure for AKD_PATEXEC
+    x_zero_mem( &pe, sizeof(PATEXEC) );
+    pe.wpStr = tr->pBuffer;
+    pe.wpMaxStr = tr->pBuffer + tr->dwBufferMax;
+    pe.wpText = pe.wpStr;
+    pe.wpMaxText = pe.wpMaxStr;
+    pe.wpPat = wszPattern;
+    pe.wpMaxPat = pe.wpPat + lstrlenW(pe.wpPat);
+    pe.dwOptions = RESE_MATCHCASE;
+
+    nGroups = 0;
+    if ( SendMessage(g_Plugin.hMainWnd, AKD_PATEXEC, 0, (LPARAM) &pe) )
+    {
+        pReGroup = pe.lpREGroupStack->first;
+        do
+        {
+            if ( pReGroup->nIndex > 0 )
+            {
+                lstrcpynW(wszGroups[nGroups], pReGroup->wpStrStart, pReGroup->nStrLen + 1);
+                wszGroups[nGroups][pReGroup->nStrLen] = 0;
+                ++nGroups;
+            }
+            pReGroup = (REGROUP *) SendMessage( g_Plugin.hMainWnd, AKD_PATNEXTGROUP, (WPARAM) pReGroup, 0 );
+        }
+        while ( pReGroup );
+    }
+    SendMessage( g_Plugin.hMainWnd, AKD_PATFREE, 0, (LPARAM) &pe );
+
+    return nGroups;
+}
+//
+BOOL PatOpenLine(HWND hWndEdit)
+{
+    tDynamicBuffer textBuf;
+    AECHARINDEX    ciCaret;
+    AETEXTRANGEW   tr;
+    BOOL           bResult;
+
+    bResult = FALSE;
+    tDynamicBuffer_Init( &textBuf );
+    x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
+    x_zero_mem( &ciCaret, sizeof(AECHARINDEX) );
+
+    SendMessage( hWndEdit, AEM_GETINDEX, AEGI_CARETCHAR, (LPARAM) &ciCaret );
+    if ( GetLineAtIndex(hWndEdit, &ciCaret, &tr, &textBuf) )
+    {
+        unsigned int nGroups;
+        wchar_t* wszGroups[4];
+        wchar_t wszGroup1[24];
+        wchar_t wszGroup2[24];
+        wchar_t wszGroup3[24];
+        wchar_t wszGroup4[24];
+
+        wszGroups[0] = wszGroup1;
+        wszGroups[1] = wszGroup2;
+        wszGroups[2] = wszGroup3;
+        wszGroups[3] = wszGroup4;
+
+        wszGroup1[0] = 0;
+        wszGroup2[0] = 0;
+        wszGroup3[0] = 0;
+        wszGroup4[0] = 0;
+
+        nGroups = MatchRePattern(QS_FINDALL_REPATTERN_ALLFILES, &tr, wszGroups);
+        if ( nGroups == 0 )
+            nGroups = MatchRePattern(QS_FINDALL_REPATTERN_SINGLEFILE, &tr, wszGroups);
+
+        if ( nGroups > 1 )
+        {
+            unsigned int i = 0;
+            if ( nGroups > 2 )
+            {
+                // -> FRAME
+                FRAMEDATA* pFrame = (FRAMEDATA *) xatoiW(wszGroups[0], NULL);
+                if ( SendMessage(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pFrame) )
+                {
+                    SendMessage( g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrame );
+                    hWndEdit = (HWND) SendMessage( g_Plugin.hMainWnd, AKD_GETFRAMEINFO, FI_WNDEDIT, (LPARAM) NULL );
+                    bResult = TRUE;
+                }
+                ++i;
+            }
+
+            if ( hWndEdit )
+            {
+                int nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
+                if ( nLineCount >= (int) xatoiW(wszGroups[i], NULL) )
+                {
+                    // -> LINE:COLUMN
+                    tDynamicBuffer_Clear( &textBuf );
+                    tDynamicBuffer_Append( &textBuf, wszGroups[i], sizeof(wchar_t) * lstrlenW(wszGroups[i]) ); // Line
+                    tDynamicBuffer_Append( &textBuf, L":", sizeof(wchar_t) ); // ':'
+                    tDynamicBuffer_Append( &textBuf, wszGroups[i+1], sizeof(wchar_t) * lstrlenW(wszGroups[i+1]) ); // Column
+                    tDynamicBuffer_Append( &textBuf, L"\0", sizeof(wchar_t) ); // trailing '\0'
+
+                    if ( SendMessage(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) textBuf.ptr) )
+                        bResult = TRUE;
+                }
+            }
+        }
+    }
+
+    tDynamicBuffer_Free( &textBuf );
+
+    return bResult;
+}
+
