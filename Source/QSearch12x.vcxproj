@@ -192,8 +192,10 @@
     <ClCompile Include="QSearch\XMemStrFunc.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="QSearch\AkelDLL.h" />
+    <ClInclude Include="QSearch\AkelPad\AkelDLL.h" />
     <ClInclude Include="QSearch\AkelDllHeader.h" />
+    <ClInclude Include="QSearch\AkelPad\AkelEdit.h" />
+    <ClInclude Include="QSearch\AkelPad\RegExpFunc.h" />
     <ClInclude Include="QSearch\DialogSwitcher.h" />
     <ClInclude Include="QSearch\QSearch.h" />
     <ClInclude Include="QSearch\QSearchDlg.h" />

@@ -489,7 +489,7 @@ Additional options (QSearch panel's popup menu or file
       0 - Include the line with the occurrence
       1 - Include only the match (occurrence) itself
       2 - Filter mode: pure text without header/footer/position
-      16 - Include the position: (Ln,Pos)
+      16 - Include the position: (Ln:Pos)
       32 - Include the match length: (Len)
       256 - Include the header: "Searching for %s ..."
       512 - Include the footer: "%d found."

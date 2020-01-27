@@ -31,8 +31,8 @@
   #define EM_GETTEXTRANGE_X EM_GETTEXTRANGE
 #endif
 
-#include "AkelEdit.h"
-#include "AkelDLL.h"
+#include "AkelPad/AkelEdit.h"
+#include "AkelPad/AkelDLL.h"
 
 #ifndef FR_UP
   #define FR_UP         FRF_UP

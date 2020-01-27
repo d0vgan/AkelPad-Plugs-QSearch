@@ -2,7 +2,7 @@
 #include "QSearchDlg.h"
 #include "DialogSwitcher.h"
 #include "XMemStrFunc.h"
-#include "RegExpFunc.h"
+#include "AkelPad/RegExpFunc.h"
 
 
 #define TEST_UNINIT 0
@@ -2923,7 +2923,7 @@ static unsigned int MatchRePattern(const wchar_t* wszPattern, const AETEXTRANGEW
         {
             if ( pReGroup->nIndex > 0 )
             {
-                lstrcpynW(wszGroups[nGroups], pReGroup->wpStrStart, pReGroup->nStrLen + 1);
+                lstrcpynW(wszGroups[nGroups], pReGroup->wpStrStart, (int) pReGroup->nStrLen + 1);
                 wszGroups[nGroups][pReGroup->nStrLen] = 0;
                 ++nGroups;
             }

@@ -223,10 +223,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\QSearch\AkelDLL.h"
-				>
-			</File>
-			<File
 				RelativePath=".\QSearch\AkelDllHeader.h"
 				>
 			</File>
@@ -266,6 +262,22 @@
 				RelativePath=".\QSearch\XMemStrFunc.h"
 				>
 			</File>
+			<Filter
+				Name="AkelPad"
+				>
+				<File
+					RelativePath=".\QSearch\AkelPad\AkelDLL.h"
+					>
+				</File>
+				<File
+					RelativePath=".\QSearch\AkelPad\AkelEdit.h"
+					>
+				</File>
+				<File
+					RelativePath=".\QSearch\AkelPad\RegExpFunc.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

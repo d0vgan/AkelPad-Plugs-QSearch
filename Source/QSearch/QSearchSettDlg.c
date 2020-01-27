@@ -176,8 +176,8 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
         }
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_POS )
         {
-            lstrcatW(szMatch1, L"(1,3)");
-            lstrcatW(szMatch2, L"(1,12)");
+            lstrcatW(szMatch1, L"(1:3)");
+            lstrcatW(szMatch2, L"(1:12)");
         }
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_LEN )
         {

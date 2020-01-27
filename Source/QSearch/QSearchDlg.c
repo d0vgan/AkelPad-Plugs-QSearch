@@ -978,17 +978,25 @@ static void qsFindResultCallback(HWND hWndEdit, DWORD dwFindAllResult, const AEC
 
     nBytesToAllocate = sizeof(wchar_t) * tr.dwBufferMax;
     if ( pfrPolicy->nMode == QSFRM_LINE_CR )
-        nBytesToAllocate += sizeof(wchar_t); // for the trailing '\r'
+        nBytesToAllocate += 2*sizeof(wchar_t); // for the leading & trailing '\r'
 
     if ( !tDynamicBuffer_Allocate(pBuf, nBytesToAllocate) )
         return; // failed to allocate the memory
 
+    pBuf->nBytesStored = 0;
     tr.pBuffer = (wchar_t *) pBuf->ptr;
+    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+    {
+        *tr.pBuffer = L'\r'; // the leading '\r'
+        pBuf->nBytesStored = sizeof(wchar_t);
+        ++tr.pBuffer; // after the leading '\r'
+    }
     tr.pBuffer[0] = 0;
-    pBuf->nBytesStored = sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+    pBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
     if ( pfrPolicy->nMode == QSFRM_LINE_CR )
     {
         tr.pBuffer += pBuf->nBytesStored / sizeof(wchar_t);
+        --tr.pBuffer; // the leading '\r' offset
         *tr.pBuffer = L'\r'; // the trailing '\r'
         pBuf->nBytesStored += sizeof(wchar_t); // includes the trailing '\r'
     }
@@ -3296,9 +3304,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     if ( wParam & QS_FINDALL_RSLT_ALLFILES )
                         dwSearch |= QSEARCH_FINDALLFILES;
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
-                    qsfa.GetFindResultPolicy.nMode = g_Options.LogOutputFRP.nMode;
-                    qsfa.GetFindResultPolicy.nBefore = g_Options.LogOutputFRP.nBefore;
-                    qsfa.GetFindResultPolicy.nAfter = g_Options.LogOutputFRP.nAfter;
+                    qsfa.GetFindResultPolicy.nMode = (short) g_Options.LogOutputFRP.nMode;
+                    qsfa.GetFindResultPolicy.nBefore = (short) g_Options.LogOutputFRP.nBefore;
+                    qsfa.GetFindResultPolicy.nAfter = (short) g_Options.LogOutputFRP.nAfter;
                     qsfa.GetFindResultPolicy.nMaxLineLen = 0;
                     qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_LogOutput_Init;
@@ -3315,9 +3323,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     if ( wParam & QS_FINDALL_RSLT_ALLFILES )
                         dwSearch |= QSEARCH_FINDALLFILES;
                     qsfa.pfnFindResultCallback = qsFindResultCallback;
-                    qsfa.GetFindResultPolicy.nMode = g_Options.FileOutputFRP.nMode;
-                    qsfa.GetFindResultPolicy.nBefore = g_Options.FileOutputFRP.nBefore;
-                    qsfa.GetFindResultPolicy.nAfter = g_Options.FileOutputFRP.nAfter;
+                    qsfa.GetFindResultPolicy.nMode = (short) g_Options.FileOutputFRP.nMode;
+                    qsfa.GetFindResultPolicy.nBefore = (short) g_Options.FileOutputFRP.nBefore;
+                    qsfa.GetFindResultPolicy.nAfter = (short) g_Options.FileOutputFRP.nAfter;
                     qsfa.GetFindResultPolicy.nMaxLineLen = 0;
                     qsfa.GetFindResultPolicy.pfnStoreResultCallback = qsStoreResultCallback;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_FileOutput_Init;

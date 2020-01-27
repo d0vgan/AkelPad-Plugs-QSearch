@@ -714,11 +714,11 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
 
     static const wchar_t* szFindAllOutputPositionW[INLNG_COUNT] = {
         /* eng */
-        L"Position: (Ln,Pos)",
+        L"Position: (Ln:Pos)",
         /* rus */
-        L"\x041F\x043E\x0437\x0438\x0446\x0438\x044F: (Ln,Pos)",
+        L"\x041F\x043E\x0437\x0438\x0446\x0438\x044F: (Ln:Pos)",
         /* ukr */
-        L"\x041F\x043E\x0437\x0438\x0446\x0456\x044F: (Ln,Pos)"
+        L"\x041F\x043E\x0437\x0438\x0446\x0456\x044F: (Ln:Pos)"
     };
 
     static const wchar_t* szFindAllOutputLengthW[INLNG_COUNT] = {

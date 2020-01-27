@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Header Files\AkelPad">
+      <UniqueIdentifier>{f6074da1-ff53-4805-b488-3bdba870c771}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QSearch\DialogSwitcher.c">
@@ -38,9 +41,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="QSearch\AkelDLL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="QSearch\AkelDllHeader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -70,6 +70,15 @@
     </ClInclude>
     <ClInclude Include="QSearch\XMemStrFunc.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QSearch\AkelPad\AkelDLL.h">
+      <Filter>Header Files\AkelPad</Filter>
+    </ClInclude>
+    <ClInclude Include="QSearch\AkelPad\AkelEdit.h">
+      <Filter>Header Files\AkelPad</Filter>
+    </ClInclude>
+    <ClInclude Include="QSearch\AkelPad\RegExpFunc.h">
+      <Filter>Header Files\AkelPad</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
