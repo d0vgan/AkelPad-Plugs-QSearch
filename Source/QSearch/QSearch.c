@@ -408,16 +408,16 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 
         if ( g_Plugin.bOldWindows )
         {
-            g_QSearchDlg.hDlg = CreateDialogA( 
-                g_Plugin.hInstanceDLL, 
+            g_QSearchDlg.hDlg = CreateDialogA(
+                g_Plugin.hInstanceDLL,
                 MAKEINTRESOURCEA(iddQSearch),
                 g_Plugin.hMainWnd,
                 qsearchDlgProc );
         }
         else
         {
-            g_QSearchDlg.hDlg = CreateDialogW( 
-                g_Plugin.hInstanceDLL, 
+            g_QSearchDlg.hDlg = CreateDialogW(
+                g_Plugin.hInstanceDLL,
                 MAKEINTRESOURCEW(iddQSearch),
                 g_Plugin.hMainWnd,
                 qsearchDlgProc );
@@ -440,7 +440,7 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                     }
                 }
                 g_QSearchDlg.pDockData->hWnd = g_QSearchDlg.hDlg;
-                SendMessage( g_Plugin.hMainWnd, AKD_DOCK, 
+                SendMessage( g_Plugin.hMainWnd, AKD_DOCK,
                   DK_SUBCLASS, (LPARAM) g_QSearchDlg.pDockData );
                 if ( !bInternalCall )
                 {
@@ -451,7 +451,7 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                         else
                             g_QSearchDlg.uWmShowFlags = QS_SF_CANPICKUPSELTEXT; // allow to pick up selected text on WM_SHOWWINDOW
 
-                        SendMessage( g_Plugin.hMainWnd, AKD_DOCK, 
+                        SendMessage( g_Plugin.hMainWnd, AKD_DOCK,
                           DK_SHOW, (LPARAM) g_QSearchDlg.pDockData );
 
                         g_QSearchDlg.uWmShowFlags = 0;
@@ -542,7 +542,7 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 crWord.cpMin = (INT_X) SendMessage(hEdit, EM_FINDWORDBREAK, WB_LEFT, cr.cpMin + 1);
                 crWord.cpMax = (INT_X) SendMessage(hEdit, EM_FINDWORDBREAK, WB_RIGHTBREAK, crWord.cpMin);
             }
-            if ( (crWord.cpMax >= cr.cpMin) && 
+            if ( (crWord.cpMax >= cr.cpMin) &&
                  ( (dwSelectWord == 1) ||
                    ((cr.cpMin > crWord.cpMin) && (cr.cpMin < crWord.cpMax)) )
                )
@@ -1006,7 +1006,7 @@ void Initialize(PLUGINDATA* pd)
             dk.rcSize.top = g_Options.dockRect.top;
             dk.rcSize.bottom = g_Options.dockRect.bottom;
         }
-        g_QSearchDlg.pDockData = (DOCK *) SendMessage( 
+        g_QSearchDlg.pDockData = (DOCK *) SendMessage(
           g_Plugin.hMainWnd, AKD_DOCK, DK_ADD, (LPARAM) &dk );
 
     }
@@ -1030,7 +1030,7 @@ void Uninitialize(void)
         if ( g_Plugin.pEditProcData )
         {
             // Remove subclass (edit window)
-            SendMessage( g_Plugin.hMainWnd, AKD_SETEDITPROC, 
+            SendMessage( g_Plugin.hMainWnd, AKD_SETEDITPROC,
               (WPARAM) 0, (LPARAM) &g_Plugin.pEditProcData );
             g_Plugin.pEditProcData = NULL;
         }
@@ -1038,7 +1038,7 @@ void Uninitialize(void)
         if ( g_Plugin.pMainProcData )
         {
             // Remove subclass (main window)
-            SendMessage( g_Plugin.hMainWnd, AKD_SETMAINPROC, 
+            SendMessage( g_Plugin.hMainWnd, AKD_SETMAINPROC,
               (WPARAM) 0, (LPARAM) &g_Plugin.pMainProcData );
             g_Plugin.pMainProcData = NULL;
         }
@@ -1058,7 +1058,7 @@ void Uninitialize(void)
 
         if ( g_QSearchDlg.pDockData )
         {
-            SendMessage( g_Plugin.hMainWnd, AKD_DOCK, 
+            SendMessage( g_Plugin.hMainWnd, AKD_DOCK,
               DK_DELETE, (LPARAM) g_QSearchDlg.pDockData );
         }
 
@@ -1164,7 +1164,7 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if ( g_QSearchDlg.pSearchResultsFrame &&
                  SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
             {
-                FRAMEDATA* pFrame;
+                const FRAMEDATA* pFrame;
 
                 pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_BYEDITWINDOW, (LPARAM) hWnd);
                 if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
@@ -1194,8 +1194,8 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if ( HIWORD(wParam) == 1 )
                     {
                         // this code works when Esc is pressed in AkelPad
-                        if ( (g_Options.dwFlags[OPTF_CATCH_MAIN_ESC] & 0x01) && 
-                             g_QSearchDlg.hDlg && 
+                        if ( (g_Options.dwFlags[OPTF_CATCH_MAIN_ESC] & 0x01) &&
+                             g_QSearchDlg.hDlg &&
                              IsWindowVisible(g_QSearchDlg.hDlg) )
                         {
                             SendMessage( g_QSearchDlg.hDlg, QSM_SHOWHIDE, FALSE, 0 );
@@ -1207,7 +1207,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case IDM_EDIT_FINDNEXTUP:
                     if ( g_Options.dwFlags[OPTF_CATCH_MAIN_F3] )
                     {
-                        if ( g_QSearchDlg.bQSearching || 
+                        if ( g_QSearchDlg.bQSearching ||
                              (g_QSearchDlg.hDlg && (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01)) )
                         {
                             WPARAM bFindPrev;
@@ -1217,7 +1217,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                 EDITINFO  ei;
 
                                 ei.hWndEdit = NULL;
-                                SendMessage( g_Plugin.hMainWnd, 
+                                SendMessage( g_Plugin.hMainWnd,
                                   AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
                                 if ( ei.hWndEdit )
                                 {
@@ -1328,7 +1328,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         case AKDN_FRAME_DESTROY:
         {
-            FRAMEDATA* pFrame = (FRAMEDATA *) lParam;
+            const FRAMEDATA* pFrame = (FRAMEDATA *) lParam;
             if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
             {
                 g_QSearchDlg.pSearchResultsFrame = NULL;
@@ -1469,7 +1469,7 @@ void ReadOptions(void)
             int i;
             for ( i = 0; i < OPTF_COUNT; i++ )
             {
-                g_Options.dwFlags[i] = readDwordA( hOptions, 
+                g_Options.dwFlags[i] = readDwordA( hOptions,
                   CSZ_OPTIONS[i], WRONG_DWORD_VALUE );
             }
 
@@ -1497,19 +1497,19 @@ void ReadOptions(void)
             g_Options.dwHighlightState = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_HIGHLIGHT_STATE], WRONG_DWORD_VALUE );
 
-            g_Options.dwUseAltHotkeys = readDwordA( hOptions, 
+            g_Options.dwUseAltHotkeys = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_USE_ALT_HOTKEYS], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltMatchCase = readDwordA( hOptions, 
+            g_Options.dwAltMatchCase = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ALT_MATCHCASE], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltWholeWord = readDwordA( hOptions, 
+            g_Options.dwAltWholeWord = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ALT_WHOLEWORD], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltSearchMode = readDwordA( hOptions, 
+            g_Options.dwAltSearchMode = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ALT_SEARCHMODE], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltHighlightAll = readDwordA( hOptions, 
+            g_Options.dwAltHighlightAll = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], WRONG_DWORD_VALUE );
 
             g_Options.dwFindHistoryItems = readDwordA( hOptions,
@@ -1572,7 +1572,7 @@ void ReadOptions(void)
             int i;
             for ( i = 0; i < OPTF_COUNT; i++ )
             {
-                g_Options.dwFlags[i] = readDwordW( hOptions, 
+                g_Options.dwFlags[i] = readDwordW( hOptions,
                   CWSZ_OPTIONS[i], WRONG_DWORD_VALUE );
             }
 
@@ -1600,19 +1600,19 @@ void ReadOptions(void)
             g_Options.dwHighlightState = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_HIGHLIGHT_STATE], WRONG_DWORD_VALUE );
 
-            g_Options.dwUseAltHotkeys = readDwordW( hOptions, 
+            g_Options.dwUseAltHotkeys = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_USE_ALT_HOTKEYS], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltMatchCase = readDwordW( hOptions, 
+            g_Options.dwAltMatchCase = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ALT_MATCHCASE], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltWholeWord = readDwordW( hOptions, 
+            g_Options.dwAltWholeWord = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ALT_WHOLEWORD], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltSearchMode = readDwordW( hOptions, 
+            g_Options.dwAltSearchMode = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ALT_SEARCHMODE], WRONG_DWORD_VALUE );
 
-            g_Options.dwAltHighlightAll = readDwordW( hOptions, 
+            g_Options.dwAltHighlightAll = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], WRONG_DWORD_VALUE );
 
             g_Options.dwFindHistoryItems = readDwordW( hOptions,
@@ -1845,14 +1845,14 @@ void SaveOptions(void)
         WriteLog("SaveOptions(): Options are not equal\n");
         wsprintfA(str, ".bOldWindows is %s\n", g_Plugin.bOldWindows ? "TRUE" : "FALSE");
         WriteLog(str);
-        wsprintfA(str, ".hMainWnd is 0x%X, IsWindow() is %s\n", g_Plugin.hMainWnd, 
+        wsprintfA(str, ".hMainWnd is 0x%X, IsWindow() is %s\n", g_Plugin.hMainWnd,
             IsWindow(g_Plugin.hMainWnd) ? "TRUE" : "FALSE");
         WriteLog(str);
 #endif
 
         if ( g_Plugin.bOldWindows )
         {
-            if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd, 
+            if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
                    AKD_BEGINOPTIONS, POB_SAVE, (LPARAM) CSZ_QSEARCH) )
             {
                 int i;
@@ -1863,7 +1863,7 @@ void SaveOptions(void)
 
                 for ( i = 0; i < OPTF_COUNT; i++ )
                 {
-                    writeDwordA( hOptions, 
+                    writeDwordA( hOptions,
                       CSZ_OPTIONS[i], g_Options.dwFlags[i] );
                 }
 
@@ -1897,16 +1897,16 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
                   g_Options.dwUseAltHotkeys );
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_MATCHCASE], 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_MATCHCASE],
                   g_Options.dwAltMatchCase );
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_WHOLEWORD], 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_WHOLEWORD],
                   g_Options.dwAltWholeWord );
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_SEARCHMODE], 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_SEARCHMODE],
                   g_Options.dwAltSearchMode );
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
                   g_Options.dwAltHighlightAll );
 
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
@@ -1967,7 +1967,7 @@ void SaveOptions(void)
         }
         else
         {
-            if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd, 
+            if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
                    AKD_BEGINOPTIONS, POB_SAVE, (LPARAM) CWSZ_QSEARCH) )
             {
                 int i;
@@ -1978,7 +1978,7 @@ void SaveOptions(void)
 
                 for ( i = 0; i < OPTF_COUNT; i++ )
                 {
-                    writeDwordW( hOptions, 
+                    writeDwordW( hOptions,
                       CWSZ_OPTIONS[i], g_Options.dwFlags[i] );
                 }
 
@@ -2012,16 +2012,16 @@ void SaveOptions(void)
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
                   g_Options.dwUseAltHotkeys );
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_MATCHCASE], 
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_MATCHCASE],
                   g_Options.dwAltMatchCase );
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_WHOLEWORD], 
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_WHOLEWORD],
                   g_Options.dwAltWholeWord );
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_SEARCHMODE], 
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_SEARCHMODE],
                   g_Options.dwAltSearchMode );
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL], 
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
                   g_Options.dwAltHighlightAll );
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
@@ -2087,7 +2087,7 @@ void SaveOptions(void)
 #endif
 }
 
-void readBinaryA(HANDLE hOptions, const char* szOptionNameA, 
+void readBinaryA(HANDLE hOptions, const char* szOptionNameA,
                  void* pData, DWORD dwDataSize)
 {
     PLUGINOPTIONA poA;
@@ -2099,7 +2099,7 @@ void readBinaryA(HANDLE hOptions, const char* szOptionNameA,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
 
-void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW, 
+void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
                  void* pData, DWORD dwDataSize)
 {
     PLUGINOPTIONW poW;
@@ -2111,7 +2111,7 @@ void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
-void readStringA(HANDLE hOptions, const char* szOptionNameA, 
+void readStringA(HANDLE hOptions, const char* szOptionNameA,
                  char* pStr, DWORD dwStrMaxSize)
 {
     PLUGINOPTIONA poA;
@@ -2123,7 +2123,7 @@ void readStringA(HANDLE hOptions, const char* szOptionNameA,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
 
-void readStringW(HANDLE hOptions, const wchar_t* szOptionNameW, 
+void readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
                  wchar_t* pStr, DWORD dwStrMaxSize)
 {
     PLUGINOPTIONW poW;
@@ -2159,7 +2159,7 @@ DWORD readDwordW(HANDLE hOptions, const wchar_t* szOptionNameW, DWORD dwDefaultV
     return dwDefaultVal;
 }
 
-void writeBinaryA(HANDLE hOptions, const char* szOptionNameA, 
+void writeBinaryA(HANDLE hOptions, const char* szOptionNameA,
                    const void* pData, DWORD dwDataSize)
 {
     PLUGINOPTIONA poA;
@@ -2171,7 +2171,7 @@ void writeBinaryA(HANDLE hOptions, const char* szOptionNameA,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
 
-void writeBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW, 
+void writeBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
                    const void* pData, DWORD dwDataSize)
 {
     PLUGINOPTIONW poW;
@@ -2183,7 +2183,7 @@ void writeBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
-void writeStringA(HANDLE hOptions, const char* szOptionNameA, 
+void writeStringA(HANDLE hOptions, const char* szOptionNameA,
                    const char* pStr)
 {
     PLUGINOPTIONA poA;
@@ -2195,7 +2195,7 @@ void writeStringA(HANDLE hOptions, const char* szOptionNameA,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
 
-void writeStringW(HANDLE hOptions, const wchar_t* szOptionNameW, 
+void writeStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
                    const wchar_t* pStr)
 {
     PLUGINOPTIONW poW;
