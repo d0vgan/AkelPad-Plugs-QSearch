@@ -407,6 +407,48 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
     return 0;
 }
 
+int findSpecialCharA(LPCSTR cszTextA)
+{
+    int i;
+    char ch;
+
+    i = 0;
+    while ( (ch = cszTextA[i]) != 0 )
+    {
+        switch ( ch )
+        {
+            case '*':
+            case '?':
+            case '\\':
+                return i;
+        }
+        ++i;
+    }
+
+    return -1; // not found
+}
+
+int findSpecialCharW(LPCWSTR cszTextW)
+{
+    int i;
+    wchar_t wch;
+
+    i = 0;
+    while ( (wch = cszTextW[i]) != 0 )
+    {
+        switch ( wch )
+        {
+            case L'*':
+            case L'?':
+            case L'\\':
+                return i;
+        }
+        ++i;
+    }
+
+    return -1; // not found
+}
+
 void getTextToSearchA(LPCSTR cszTextA, BOOL* pbSearchEx, const DWORD dwOptFlags[], CHAR out_pszSearchTextA[])
 {
     *pbSearchEx = FALSE;

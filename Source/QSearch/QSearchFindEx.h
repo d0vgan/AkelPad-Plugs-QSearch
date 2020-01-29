@@ -6,6 +6,8 @@
 
 INT_X   doFindTextExA(HWND hEd, TEXTFINDA* ptfA);
 INT_X   doFindTextExW(HWND hEd, TEXTFINDW* ptfW);
+int     findSpecialCharA(LPCSTR cszTextA);
+int     findSpecialCharW(LPCWSTR cszTextW);
 void    getTextToSearchA(LPCSTR cszTextA, BOOL* pbSearchEx, const DWORD dwOptFlags[], CHAR out_pszSearchTextA[]);
 void    getTextToSearchW(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[], WCHAR out_pszSearchTextW[]);
 
