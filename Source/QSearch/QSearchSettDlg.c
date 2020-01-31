@@ -170,9 +170,11 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
         {
             cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
-            nLen = wsprintfW(szText, cszTextFormat, L'/', L"w[a-z]+d", L'/', L"Example.txt");
+            nLen = wsprintfW(szText, cszTextFormat, L'/', L"w[a-z]+d", L'/', L"Example.txt", 2);
             tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
             tDynamicBuffer_Append(&infoBuf, L"\n", 1*sizeof(wchar_t));
+            lstrcatW(szMatch1, L"   ");
+            lstrcatW(szMatch2, L"   ");
         }
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_POS )
         {

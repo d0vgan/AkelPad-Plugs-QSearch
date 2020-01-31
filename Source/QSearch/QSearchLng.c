@@ -793,7 +793,7 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
     SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_LENGTH),      szFindAllOutputLengthW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_WHOLELINE),   szFindAllOutputWholeLineW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_MATCHONLY),   szFindAllOutputMatchOnlyW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FOOTER),      szFindAllOutputFooterW[uInternalLng] );
+    // SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FOOTER),      szFindAllOutputFooterW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FILTERMODE),  szFindAllOutputFilterModeW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_SYNTAXTHEME), szFindAllOutputSyntaxThemeW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE),     szFindAllOutputExampleW[uInternalLng] );
@@ -995,11 +995,11 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
         {
             static const wchar_t* szFindAllSearchingForW[INLNG_COUNT] = {
                 /* eng */
-                L"Searching for %c%s%c in file '%s' ...",
+                L"Searching for %c%s%c in file '%s' - %u matches",
                 /* rus */
-                L"\x0418\x0449\x0435\x043C %c%s%c \x0432\x0020\x0444\x0430\x0439\x043B\x0435 '%s' ...",
+                L"\x0418\x0449\x0435\x043C %c%s%c \x0432\x0020\x0444\x0430\x0439\x043B\x0435 '%s' - %u \x043D\x0430\x0439\x0434\x0435\x043D\x043E",
                 /* ukr */
-                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E %c%s%c \x0443\x0020\x0444\x0430\x0439\x043B\x0456 '%s' ..."
+                L"\x0428\x0443\x043A\x0430\x0454\x043C\x043E %c%s%c \x0443\x0020\x0444\x0430\x0439\x043B\x0456 '%s' - %u \x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E"
             };
             return szFindAllSearchingForW[uInternalLng];
         }
@@ -1008,7 +1008,7 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
         {
             static const wchar_t* szFindAllOccurrencesFoundW[INLNG_COUNT] = {
                 /* eng */
-                L"%u occurrences found.",
+                L"%u matches.",
                 /* rus */
                 L"%u \x043D\x0430\x0439\x0434\x0435\x043D\x043E.",
                 /* ukr */
