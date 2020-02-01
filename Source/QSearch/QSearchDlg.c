@@ -1001,61 +1001,64 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
         }
         else if ( pfrPolicy->nMode == QSFRM_CHARINLINE )
         {
-            if ( tr.cr.ciMin.nCharInLine > pfrPolicy->nBefore )
-                tr.cr.ciMin.nCharInLine -= pfrPolicy->nBefore;
-            else
-                tr.cr.ciMin.nCharInLine = 0;
+            int nBefore;
+            int nAfter;
+            AECHARINDEX ci;
 
-            if ( tr.cr.ciMax.nCharInLine + pfrPolicy->nAfter < tr.cr.ciMax.lpLine->nLineLen )
-                tr.cr.ciMax.nCharInLine += pfrPolicy->nAfter;
-            else
+            nBefore = pfrPolicy->nBefore;
+            x_mem_cpy(&ci, &tr.cr.ciMin, sizeof(AECHARINDEX));
+            while ( nBefore != 0 && AEC_PrevCharInLine(&ci) != NULL )
+            {
+                x_mem_cpy(&tr.cr.ciMin, &ci, sizeof(AECHARINDEX));
+                --nBefore;
+            }
+
+            nAfter = pfrPolicy->nAfter;
+            x_mem_cpy(&ci, &tr.cr.ciMax, sizeof(AECHARINDEX));
+            while ( nAfter != 0 && AEC_NextCharInLine(&ci) != NULL )
+            {
+                x_mem_cpy(&tr.cr.ciMax, &ci, sizeof(AECHARINDEX));
+                --nAfter;
+            }
+            if ( nAfter != 0 )
+            {
                 tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+            }
         }
         else // QSFRM_LINE or QSFRM_LINE_CR
         {
             if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
             {
-                tr.cr.ciMin.nCharInLine = 0;
-                tr.cr.ciMax.nCharInLine = tr.cr.ciMax.lpLine->nLineLen;
+                AEC_WrapLineBegin(&tr.cr.ciMin);
+                AEC_WrapLineEnd(&tr.cr.ciMax);
             }
             else
             {
-                INT_X  nLineStartPos;
-                int    nLine;
-                int    nLineCount;
-                int    nLineLen;
-
                 if ( pfrPolicy->nBefore > 0 )
                 {
-                    //if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                    //    nLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMin.nLine, 0 );
-                    //else
-                        nLine = tr.cr.ciMin.nLine;
+                    int nBefore = pfrPolicy->nBefore;
+                    for ( ; ; )
+                    {
+                        AEC_WrapLineBegin(&tr.cr.ciMin);
+                        if ( nBefore == 0 || tr.cr.ciMin.nLine == 0 )
+                            break;
 
-                    if ( nLine > pfrPolicy->nBefore )
-                        nLine -= pfrPolicy->nBefore;
-                    else
-                        nLine = 0;
-
-                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nLine, 0 );
-                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nLineStartPos, (LPARAM) &tr.cr.ciMin );
+                        AEC_PrevLine(&tr.cr.ciMin);
+                        --nBefore;
+                    }
                 }
                 if ( pfrPolicy->nAfter > 0)
                 {
-                    //if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                    //    nLine = (int) SendMessage( hWndEdit, AEM_GETUNWRAPLINE, (WPARAM) tr.cr.ciMax.nLine, 0 );
-                    //else
-                        nLine = tr.cr.ciMax.nLine;
+                    int nAfter = pfrPolicy->nAfter;
+                    for ( ; ; )
+                    {
+                        AEC_WrapLineEnd(&tr.cr.ciMax);
+                        if ( nAfter == 0 || AEC_IsLastCharInFile(&tr.cr.ciMax) )
+                            break;
 
-                    nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
-                    if ( nLine + pfrPolicy->nAfter < nLineCount )
-                        nLine += pfrPolicy->nAfter;
-                    else
-                        nLine = nLineCount;
-
-                    nLineStartPos = (INT_X) SendMessage( hWndEdit, EM_LINEINDEX, nLine, 0 );
-                    nLineLen = (int) SendMessage( hWndEdit, EM_LINELENGTH, nLineStartPos, 0 );
-                    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) (nLineStartPos + nLineLen), (LPARAM) &tr.cr.ciMax );
+                        AEC_NextLine(&tr.cr.ciMax);
+                        --nAfter;
+                    }
                 }
             }
         }
