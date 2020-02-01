@@ -492,7 +492,6 @@ Additional options (QSearch panel's popup menu or file
       16 - Include the position: (Ln:Pos)
       32 - Include the match length: (Len)
       256 - Include the header: "Searching for %s ..."
-      512 - Include the footer: "%d found."
       4096 - Apply the Coder alias (syntax theme)
 
 39) findall_count_delay = 400
@@ -550,7 +549,11 @@ Additional options (QSearch panel's popup menu or file
 History:
 --------
 v.7.5
+ * changed: look & feel of the search results (Find All) improved
+ + added: double-click in the File Output goes to the matching line
  + added: 'select_by_fnd', 'select_by_selfnd'
+ - fixed: Highlight All might not work while searching with special characters
+ - fixed: QSFRM_CHARINLINE and QSFRM_LINE did not support wrapped lines
 
 v.7.4 (January 2020)
  + added: Find All in All Files
