@@ -283,6 +283,18 @@ static UINT_PTR nFindAllTimerId = 0;
 static CRITICAL_SECTION csFindAllTimerId;
 
 
+static BOOL isCheckBoxChecked(HWND hDlg, int nItemId)
+{
+    BOOL bChecked = FALSE;
+    HWND hCh = GetDlgItem(hDlg, nItemId);
+    if ( hCh )
+    {
+        if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
+            bChecked = TRUE;
+    }
+    return bChecked;
+}
+
 static void qsSetInfoEmpty()
 {
     if ( g_QSearchDlg.hStInfo )
@@ -327,6 +339,7 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
 typedef struct sFindAllContext {
     // input
     const wchar_t* cszFindWhat;
+    const AEFINDTEXTW* pFindTextW;
     const FRAMEDATA* pFrame;
     DWORD dwFindAllMode;
     DWORD dwFindAllFlags;
@@ -400,6 +413,21 @@ static HWND LogOutput_GetEditHwnd()
     return hEditWnd;
 }
 
+static wchar_t getQuoteChar(const tFindAllContext* pFindContext)
+{
+    wchar_t chQuote = L'\"';
+    if ( pFindContext->dwFindAllFlags & QS_FAF_REGEXP )
+        chQuote = L'/';
+
+    //if ( pFindContext->dwFindAllFlags & QS_FAF_MATCHCASE )
+    //    ...
+
+    //if ( pFindContext->dwFindAllFlags & QS_FAF_WHOLEWORD )
+    //    ...
+
+    return chQuote;
+}
+
 static UINT_PTR formatSearchingForStringToBuf(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
 {
     wchar_t* pszText;
@@ -409,15 +437,7 @@ static UINT_PTR formatSearchingForStringToBuf(tFindAllContext* pFindContext, tDy
     UINT_PTR nBytesToAllocate;
     UINT_PTR nLen;
 
-    chQuote = L'\"';
-    if ( pFindContext->dwFindAllFlags & QS_FAF_REGEXP )
-        chQuote = L'/';
-
-    //if ( dwFindAllFlags & QS_FAF_MATCHCASE )
-    //    ...
-
-    //if ( dwFindAllFlags & QS_FAF_WHOLEWORD )
-    //    ...
+    chQuote = getQuoteChar(pFindContext);
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
 
@@ -450,9 +470,7 @@ static UINT_PTR formatAllFilesSearchingForStringToBuf(tFindAllContext* pFindCont
     UINT_PTR nBytesToAllocate;
     UINT_PTR nLen;
 
-    chQuote = L'\"';
-    if ( pFindContext->dwFindAllFlags & QS_FAF_REGEXP )
-        chQuote = L'/';
+    chQuote = getQuoteChar(pFindContext);
 
     cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFORINFILES);
 
@@ -506,7 +524,7 @@ static void initLogOutput(DWORD dwFindAllResult)
     CallLogOutput( &loParams );
 }
 
-static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos)
+static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, BOOL bSelectFindText, const tFindAllContext* pFindContext)
 {
     int nFirstVisibleLine;
     AECHARINDEX ci;
@@ -516,6 +534,46 @@ static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos)
     nFirstVisibleLine = (int) SendMessageW( hWndEdit, AEM_GETLINENUMBER, AEGL_FIRSTFULLVISIBLELINE, 0 );
     if ( ci.nLine > nFirstVisibleLine )
         SendMessageW( hWndEdit, AEM_LINESCROLL, AESB_VERT | AESB_ALIGNTOP, (LPARAM) (ci.nLine - nFirstVisibleLine) );
+
+    if ( bSelectFindText )
+    {
+        wchar_t szQuoteTextW[2];
+        AEFINDTEXTW aeftW;
+
+        szQuoteTextW[0] = getQuoteChar(pFindContext);
+        szQuoteTextW[1] = 0;
+
+        aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
+        aeftW.pText = szQuoteTextW;
+        aeftW.dwTextLen = 1;
+        aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
+        x_mem_cpy( &aeftW.crSearch.ciMin, &ci, sizeof(AECHARINDEX) );
+        SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+
+        if ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+        {
+            aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
+            aeftW.pText = pFindContext->pFindTextW->pText;
+            aeftW.dwTextLen = pFindContext->pFindTextW->dwTextLen;
+            aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
+            x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
+            SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+
+            if ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+            {
+                // Select the text
+                SendMessageW( hWndEdit, AEM_EXSETSEL, (WPARAM) &aeftW.crFound.ciMin, (LPARAM) &aeftW.crFound.ciMax );
+
+                // Highlight All
+                if ( isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_HIGHLIGHTALL) )
+                {
+                    void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[]);
+
+                    qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, g_Options.dwFlags);
+                }
+            }
+        }
+    }
 }
 
 static void qsShowFindResults_LogOutput_Init(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
@@ -574,7 +632,7 @@ static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDyn
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
         LogOutput_AddText( (const wchar_t*) pFindContext->ResultsBuf.ptr, nLen );
 
-        scrollEditToPosition(hWndEdit, nStartPos);
+        scrollEditToPosition(hWndEdit, nStartPos, FALSE, pFindContext);
     }
 
     /*
@@ -655,7 +713,7 @@ static void qsShowFindResults_LogOutput_AllFiles_Done(tFindAllContext* pFindCont
     tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     LogOutput_AddText( (const wchar_t*) pFindContext->ResultsBuf.ptr, nLen );
 
-    scrollEditToPosition(hWndEdit, nStartPos);
+    scrollEditToPosition(hWndEdit, nStartPos, FALSE, pFindContext);
 }
 
 // FileOutput...
@@ -744,7 +802,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
             aeatW.nNewLine = AELB_ASINPUT;
             SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
 
-            scrollEditToPosition(ei.hWndEdit, nStartPos);
+            scrollEditToPosition(ei.hWndEdit, nStartPos, FALSE, pFindContext);
         }
     }
 }
@@ -1829,19 +1887,12 @@ static void strAppendAltHotkeyA(char* strA, DWORD dwAltHotkey)
 
 static void OnSrchModeChanged()
 {
-    HWND hChHighlightAll;
-    BOOL bHighlightAllChecked = FALSE;
-
     qsdlgShowHideWholeWordCheckBox(g_QSearchDlg.hDlg, g_Options.dwFlags);
     qs_bForceFindFirst = TRUE;
     qs_nEditEOF = 0;
     qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE );
 
-    hChHighlightAll = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_HIGHLIGHTALL);
-    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-        bHighlightAllChecked = TRUE;
-
-    if ( bHighlightAllChecked )
+    if ( isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_HIGHLIGHTALL) )
     {
         qsearchDoTryUnhighlightAll();
     }
@@ -1971,15 +2022,7 @@ UINT qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll
 
     if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlags) )
     {
-        HWND    hDlgItm;
-        BOOL    bMatchCase;
-
-        bMatchCase = FALSE;
-        if ( hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE) )
-        {
-            if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                bMatchCase = TRUE;
-        }
+        BOOL bMatchCase = isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
 
         if ( !isHighlightAll )
         {
@@ -2625,14 +2668,12 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
         }
         else
         {
-            HWND    hChMatchCase;
             wchar_t szText1[MAX_TEXT_SIZE];
             wchar_t szText2[MAX_TEXT_SIZE];
             const wchar_t* psz1;
             const wchar_t* psz2;
 
-            hChMatchCase = GetDlgItem(hDlg, IDC_CH_MATCHCASE);
-            if ( SendMessage(hChMatchCase, BM_GETCHECK, 0, 0) == BST_CHECKED )
+            if ( isCheckBoxChecked(hDlg, IDC_CH_MATCHCASE) )
             {
                 // match case
                 psz1 = g_QSearchDlg.szFindTextW;
@@ -2729,13 +2770,8 @@ INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam)
 
 static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
 {
-    HWND hChHighlightAll;
-    BOOL bHighlightAllChecked = FALSE;
     UINT nPickedUp = 0;
-
-    hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-        bHighlightAllChecked = TRUE;
+    BOOL bHighlightAllChecked = isCheckBoxChecked(hDlg, IDC_CH_HIGHLIGHTALL);
 
     if ( bHighlightAllChecked &&
         g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
@@ -2906,13 +2942,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
-                    HWND hChHighlightAll;
-                    BOOL bHighlightAllChecked = FALSE;
                     UINT nPickedUp = 0;
-
-                    hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-                    if ( SendMessage(hChHighlightAll, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                        bHighlightAllChecked = TRUE;
+                    BOOL bHighlightAllChecked = isCheckBoxChecked(hDlg, IDC_CH_HIGHLIGHTALL);
 
                     if ( bHighlightAllChecked &&
                          g_QSearchDlg.uSearchOrigin == QS_SO_EDITOR &&
@@ -4228,16 +4259,10 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
     // getting selected text with modified search flags
     if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlagsTemp) )
     {
-        DWORD   dwSearchParams;
-        BOOL    bMatchCase;
-        HWND    hDlgItm;
+        DWORD  dwSearchParams;
+        BOOL   bMatchCase;
 
-        bMatchCase = FALSE;
-        if ( hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE) )
-        {
-            if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                bMatchCase = TRUE;
-        }
+        bMatchCase = isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
 
         // clear the "not found" flag
         qs_bEditNotFound = FALSE;
@@ -5091,6 +5116,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             aeftW.nNewLine = AELB_ASIS;
 
             FindContext.cszFindWhat = szFindTextW;
+            FindContext.pFindTextW = &aeftW;
             FindContext.pFrame = NULL;
             FindContext.dwFindAllMode = g_Options.dwFindAllMode;
             FindContext.dwFindAllFlags = 0;
@@ -5237,6 +5263,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 pFindAll->ShowFindResults.pfnAllFilesDone(&FindContext, &pFindAll->tempBuf);
                 tDynamicBuffer_Clear(&FindContext.ResultsBuf);
+                tDynamicBuffer_Clear(&FindContext.OccurrencesBuf);
             }
 
             tDynamicBuffer_Free(&pFindAll->tempBuf);
@@ -5360,9 +5387,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[])
 
     if ( g_bHighlightPlugin && !qs_bEditNotFound )
     {
-        HWND hCh = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-
-        if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
+        if ( isCheckBoxChecked(hDlg, IDC_CH_HIGHLIGHTALL) )
         {
             EDITINFO  ei;
 
@@ -5410,12 +5435,10 @@ void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[])
                     hlParams.dwMarkID = g_Options.dwHighlightMarkID;
                     hlParams.wszMarkText = NULL;
 
-                    hCh = GetDlgItem(hDlg, IDC_CH_MATCHCASE);
-                    if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                    if ( isCheckBoxChecked(hDlg, IDC_CH_MATCHCASE) )
                         hlParams.dwMarkFlags |= MARKFLAG_MATCHCASE;
 
-                    hCh = GetDlgItem(hDlg, IDC_CH_WHOLEWORD);
-                    if ( SendMessage(hCh, BM_GETCHECK, 0, 0) == BST_CHECKED )
+                    if ( isCheckBoxChecked(hDlg, IDC_CH_WHOLEWORD) )
                         hlParams.dwMarkFlags |= MARKFLAG_WHOLEWORD;
 
 #if AKELPAD_RUNTIME_VERSION_CHECK
