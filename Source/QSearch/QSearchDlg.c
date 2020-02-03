@@ -524,6 +524,10 @@ static void initLogOutput(DWORD dwFindAllResult)
     CallLogOutput( &loParams );
 }
 
+// funcs
+void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[]);
+void qsearchDoTryUnhighlightAll(void);
+
 static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, BOOL bSelectFindText, const tFindAllContext* pFindContext)
 {
     int nFirstVisibleLine;
@@ -567,8 +571,10 @@ static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, BOOL bSelectFindTe
                 // Highlight All
                 if ( isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_HIGHLIGHTALL) )
                 {
-                    void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[]);
+                    // Highlighting doesn't work without this:
+                    SendMessageW( hWndEdit, WM_PAINT, 0, 0 );
 
+                    // Actual highlighting:
                     qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, g_Options.dwFlags);
                 }
             }
@@ -1174,8 +1180,6 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[]);
 void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF);
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[]);
-void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[]);
-void qsearchDoTryUnhighlightAll(void);
 HWND qsearchGetFindEdit(HWND hDlg);
 
 #define UFHF_MOVE_TO_TOP_IF_EXISTS 0x0001
