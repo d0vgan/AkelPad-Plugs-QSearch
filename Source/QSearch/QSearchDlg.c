@@ -499,7 +499,8 @@ static void initLogOutput(DWORD dwFindAllResult)
     }
     else
     {
-        szCoderAlias[0] = 0;
+        // szCoderAlias[0] = 0;
+        lstrcpyW(szCoderAlias, L".qsfndall");
     }
 
     loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_1);
@@ -744,7 +745,8 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     }
     else
     {
-        szCoderAlias[0] = 0;
+        // szCoderAlias[0] = 0;
+        lstrcpyW(szCoderAlias, L".qsfndall");
     }
 
     bOutputResult = FALSE;
