@@ -896,22 +896,37 @@ typedef struct sShowFindResults {
     tShowFindResults_AllFiles_Done pfnAllFilesDone;  // can't be NULL
 } tShowFindResults;
 
-typedef void (*tStoreResultCallback)(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const AECHARRANGE* pcrResult, const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
+typedef void (*tStoreResultCallback)(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const int nLinesBeforeAfter[2], const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static void qsStoreResultCallback(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const AECHARRANGE* pcrResult, const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+static void formatFindResult(const tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const int nLinesBeforeAfter[2], const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf)
 {
-    wchar_t* pStr;
-    HWND hWndEdit;
-    UINT_PTR nBytesToAllocate;
-    BOOL bAddFramePtr;
+    pTempBuf->nBytesStored = 0;
 
-    hWndEdit = pFindContext->pFrame->ei.hWndEdit;
-    nBytesToAllocate = pFindResult->nBytesStored;
-    bAddFramePtr = FALSE;
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
+        HWND hWndEdit;
+        BOOL bAddFramePtr;
+        int nUnwrappedLine;
+        int nPrefixLen;
+        wchar_t szPrefixBuf[128];
+
+        hWndEdit = pFindContext->pFrame->ei.hWndEdit;
+        bAddFramePtr = FALSE;
+        nUnwrappedLine = 0;
+        nPrefixLen = 0;
+        szPrefixBuf[0] = 0;
+
+        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+        {
+            szPrefixBuf[nPrefixLen++] = L' ';
+        }
+
         if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_POS )
         {
+            INT_X nLinePos;
+            AECHARINDEX ci;
+
+            szPrefixBuf[nPrefixLen++] = L'(';
             if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
             {
                 bAddFramePtr = TRUE;
@@ -925,51 +940,11 @@ static void qsStoreResultCallback(tFindAllContext* pFindContext, const AECHARRAN
                     bAddFramePtr = TRUE;
                 }
             }
-            if ( bAddFramePtr )
-            {
-                nBytesToAllocate += 24*sizeof(wchar_t); // frame_ptr -> up to 20 chars
-            }
-            nBytesToAllocate += 32*sizeof(wchar_t); // " (ln:pos)\t" -> 2+10+1+10+2 chars
-        }
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_LEN )
-        {
-            nBytesToAllocate += 16*sizeof(wchar_t); // "(len)" -> 1+10+1 chars
-        }
-    }
-
-    if ( !tDynamicBuffer_Allocate(pTempBuf, nBytesToAllocate) )
-        return; // failed to allocate the memory
-
-    // constructing the output string...
-    pTempBuf->nBytesStored = 0;
-
-    if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
-    {
-        pStr = (wchar_t *) pTempBuf->ptr;
-
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
-        {
-            *(pStr++) = L' ';
-            pTempBuf->nBytesStored += 1*sizeof(wchar_t);
-        }
-
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_POS )
-        {
-            INT_X nLinePos;
-            int nUnwrappedLine;
-            int nLen;
-            AECHARINDEX ci;
-
-            *(pStr++) = L'(';
-            pTempBuf->nBytesStored += sizeof(wchar_t);
 
             if ( bAddFramePtr )
             {
-                nLen = xitoaW( (INT_PTR) pFindContext->pFrame, pStr );
-                pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) nLen;
-                pStr += nLen;
-                *(pStr++) = L' ';
-                pTempBuf->nBytesStored += sizeof(wchar_t);
+                nPrefixLen += xitoaW( (INT_PTR) pFindContext->pFrame, &szPrefixBuf[nPrefixLen] );
+                szPrefixBuf[nPrefixLen++] = L' ';
             }
 
             if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
@@ -980,7 +955,11 @@ static void qsStoreResultCallback(tFindAllContext* pFindContext, const AECHARRAN
             x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
             nLinePos = AEC_WrapLineBegin(&ci);
 
-            pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"%d:%d)\t", nUnwrappedLine + 1, (int) (nLinePos + 1) );
+            nPrefixLen += xitoaW( nUnwrappedLine + 1, &szPrefixBuf[nPrefixLen] );
+            szPrefixBuf[nPrefixLen++] = L':';
+            nPrefixLen += xitoaW( nLinePos + 1, &szPrefixBuf[nPrefixLen] );
+            szPrefixBuf[nPrefixLen++] = L')';
+            szPrefixBuf[nPrefixLen++] = L'\t';
         }
 
         if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_LEN )
@@ -998,19 +977,120 @@ static void qsStoreResultCallback(tFindAllContext* pFindContext, const AECHARRAN
             aeis.nNewLine = AELB_ASIS;
             nLen = (int) SendMessage( hWndEdit, AEM_INDEXSUBTRACT, 0, (LPARAM) &aeis );
 
-            pStr = (wchar_t *) pTempBuf->ptr;
-            if ( pTempBuf->nBytesStored != 0 )
+            if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_POS )
             {
-                pTempBuf->nBytesStored -= sizeof(wchar_t); // exclude the trailing L'\t'
-                pStr += pTempBuf->nBytesStored/sizeof(wchar_t);
+                nPrefixLen -= 1; // exclude the trailing '\t'
             }
 
-            pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) wsprintfW( pStr, L"(%d)\t", nLen );
+            szPrefixBuf[nPrefixLen++] = L'(';
+            nPrefixLen += xitoaW( nLen, &szPrefixBuf[nPrefixLen] );
+            szPrefixBuf[nPrefixLen++] = L')';
+            szPrefixBuf[nPrefixLen++] = L'\t';
+        }
+
+        szPrefixBuf[nPrefixLen] = 0; // the trailing '\0'
+
+        if ( (nPrefixLen != 0) && (nLinesBeforeAfter[0] != 0 || nLinesBeforeAfter[1] != 0) )
+        {
+            int n1;
+            int n2;
+            int n;
+            int i;
+            wchar_t szPrefixBuf2[128];
+
+            tDynamicBuffer_Allocate( pTempBuf, sizeof(wchar_t)*(nPrefixLen + 1)*(1 + nLinesBeforeAfter[0] + nLinesBeforeAfter[1]) + pFindResult->nBytesStored );
+
+            n = -nLinesBeforeAfter[0];
+            n1 = 0;
+            n2 = x_wstr_findch( (const wchar_t *) pFindResult->ptr, L'\r', 0 );
+            for ( ; ; )
+            {
+                if ( n == 0 )
+                {
+                    tDynamicBuffer_Append(pTempBuf, szPrefixBuf, sizeof(wchar_t)*nPrefixLen);
+                }
+                else
+                {
+                    i = -1;
+                    lstrcpyW(szPrefixBuf2, szPrefixBuf);
+                    if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_POS )
+                    {
+                        i = x_wstr_findch(szPrefixBuf2, L'(', 0);
+                        if ( i != -1 )
+                        {
+                            // szPrefixBuf2[i] = (n < 0) ? L'\x2193' : L'\x2191';
+                            if ( bAddFramePtr )
+                            {
+                                // i = x_wstr_findch(szPrefixBuf2, L' ', i + 1);
+                                ++i;
+                                for ( ; szPrefixBuf2[i] != L' '; ++i )
+                                {
+                                    szPrefixBuf2[i] = L' ';
+                                }
+                            }
+                        }
+                        if ( i != -1 )
+                        {
+                            ++i;
+                            i += xitoaW(nUnwrappedLine + n + 1, &szPrefixBuf2[i]);
+                            for ( ; szPrefixBuf2[i] != L')'; ++i )
+                            {
+                                szPrefixBuf2[i] = L' ';
+                            }
+                            // szPrefixBuf2[i] = (n < 0) ? L'\x2193' : L'\x2191';
+                        }
+                    }
+                    if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_LEN )
+                    {
+                        i = x_wstr_findch(szPrefixBuf2, L'(', (i == -1) ? 0 : i);
+                        if ( i != -1 )
+                        {
+                            for ( ; szPrefixBuf2[i] != L'\t'; ++i )
+                            {
+                                szPrefixBuf2[i] = L' ';
+                            }
+                        }
+                    }
+                    tDynamicBuffer_Append(pTempBuf, szPrefixBuf2, sizeof(wchar_t)*nPrefixLen);
+                }
+                if ( n2 != -1 )
+                {
+                    tDynamicBuffer_Append( pTempBuf, ((const wchar_t *) pFindResult->ptr) + n1, sizeof(wchar_t)*(n2 - n1) );
+                    tDynamicBuffer_Append( pTempBuf, L"\r", sizeof(wchar_t) );
+                    if ( ++n <= nLinesBeforeAfter[1] )
+                    {
+                        n1 = n2 + 1;
+                        n2 = x_wstr_findch( (const wchar_t *) pFindResult->ptr, L'\r', n1 );
+                    }
+                    else
+                        break;
+                }
+                else
+                {
+                    tDynamicBuffer_Append( pTempBuf, ((const wchar_t *) pFindResult->ptr) + n1, pFindResult->nBytesStored - sizeof(wchar_t)*n1 );
+                    break;
+                }
+            }
+        }
+        else
+        {
+            tDynamicBuffer_Allocate(pTempBuf, sizeof(wchar_t)*nPrefixLen + pFindResult->nBytesStored);
+            if ( nPrefixLen != 0 )
+            {
+                tDynamicBuffer_Append(pTempBuf, szPrefixBuf, sizeof(wchar_t)*nPrefixLen);
+            }
+            tDynamicBuffer_Append(pTempBuf, pFindResult->ptr, pFindResult->nBytesStored);
         }
     }
+    else
+    {
+        tDynamicBuffer_Append(pTempBuf, pFindResult->ptr, pFindResult->nBytesStored);
+    }
+}
 
-    tDynamicBuffer_Append(pTempBuf, pFindResult->ptr, pFindResult->nBytesStored);
-
+static void qsStoreResultCallback(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const int nLinesBeforeAfter[2], const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf, tShowFindResults_AddOccurrence pfnAddOccurrence)
+{
+    formatFindResult(pFindContext, pcrFound, nLinesBeforeAfter, pFindResult, pTempBuf);
     pfnAddOccurrence(pFindContext, pTempBuf);
 }
 
@@ -1032,6 +1112,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     AETEXTRANGEW tr;
     HWND         hWndEdit;
     UINT_PTR     nBytesToAllocate;
+    int          nLinesBeforeAfter[2];
 
     if ( !pfrPolicy->pfnStoreResultCallback )
         return; // no sense to retrieve the find result
@@ -1040,6 +1121,8 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
+    nLinesBeforeAfter[0] = 0;
+    nLinesBeforeAfter[1] = 0;
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
     {
@@ -1112,6 +1195,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                         AEC_PrevLine(&tr.cr.ciMin);
                         --nBefore;
                     }
+                    nLinesBeforeAfter[0] = pfrPolicy->nBefore - nBefore;
                 }
                 if ( pfrPolicy->nAfter > 0)
                 {
@@ -1125,6 +1209,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                         AEC_NextLine(&tr.cr.ciMax);
                         --nAfter;
                     }
+                    nLinesBeforeAfter[1] = pfrPolicy->nAfter - nAfter;
                 }
             }
         }
@@ -1132,7 +1217,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
     tr.bColumnSel = FALSE;
     tr.pBuffer = NULL;
-    tr.nNewLine = AELB_ASIS;
+    tr.nNewLine = AELB_R;
     tr.bFillSpaces = FALSE;
 
     tr.dwBufferMax = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
@@ -1141,29 +1226,22 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
     nBytesToAllocate = sizeof(wchar_t) * tr.dwBufferMax;
     if ( pfrPolicy->nMode == QSFRM_LINE_CR )
-        nBytesToAllocate += 2*sizeof(wchar_t); // for the leading & trailing '\r'
+        nBytesToAllocate += 1*sizeof(wchar_t); // for the trailing '\r'
 
     if ( !tDynamicBuffer_Allocate(pTempBuf, nBytesToAllocate) )
         return; // failed to allocate the memory
 
     pTempBuf->nBytesStored = 0;
     tr.pBuffer = (wchar_t *) pTempBuf->ptr;
-    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
-    {
-        *tr.pBuffer = L'\r'; // the leading '\r'
-        pTempBuf->nBytesStored = sizeof(wchar_t);
-        ++tr.pBuffer; // after the leading '\r'
-    }
     tr.pBuffer[0] = 0;
     pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
     if ( pfrPolicy->nMode == QSFRM_LINE_CR )
     {
         tr.pBuffer += pTempBuf->nBytesStored / sizeof(wchar_t);
-        --tr.pBuffer; // the leading '\r' offset
         *tr.pBuffer = L'\r'; // the trailing '\r'
-        pTempBuf->nBytesStored += sizeof(wchar_t); // includes the trailing '\r'
+        pTempBuf->nBytesStored += 1*sizeof(wchar_t); // includes the trailing '\r'
     }
-    pfrPolicy->pfnStoreResultCallback( pFindContext, pcrFound, &tr.cr, pTempBuf, pTempBuf2, pfnAddOccurrence );
+    pfrPolicy->pfnStoreResultCallback( pFindContext, pcrFound, nLinesBeforeAfter, pTempBuf, pTempBuf2, pfnAddOccurrence );
 }
 
 typedef struct sQSFindAll {

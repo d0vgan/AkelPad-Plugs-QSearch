@@ -157,6 +157,20 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
     return TRUE;
 }
 
+int x_wstr_findch(const WCHAR* str, WCHAR ch, int nOffset)
+{
+    const WCHAR* p;
+    WCHAR cc;
+
+    for ( p = str + nOffset; (cc = *p) != 0; ++p )
+    {
+        if ( cc == ch )
+            return (int) (p - str);
+    }
+
+    return -1; // not found
+}
+
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext)
 {
     INT_PTR nNumber = 0;
