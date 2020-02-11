@@ -3248,6 +3248,28 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             break;
         }
+        case WM_KEYDOWN:
+        {
+            if ( wParam == VK_TAB )
+            {
+                if ( GetKeyState(VK_CONTROL) & 0x80 ) // Ctrl+Tab, Ctrl+Shift+Tab, ...
+                {
+                    EDITINFO ei;
+
+                    ei.hWndEdit = 0;
+                    SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
+                    if ( ei.hWndEdit )
+                    {
+                        if ( g_Plugin.bOldWindows )
+                            PostMessageA(ei.hWndEdit, WM_KEYDOWN, wParam, lParam);
+                        else
+                            PostMessageW(ei.hWndEdit, WM_KEYDOWN, wParam, lParam);
+                        return 1;
+                    }
+                }
+            }
+            break;
+        }
         //case WM_KEYDOWN:
         //{
         //    bHotKeyPressed = FALSE;
@@ -3258,6 +3280,17 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         //    }
         //    break;
         //}
+        case WM_KEYUP:
+        {
+            if ( wParam == VK_TAB )
+            {
+                if ( GetKeyState(VK_CONTROL) & 0x80 ) // Ctrl+Tab, Ctrl+Shift+Tab, ...
+                {
+                    return 1;
+                }
+            }
+            break;
+        }
         //case WM_KEYUP:
         //{
         //    if ( bHotKeyPressed )
