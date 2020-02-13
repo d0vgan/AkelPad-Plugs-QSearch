@@ -1034,11 +1034,11 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
         {
             static const wchar_t* szFindAllOccurrencesFoundInFilesW[INLNG_COUNT] = {
                 /* eng */
-                L"Total found: %u.",
+                L"Total found: %u in %d files.",
                 /* rus */
-                L"\x0412\x0441\x0435\x0433\x043E\x0020\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u.",
+                L"\x0412\x0441\x0435\x0433\x043E\x0020\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u \x0432 %d \x0444\x0430\x0439\x043B\x0430\x0445.",
                 /* ukr */
-                L"\x0423\x0441\x044C\x043E\x0433\x043E\x0020\x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u."
+                L"\x0423\x0441\x044C\x043E\x0433\x043E\x0020\x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u \x0443 %d \x0444\x0430\x0439\x043B\x0430\x0445."
             };
             return szFindAllOccurrencesFoundInFilesW[uInternalLng];
         }

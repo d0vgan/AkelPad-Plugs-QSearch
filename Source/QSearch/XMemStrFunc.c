@@ -272,6 +272,9 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
     UINT_PTR nBytesToStore;
     tDynamicBuffer newBuf;
 
+    if ( nBytes == 0 )
+        return pBuf->nBytesStored;
+
     nBytesAllocated = pBuf->nBytesAllocated;
     nBytesToStore = pBuf->nBytesStored + nBytes;
     if ( nBytesToStore > nBytesAllocated )

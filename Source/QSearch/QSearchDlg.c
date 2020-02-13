@@ -344,9 +344,10 @@ typedef struct sFindAllContext {
     DWORD dwFindAllMode;
     DWORD dwFindAllFlags;
     DWORD dwFindAllResult;
-    unsigned int nOccurrences;
-    unsigned int nTotalOccurrences;
+    unsigned int nOccurrences; // in current file
+    unsigned int nTotalOccurrences; // in all files
     unsigned int nTotalFiles;
+    unsigned int nFilesWithOccurrences;
     // output
     tDynamicBuffer ResultsBuf;
     tDynamicBuffer OccurrencesBuf;
@@ -608,27 +609,31 @@ static void qsShowFindResults_LogOutput_AddOccurrence(tFindAllContext* pFindCont
 
 static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
 {
-    UINT_PTR nLen;
-
-    if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (pFindContext->nOccurrences != 0) ||
+         ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0) )
     {
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+        if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
         {
-            if ( formatSearchingForStringToBuf(pFindContext, pTempBuf) )
+            if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
             {
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, pTempBuf->ptr, pTempBuf->nBytesStored );
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
+                if ( formatSearchingForStringToBuf(pFindContext, pTempBuf) )
+                {
+                    tDynamicBuffer_Append( &pFindContext->ResultsBuf, pTempBuf->ptr, pTempBuf->nBytesStored );
+                    tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
+                }
             }
         }
+
+        tDynamicBuffer_Append( &pFindContext->ResultsBuf, pFindContext->OccurrencesBuf.ptr, pFindContext->OccurrencesBuf.nBytesStored );
     }
 
-    tDynamicBuffer_Append( &pFindContext->ResultsBuf, pFindContext->OccurrencesBuf.ptr, pFindContext->OccurrencesBuf.nBytesStored );
     tDynamicBuffer_Clear( &pFindContext->OccurrencesBuf );
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
     {
         HWND hWndEdit;
         INT_PTR nStartPos;
+        UINT_PTR nLen;
 
         hWndEdit = LogOutput_GetEditHwnd();
         nStartPos = SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hWndEdit, 0);
@@ -641,30 +646,6 @@ static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDyn
 
         scrollEditToPosition(hWndEdit, nStartPos, FALSE, pFindContext);
     }
-
-    /*
-    if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
-    {
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND )
-        {
-            const wchar_t* cszTextFormat;
-            wchar_t szText[128];
-
-            cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-            nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nOccurrences);
-
-            if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES )
-            {
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, szText, nLen*sizeof(wchar_t) );
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
-            }
-            else
-            {
-                LogOutput_AddText(szText, nLen);
-            }
-        }
-    }
-    */
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
     {
@@ -711,7 +692,7 @@ static void qsShowFindResults_LogOutput_AllFiles_Done(tFindAllContext* pFindCont
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
-        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nTotalOccurrences);
+        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nTotalOccurrences, pFindContext->nFilesWithOccurrences);
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, szText, nLen*sizeof(wchar_t) );
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
     }
@@ -817,37 +798,25 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
 static void qsShowFindResults_FileOutput_Done(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
 {
-    if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
+    if ( (pFindContext->nOccurrences != 0) ||
+         ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0) )
     {
-        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
+        if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
         {
-            if ( formatSearchingForStringToBuf(pFindContext, pTempBuf) )
+            if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING )
             {
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, pTempBuf->ptr, pTempBuf->nBytesStored );
-                tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
+                if ( formatSearchingForStringToBuf(pFindContext, pTempBuf) )
+                {
+                    tDynamicBuffer_Append( &pFindContext->ResultsBuf, pTempBuf->ptr, pTempBuf->nBytesStored );
+                    tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
+                }
             }
         }
+
+        tDynamicBuffer_Append( &pFindContext->ResultsBuf, pFindContext->OccurrencesBuf.ptr, pFindContext->OccurrencesBuf.nBytesStored );
     }
 
-    tDynamicBuffer_Append( &pFindContext->ResultsBuf, pFindContext->OccurrencesBuf.ptr, pFindContext->OccurrencesBuf.nBytesStored );
     tDynamicBuffer_Clear( &pFindContext->OccurrencesBuf );
-
-    /*
-    if ( ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0) &&
-         (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_OCCFOUND) )
-    {
-        const wchar_t* cszTextFormat;
-        UINT_PTR nLen;
-        wchar_t  szText[128];
-
-        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nOccurrences);
-
-        tDynamicBuffer_Append( &pFindContext->ResultsBuf, szText, nLen*sizeof(wchar_t) );
-        tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
-    }
-    else
-    */
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
     {
@@ -879,7 +848,7 @@ static void qsShowFindResults_FileOutput_AllFiles_Done(tFindAllContext* pFindCon
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUNDINFILES);
-        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nTotalOccurrences);
+        nLen = (UINT_PTR) wsprintfW(szText, cszTextFormat, pFindContext->nTotalOccurrences, pFindContext->nFilesWithOccurrences);
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, szText, nLen*sizeof(wchar_t) );
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\r", 1*sizeof(wchar_t) ); // new line
     }
@@ -5241,6 +5210,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             FindContext.nOccurrences = 0;
             FindContext.nTotalOccurrences = 0;
             FindContext.nTotalFiles = 0;
+            FindContext.nFilesWithOccurrences = 0;
             tDynamicBuffer_Init( &FindContext.ResultsBuf );
             tDynamicBuffer_Init( &FindContext.OccurrencesBuf );
             tDynamicBuffer_Allocate( &FindContext.ResultsBuf, 128*1024*sizeof(wchar_t) );
@@ -5334,6 +5304,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         pFindAll->pfnFindResultCallback(&FindContext, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->tempBuf, &pFindAll->tempBuf2, pFindAll->ShowFindResults.pfnAddOccurrence);
 
                     x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
+                }
+
+                if ( FindContext.nOccurrences != 0 )
+                {
+                    ++FindContext.nFilesWithOccurrences;
                 }
 
                 if ( pFrameInitial == FindContext.pFrame )
