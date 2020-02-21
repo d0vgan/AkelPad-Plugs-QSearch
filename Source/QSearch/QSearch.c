@@ -79,13 +79,15 @@ void CloseLog(void)
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
-#define LOGOUTPUT_FRP_MODE     QSFRM_CHARINLINE
-#define LOGOUTPUT_FRP_BEFORE   100
-#define LOGOUTPUT_FRP_AFTER    100
+#define LOGOUTPUT_FRP_MODE       QSFRM_CHARINLINE
+#define LOGOUTPUT_FRP_BEFORE     100
+#define LOGOUTPUT_FRP_AFTER      100
+#define LOGOUTPUT_FRP_HIGHLIGHT  QSFRH_IFCHECKED
 
-#define FILEOUTPUT_FRP_MODE    QSFRM_LINE
-#define FILEOUTPUT_FRP_BEFORE  0
-#define FILEOUTPUT_FRP_AFTER   0
+#define FILEOUTPUT_FRP_MODE      QSFRM_LINE
+#define FILEOUTPUT_FRP_BEFORE    0
+#define FILEOUTPUT_FRP_AFTER     0
+#define FILEOUTPUT_FRP_HIGHLIGHT QSFRH_IFCHECKED
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> plugin state >>>>>>>>>>>>>>>>>>>>>>>> */
@@ -121,13 +123,15 @@ void CloseLog(void)
         pFRP->nMode = WRONG_INT_VALUE;
         pFRP->nBefore = WRONG_INT_VALUE;
         pFRP->nAfter = WRONG_INT_VALUE;
+        pFRP->nHighlight = WRONG_INT_VALUE;
     }
 
     BOOL equalFRP(const FindResultsOutputPolicy* pFRP1, const FindResultsOutputPolicy* pFRP2)
     {
-        if ( (pFRP1->nMode   != pFRP2->nMode)   ||
-             (pFRP1->nBefore != pFRP2->nBefore) ||
-             (pFRP1->nAfter  != pFRP2->nAfter) )
+        if ( (pFRP1->nMode      != pFRP2->nMode)   ||
+             (pFRP1->nBefore    != pFRP2->nBefore) ||
+             (pFRP1->nAfter     != pFRP2->nAfter)  ||
+             (pFRP1->nHighlight != pFRP2->nHighlight) )
         {
             return FALSE;
         }
@@ -272,9 +276,11 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_LOGOUTPUT_FRP_MODE       39 */  "logoutput_frp_mode",
     /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  "logoutput_frp_before",
     /* OPT_LOGOUTPUT_FRP_AFTER      41 */  "logoutput_frp_after",
-    /* OPT_FILEOUTPUT_FRP_MODE      42 */  "fileoutput_frp_mode",
-    /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  "fileoutput_frp_before",
-    /* OPT_FILEOUTPUT_FRP_AFTER     44 */  "fileoutput_frp_after"
+    /* OPT_LOGOUTPUT_FRP_HIGHLIGHT  42 */  "logoutput_frp_highlight",
+    /* OPT_FILEOUTPUT_FRP_MODE      43 */  "fileoutput_frp_mode",
+    /* OPT_FILEOUTPUT_FRP_BEFORE    44 */  "fileoutput_frp_before",
+    /* OPT_FILEOUTPUT_FRP_AFTER     45 */  "fileoutput_frp_after",
+    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  "fileoutput_frp_highlight"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -320,9 +326,11 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_LOGOUTPUT_FRP_MODE       39 */  L"logoutput_frp_mode",
     /* OPT_LOGOUTPUT_FRP_BEFORE     40 */  L"logoutput_frp_before",
     /* OPT_LOGOUTPUT_FRP_AFTER      41 */  L"logoutput_frp_after",
-    /* OPT_FILEOUTPUT_FRP_MODE      42 */  L"fileoutput_frp_mode",
-    /* OPT_FILEOUTPUT_FRP_BEFORE    43 */  L"fileoutput_frp_before",
-    /* OPT_FILEOUTPUT_FRP_AFTER     44 */  L"fileoutput_frp_after"
+    /* OPT_LOGOUTPUT_FRP_HIGHLIGHT  42 */  L"logoutput_frp_highlight",
+    /* OPT_FILEOUTPUT_FRP_MODE      43 */  L"fileoutput_frp_mode",
+    /* OPT_FILEOUTPUT_FRP_BEFORE    44 */  L"fileoutput_frp_before",
+    /* OPT_FILEOUTPUT_FRP_AFTER     45 */  L"fileoutput_frp_after",
+    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  L"fileoutput_frp_highlight"
 };
 
 
@@ -1551,6 +1559,9 @@ void ReadOptions(void)
             g_Options.LogOutputFRP.nAfter = (int) readDwordA( hOptions,
               CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
 
+            g_Options.LogOutputFRP.nHighlight = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
+
             g_Options.FileOutputFRP.nMode = (int) readDwordA( hOptions,
               CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE], WRONG_INT_VALUE );
 
@@ -1559,6 +1570,9 @@ void ReadOptions(void)
 
             g_Options.FileOutputFRP.nAfter = (int) readDwordA( hOptions,
               CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nHighlight = (int) readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1648,6 +1662,9 @@ void ReadOptions(void)
             g_Options.LogOutputFRP.nMode = (int) readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE], WRONG_INT_VALUE );
 
+            g_Options.LogOutputFRP.nHighlight = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
+
             g_Options.LogOutputFRP.nBefore = (int) readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE], WRONG_INT_VALUE );
 
@@ -1662,6 +1679,9 @@ void ReadOptions(void)
 
             g_Options.FileOutputFRP.nAfter = (int) readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER], WRONG_INT_VALUE );
+
+            g_Options.FileOutputFRP.nHighlight = (int) readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1803,6 +1823,9 @@ void ReadOptions(void)
     if ( g_Options.LogOutputFRP.nAfter == WRONG_INT_VALUE )
         g_Options.LogOutputFRP.nAfter = LOGOUTPUT_FRP_AFTER;
 
+    if ( g_Options.LogOutputFRP.nHighlight == WRONG_INT_VALUE )
+        g_Options.LogOutputFRP.nHighlight = LOGOUTPUT_FRP_HIGHLIGHT;
+
     if ( g_Options.FileOutputFRP.nMode == WRONG_INT_VALUE )
         g_Options.FileOutputFRP.nMode = FILEOUTPUT_FRP_MODE;
 
@@ -1811,6 +1834,9 @@ void ReadOptions(void)
 
     if ( g_Options.FileOutputFRP.nAfter == WRONG_INT_VALUE )
         g_Options.FileOutputFRP.nAfter = FILEOUTPUT_FRP_AFTER;
+
+    if ( g_Options.FileOutputFRP.nHighlight == WRONG_INT_VALUE )
+        g_Options.FileOutputFRP.nHighlight = FILEOUTPUT_FRP_HIGHLIGHT;
 }
 
 void SaveOptions(void)
@@ -1948,6 +1974,9 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
                   g_Options.LogOutputFRP.nAfter );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
+                  g_Options.LogOutputFRP.nHighlight );
+
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
                   g_Options.FileOutputFRP.nMode );
 
@@ -1956,6 +1985,9 @@ void SaveOptions(void)
 
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
                   g_Options.FileOutputFRP.nAfter );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
+                  g_Options.FileOutputFRP.nHighlight );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -2063,6 +2095,9 @@ void SaveOptions(void)
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
                   g_Options.LogOutputFRP.nAfter );
 
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
+                  g_Options.LogOutputFRP.nHighlight );
+
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
                   g_Options.FileOutputFRP.nMode );
 
@@ -2071,6 +2106,9 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
                   g_Options.FileOutputFRP.nAfter );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
+                  g_Options.FileOutputFRP.nHighlight );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);

@@ -85,6 +85,12 @@
 #define QSFRM_CHARINLINE  3 // number of chars within the current line
 #define QSFRM_LINE_CR     4 // number of lines + trailing '\r'
 
+// tGetFindResultPolicy.nHighlight
+#define QSFRH_NONE        0 // don't highlight
+#define QSFRH_SELECT      1 // select the "find what" text
+#define QSFRH_IFCHECKED   2 // highlight if "Highlight All" is checked
+#define QSFRH_ALWAYS      3 // highlight always
+
 // Regular Expressions for Find All (All Files)
 #define QS_FINDALL_REPATTERN_ALLFILES    L"^[ ]*\\((\\d+) (\\d+):(\\d+)\\)"
 #define QS_FINDALL_RETAGS_ALLFILES       L"/FRAME=\\1 /GOTOLINE=\\2:\\3"

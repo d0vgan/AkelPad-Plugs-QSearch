@@ -40,6 +40,7 @@
         int nMode;   // see tGetFindResultPolicy.nMode
         int nBefore; // see tGetFindResultPolicy.nBefore
         int nAfter;  // see tGetFindResultPolicy.nAfter
+        int nHighlight; // one of QSFRH_*
     } FindResultsOutputPolicy;
 
     void initializeFRP(FindResultsOutputPolicy* pFRP);
