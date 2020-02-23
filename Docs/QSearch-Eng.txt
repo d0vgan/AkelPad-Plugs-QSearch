@@ -503,9 +503,9 @@ Additional options (QSearch panel's popup menu or file
      It defines the meaning of the 'frp_before' and 'frp_after' parameters.
      Its value can be one of:
       1 (QSFRM_LINE)       - number of lines
-      2 (QSFRM_CHAR)       - number of characters
+      2 (QSFRM_LINE_CR)    - number of lines + trailing new line
       3 (QSFRM_CHARINLINE) - number of characters within the current line
-      4 (QSFRM_LINE_CR)    - number of lines + trailing new line
+      4 (QSFRM_CHAR)       - number of characters
 
 41) logoutput_frp_before = 100
      Depending on 'logoutput_frp_mode', specifies the number of lines or
@@ -530,19 +530,33 @@ Additional options (QSearch panel's popup menu or file
      characters to be shown _after_ each occurrence in the Log Output.
      See 'logoutput_frp_before' for details.
 
-43) fileoutput_frp_mode = 1
+43) logoutput_frp_highlight = 1
+     Responsible for highlighting the occurrences in the Find Results.
+     Its value can be one of:
+      0 (QSFRH_NONE)      - don't highlight
+      1 (QSFRH_SELECT)    - select the text being searched
+
+44) fileoutput_frp_mode = 1
      Sets the FindResultsPolicy mode for the File Output.
      See 'logoutput_frp_mode' for details.
 
-44) fileoutput_frp_before = 0
+45) fileoutput_frp_before = 0
      Depending on 'fileoutput_frp_mode', specifies the number of lines or
      characters to be shown _before_ each occurrence in the File Output.
      See 'logoutput_frp_before' for details.
 
-45) fileoutput_frp_after = 0
+46) fileoutput_frp_after = 0
      Depending on 'fileoutput_frp_mode', specifies the number of lines or
      characters to be shown _after_ each occurrence in the File Output.
      See 'logoutput_frp_before' for details.
+
+47) fileoutput_frp_highlight = 2
+     Responsible for highlighting the occurrences in the Find Results.
+     Its value can be one of:
+      0 (QSFRH_NONE)      - don't highlight
+      1 (QSFRH_SELECT)    - select the text being searched
+      2 (QSFRH_IFCHECKED) - highlight if "Highlight All" is checked
+      3 (QSFRH_ALWAYS)    - highlight always
 
 
 --------
@@ -550,8 +564,10 @@ History:
 --------
 v.7.5 (February 2020)
  * changed: look & feel of the search results (Find All) improved
+ + added: a syntax file "qsfndall.coder" to be used by the Coder plugin
  + added: double-click in the File Output goes to the matching line
  + added: 'select_by_fnd', 'select_by_selfnd'
+ + added: 'logoutput_frp_highlight'
  * changed: Ctrl+Tab in the QSearch panel is sent to AkelPad's editing window
  - fixed: Highlight All might not work while searching with special characters
  - fixed: QSFRM_CHARINLINE and QSFRM_LINE did not support wrapped lines
