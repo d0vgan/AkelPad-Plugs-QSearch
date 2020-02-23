@@ -564,7 +564,7 @@ History:
 --------
 v.7.5 (February 2020)
  * changed: look & feel of the search results (Find All) improved
- + added: a syntax file "qsfndall.coder" to be used by the Coder plugin
+ + added: syntax files "qsfndall_*.coder" to be used by the Coder plugin
  + added: double-click in the File Output goes to the matching line
  + added: 'select_by_fnd', 'select_by_selfnd'
  + added: 'logoutput_frp_highlight'
