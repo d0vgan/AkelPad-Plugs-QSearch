@@ -268,36 +268,34 @@ BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
 UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR nBytes)
 {
     unsigned char* p;
-    UINT_PTR nBytesAllocated;
     UINT_PTR nBytesToStore;
     tDynamicBuffer newBuf;
 
     if ( nBytes == 0 )
         return pBuf->nBytesStored;
 
-    nBytesAllocated = pBuf->nBytesAllocated;
     nBytesToStore = pBuf->nBytesStored + nBytes;
-    if ( nBytesToStore > nBytesAllocated )
+    if ( nBytesToStore > pBuf->nBytesAllocated )
     {
         // allocate new memory
-        UINT_PTR nBytesToAllocate;
-
-        if ( nBytesAllocated == 0 )
+        UINT_PTR nBytesToAllocate = pBuf->nBytesAllocated;
+        if ( nBytesToAllocate == 0 )
         {
-            nBytesAllocated = 64;
+            nBytesToAllocate = 64;
         }
-        else if ( (nBytesAllocated % 64) != 0 )
+        else if ( (nBytesToAllocate % 64) != 0 )
         {
-            nBytesAllocated = (1 + nBytesAllocated/64)*64;
+            nBytesToAllocate = (1 + nBytesToAllocate/64)*64;
         }
-        nBytesToAllocate = (1 + nBytesToStore/nBytesAllocated)*nBytesAllocated;
+        nBytesToAllocate = (1 + nBytesToStore/nBytesToAllocate)*nBytesToAllocate;
         tDynamicBuffer_Init(&newBuf);
         if ( tDynamicBuffer_Allocate(&newBuf, nBytesToAllocate) == 0 )
             return 0; // failed to allocate the memory
 
-        // copy the previous data
         p = (unsigned char *) newBuf.ptr;
-        x_mem_cpy( p, pBuf->ptr, pBuf->nBytesStored );
+        // copy the previous data
+        if ( pBuf->nBytesStored != 0 )
+            x_mem_cpy( p, pBuf->ptr, pBuf->nBytesStored );
     }
     else
     {
@@ -307,7 +305,8 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
 
     p += pBuf->nBytesStored;
     x_mem_cpy(p, pData, nBytes); // append the new data
-    if ( nBytesToStore > nBytesAllocated )
+
+    if ( nBytesToStore > pBuf->nBytesAllocated )
     {
         // free the previously allocated memory
         if ( pBuf->ptr )

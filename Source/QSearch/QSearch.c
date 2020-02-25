@@ -74,7 +74,7 @@ void CloseLog(void)
 #define  DEFAULT_SELECT_BY_SELFND    1
 #define  DEFAULT_ADJ_INCOMPL_REGEXP  1
 #define  DEFAULT_FINDALL_MODE        QS_FINDALL_LOGOUTPUT
-#define  DEFAULT_FINDALL_RESULT      QS_FINDALL_RSLT_WHOLELINE | QS_FINDALL_RSLT_POS | QS_FINDALL_RSLT_SEARCHING | QS_FINDALL_RSLT_OCCFOUND
+#define  DEFAULT_FINDALL_RESULT      QS_FINDALL_RSLT_WHOLELINE | QS_FINDALL_RSLT_POS | QS_FINDALL_RSLT_SEARCHING
 #define  DEFAULT_FINDALL_COUNT_DELAY 400
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
@@ -341,6 +341,7 @@ QSearchOpt      g_Options;
 QSearchOpt      g_Options0;
 wchar_t         g_szFunctionQSearchW[128] = { 0 };
 BOOL            g_bHighlightPlugin = FALSE;
+BOOL            g_bLogPlugin = FALSE;
 BOOL            g_bFrameActivated = FALSE;
 
 
@@ -967,6 +968,52 @@ static BOOL findHighlightPlugin(PLUGINDATA* pd)
     return bExists;
 }
 
+static BOOL findLogPlugin(PLUGINDATA* pd)
+{
+    BOOL bExists = FALSE;
+
+    if ( pd->bOldWindows )
+    {
+        char             szPluginPath[2*MAX_PATH + 1];
+        HANDLE           hFind;
+        WIN32_FIND_DATAA findData;
+
+        lstrcpyA( szPluginPath, (const char *) pd->pAkelDir );
+        lstrcatA( szPluginPath, "\\AkelFiles\\Plugs\\Log.dll" );
+
+        hFind = FindFirstFileA(szPluginPath, &findData);
+        if ( hFind && (hFind != INVALID_HANDLE_VALUE) )
+        {
+            if ( !(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+            {
+                bExists = TRUE;
+            }
+            FindClose(hFind);
+        }
+    }
+    else
+    {
+        wchar_t          szPluginPath[2*MAX_PATH + 1];
+        HANDLE           hFind;
+        WIN32_FIND_DATAW findData;
+
+        lstrcpyW( szPluginPath, (const wchar_t *) pd->pAkelDir );
+        lstrcatW( szPluginPath, L"\\AkelFiles\\Plugs\\Log.dll" );
+
+        hFind = FindFirstFileW(szPluginPath, &findData);
+        if ( hFind && (hFind != INVALID_HANDLE_VALUE) )
+        {
+            if ( !(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+            {
+                bExists = TRUE;
+            }
+            FindClose(hFind);
+        }
+    }
+
+    return bExists;
+}
+
 void Initialize(PLUGINDATA* pd)
 {
     if ( !g_Plugin.bInitialized )
@@ -984,6 +1031,7 @@ void Initialize(PLUGINDATA* pd)
         g_Plugin.wLangSystem  = getAkelPadLang(pd);
 
         g_bHighlightPlugin = findHighlightPlugin(pd);
+        g_bLogPlugin = findLogPlugin(pd);
 
         ReadOptions();
 
@@ -1807,6 +1855,8 @@ void ReadOptions(void)
 
     if ( g_Options.dwFindAllMode == WRONG_DWORD_VALUE )
         g_Options.dwFindAllMode = DEFAULT_FINDALL_MODE;
+    if ( (g_Options.dwFindAllMode == QS_FINDALL_LOGOUTPUT) && !g_bLogPlugin )
+        g_Options.dwFindAllMode = QS_FINDALL_FILEOUTPUT_SNGL;
 
     if ( g_Options.dwFindAllResult == WRONG_DWORD_VALUE )
         g_Options.dwFindAllResult = DEFAULT_FINDALL_RESULT;

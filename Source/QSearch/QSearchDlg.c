@@ -36,6 +36,7 @@ extern QSearchDlgState g_QSearchDlg;
 extern QSearchOpt      g_Options;
 extern wchar_t         g_szFunctionQSearchW[128];
 extern BOOL            g_bHighlightPlugin;
+extern BOOL            g_bLogPlugin;
 
 
 // helpers
@@ -494,14 +495,16 @@ static void initLogOutput(DWORD dwFindAllResult)
     DLLECLOG_OUTPUT_1 loParams;
     wchar_t szCoderAlias[MAX_CODERALIAS + 1];
 
-    if ( dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
+    if ( g_bHighlightPlugin )
     {
-        getCoderAliasW(szCoderAlias);
+        if ( dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
+            getCoderAliasW(szCoderAlias);
+        else
+            lstrcpyW(szCoderAlias, L".qsfndall_tolog");
     }
     else
     {
-        // szCoderAlias[0] = 0;
-        lstrcpyW(szCoderAlias, L".qsfndall_tolog");
+        szCoderAlias[0] = 0;
     }
 
     loParams.dwStructSize = sizeof(DLLECLOG_OUTPUT_1);
@@ -547,26 +550,40 @@ static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, DWORD dwFrpHighlig
 
     if ( dwFrpHighlight != QSFRH_NONE )
     {
-        wchar_t szQuoteTextW[2];
+        BOOL bContinue = TRUE;
         AEFINDTEXTW aeftW;
 
-        szQuoteTextW[0] = getQuoteChar(pFindContext);
-        szQuoteTextW[1] = 0;
+        if ( ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) == 0) &&
+             ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_SEARCHING) != 0) )
+        {
+            wchar_t szQuoteTextW[2];
 
-        aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
-        aeftW.pText = szQuoteTextW;
-        aeftW.dwTextLen = 1;
-        aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
-        x_mem_cpy( &aeftW.crSearch.ciMin, &ci, sizeof(AECHARINDEX) );
-        SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+            szQuoteTextW[0] = getQuoteChar(pFindContext);
+            szQuoteTextW[1] = 0;
 
-        if ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+            aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
+            aeftW.pText = szQuoteTextW;
+            aeftW.dwTextLen = 1;
+            aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
+            x_mem_cpy( &aeftW.crSearch.ciMin, &ci, sizeof(AECHARINDEX) );
+            SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+            if ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+                x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
+            else
+                bContinue = FALSE;
+        }
+        else
+        {
+            x_mem_cpy( &aeftW.crSearch.ciMin, &ci, sizeof(AECHARINDEX) );
+            SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+        }
+
+        if ( bContinue )
         {
             aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
             aeftW.pText = pFindContext->pFindTextW->pText;
             aeftW.dwTextLen = pFindContext->pFindTextW->dwTextLen;
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
-            x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
             SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
 
             if ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
@@ -727,16 +744,18 @@ static void qsShowFindResults_FileOutput_AddOccurrence(tFindAllContext* pFindCon
 static void addResultsToFileOutput(tFindAllContext* pFindContext)
 {
     BOOL bOutputResult;
-    wchar_t  szCoderAlias[MAX_CODERALIAS + 1];
+    wchar_t szCoderAlias[MAX_CODERALIAS + 1];
 
-    if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
+    if ( g_bHighlightPlugin )
     {
-        getCoderAliasW(szCoderAlias);
+        if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
+            getCoderAliasW(szCoderAlias);
+        else
+            lstrcpyW(szCoderAlias, L".qsfndall_tofile");
     }
     else
     {
-        // szCoderAlias[0] = 0;
-        lstrcpyW(szCoderAlias, L".qsfndall_tofile");
+        szCoderAlias[0] = 0;
     }
 
     bOutputResult = FALSE;
@@ -3479,6 +3498,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
                 uCheck = (g_Options.dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) ? MF_CHECKED : MF_UNCHECKED;
                 CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_FILTERMODE, MF_BYCOMMAND | uCheck );
+
+                if ( !g_bLogPlugin )
+                    EnableMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_LOGOUTPUT, MF_BYCOMMAND | MF_DISABLED );
 
                 hPopMnu = g_QSearchDlg.hFindAllPopupMenu;
             }

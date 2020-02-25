@@ -483,7 +483,7 @@ Additional options (QSearch panel's popup menu or file
       * Auto Count All (count all occurrences while searching)
       * Log Output (output to Log::Output when "Find All" is pressed)
 
-38) findall_result = 816
+38) findall_result = 272
      Represents the "Find All Results Format" dialog.
      The value will be the sum of the following numbers:
       0 - Include the line with the occurrence
