@@ -267,9 +267,7 @@ BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
 
 UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR nBytes)
 {
-    unsigned char* p;
     UINT_PTR nBytesToStore;
-    tDynamicBuffer newBuf;
 
     if ( nBytes == 0 )
         return pBuf->nBytesStored;
@@ -278,7 +276,10 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
     if ( nBytesToStore > pBuf->nBytesAllocated )
     {
         // allocate new memory
-        UINT_PTR nBytesToAllocate = pBuf->nBytesAllocated;
+        tDynamicBuffer newBuf;
+        UINT_PTR nBytesToAllocate;
+
+        nBytesToAllocate = pBuf->nBytesAllocated;
         if ( nBytesToAllocate == 0 )
         {
             nBytesToAllocate = 64;
@@ -289,31 +290,35 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
         }
         nBytesToAllocate = (1 + nBytesToStore/nBytesToAllocate)*nBytesToAllocate;
         tDynamicBuffer_Init(&newBuf);
-        if ( tDynamicBuffer_Allocate(&newBuf, nBytesToAllocate) == 0 )
-            return 0; // failed to allocate the memory
+        if ( tDynamicBuffer_Allocate(&newBuf, nBytesToAllocate) != 0 )
+        {
+            unsigned char* p = (unsigned char *) newBuf.ptr;
+            // copy the previous data
+            if ( pBuf->nBytesStored != 0 )
+            {
+                x_mem_cpy( p, pBuf->ptr, pBuf->nBytesStored );
+                p += pBuf->nBytesStored;
+            }
+            // append the new data
+            x_mem_cpy(p, pData, nBytes);
 
-        p = (unsigned char *) newBuf.ptr;
-        // copy the previous data
-        if ( pBuf->nBytesStored != 0 )
-            x_mem_cpy( p, pBuf->ptr, pBuf->nBytesStored );
+            // free the previously allocated memory
+            if ( pBuf->ptr )
+                SysMemFree( pBuf->ptr );
+
+            // use the newly allocated memory
+            x_mem_cpy( pBuf, &newBuf, sizeof(tDynamicBuffer) );
+        }
+        else
+            return 0; // failed to allocate the memory
     }
     else
     {
         // use the existing memory
-        p = (unsigned char *) pBuf->ptr;
-    }
-
-    p += pBuf->nBytesStored;
-    x_mem_cpy(p, pData, nBytes); // append the new data
-
-    if ( nBytesToStore > pBuf->nBytesAllocated )
-    {
-        // free the previously allocated memory
-        if ( pBuf->ptr )
-            SysMemFree( pBuf->ptr );
-
-        // use the newly allocated memory
-        x_mem_cpy( pBuf, &newBuf, sizeof(tDynamicBuffer) );
+        unsigned char* p = (unsigned char *) pBuf->ptr;
+        p += pBuf->nBytesStored;
+        // append the new data
+        x_mem_cpy(p, pData, nBytes);
     }
 
     pBuf->nBytesStored = nBytesToStore;
