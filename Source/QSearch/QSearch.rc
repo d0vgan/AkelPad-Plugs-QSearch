@@ -158,7 +158,7 @@ BEGIN
             VALUE "FileDescription", "QSearch plugin for AkelPad text editor"
             VALUE "FileVersion", "7, 5, 0, 0"
             VALUE "InternalName", "QSearch"
-            VALUE "LegalCopyright", "(C) Sep 2007 - Feb 2020, Vitaliy Dovgan aka DV"
+            VALUE "LegalCopyright", "(C) Sep 2007 - Mar 2020, Vitaliy Dovgan aka DV"
             VALUE "OriginalFilename", "QSearch.dll"
             VALUE "ProductName", "QSearch plugin for AkelPad text editor"
             VALUE "ProductVersion", "7, 5, 0, 0"
