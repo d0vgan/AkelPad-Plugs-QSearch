@@ -628,9 +628,9 @@ v.6.4 (December 2015)
  - fixed: "Whole word" while searching with special character '*'
 
 v.6.3 (September 2015)
- + With DialogSwitcher enabled, Ctrl+F and Crtl+H from the editor window
+ + With DialogSwitcher enabled, Ctrl+F and Ctrl+H from the editor window
    can pick up the editor window's selected text.
-   (Whereas Ctrl+F and Crtl+H from the Find/Replace dialog keeps the
+   (Whereas Ctrl+F and Ctrl+H from the Find/Replace dialog keeps the
    dialog's previous text.)
  * AkelPad 4.9.6+
  * 8th anniversary of QSearch :)
