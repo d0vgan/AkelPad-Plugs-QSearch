@@ -513,17 +513,17 @@ Additional options (QSearch panel's popup menu or file
       In case of logoutput_frp_mode = 1, it is the number of lines. And
      logoutput_frp_before = 0 will mean "use the whole line with the
      occurrence".
-      In case of logoutput_frp_mode = 2, it is the number of characters
-     before the occurrence, not limited by the line with the occurrence
-     (i.e. characters from the previous lines can be grabbed). And
-     logoutput_frp_before = 0 will mean: "use only the occurrence itself".
+      In case of logoutput_frp_mode = 2, it is the number of lines, plus
+     the trailing new line character will be added to the Log Output after
+     each occurrence shown.
       In case of logoutput_frp_mode = 3, it is the number of characters
      before the occurrence, limited by the line with the occurrence (i.e.
      no characters outside of this line will be grabbed). And
      logoutput_frp_before = 0 will mean: "use only the occurrence itself".
-      In case of logoutput_frp_mode = 4, it is the number of lines, plus
-     the trailing new line character will be added to the Log Output after
-     each occurrence shown.
+      In case of logoutput_frp_mode = 4, it is the number of characters
+     before the occurrence, not limited by the line with the occurrence
+     (i.e. characters from the previous lines can be grabbed). And
+     logoutput_frp_before = 0 will mean: "use only the occurrence itself".
 
 42) logoutput_frp_after = 100
      Depending on 'logoutput_frp_mode', specifies the number of lines or
