@@ -100,7 +100,7 @@
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
-    #define  MAX_TEXT_SIZE  120
+    #define  MAX_TEXT_SIZE  250
 
     typedef struct tQSearchDlgState {
         HWND             hDlg;

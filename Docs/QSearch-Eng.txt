@@ -563,7 +563,8 @@ Additional options (QSearch panel's popup menu or file
 History:
 --------
 v.7.6 (May 2020)
- + added: the QSearch panel is resizable
+ + added: now the QSearch panel is resizable
+ * changed: max searching text length increased from 120 to 250
  - fixed: a few corrections in the documentation (QSearch-*.txt)
 
 v.7.5 (March 2020)
