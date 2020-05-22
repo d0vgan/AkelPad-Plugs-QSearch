@@ -2892,6 +2892,54 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
     }
 }
 
+static void fillToolInfoA(
+    TOOLINFOA* lptiA,
+    LPSTR      lpToolTipText,
+    HWND       hWnd,
+    UINT       uId)
+{
+    RECT rect;
+
+    GetClientRect(hWnd, &rect);
+
+    lptiA->cbSize = sizeof(TOOLINFOA);
+    lptiA->uFlags = TTF_SUBCLASS;
+    lptiA->hwnd = hWnd;
+    lptiA->hinst = g_Plugin.hInstanceDLL;
+    lptiA->uId = uId;
+    lptiA->lpszText = lpToolTipText;
+    // ToolTip control will cover the whole window
+    lptiA->rect.left = rect.left;
+    lptiA->rect.top = rect.top;
+    lptiA->rect.right = rect.right;
+    lptiA->rect.bottom = rect.bottom;
+    lptiA->lParam = 0;
+}
+
+static void fillToolInfoW(
+    TOOLINFOW* lptiW,
+    LPWSTR     lpToolTipText,
+    HWND       hWnd,
+    UINT       uId)
+{
+    RECT rect;
+
+    GetClientRect(hWnd, &rect);
+
+    lptiW->cbSize = sizeof(TOOLINFOW);
+    lptiW->uFlags = TTF_SUBCLASS;
+    lptiW->hwnd = hWnd;
+    lptiW->hinst = g_Plugin.hInstanceDLL;
+    lptiW->uId = uId;
+    lptiW->lpszText = lpToolTipText;
+    // ToolTip control will cover the whole window
+    lptiW->rect.left = rect.left;
+    lptiW->rect.top = rect.top;
+    lptiW->rect.right = rect.right;
+    lptiW->rect.bottom = rect.bottom;
+    lptiW->lParam = 0;
+}
+
 INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
   UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -4019,7 +4067,29 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( SendMessage(g_Plugin.hMainWnd, AKD_RESIZEDIALOG, 0, (LPARAM)&rdsm) )
                 {
                     if ( g_QSearchDlg.pDockData )
+                    {
                         GetClientRect(hDlg, &g_QSearchDlg.pDockData->rcDragDrop);
+                    }
+
+                    if ( g_QSearchDlg.hFindEdit )
+                    {
+                        if ( g_Plugin.bOldWindows )
+                        {
+                            TOOLINFOA tiA;
+
+                            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                            // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
+                            SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
+                        }
+                        else
+                        {
+                            TOOLINFOW tiW;
+
+                            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                            // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
+                            SendMessageW( hToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM) &tiW );
+                        }
+                    }
                 }
             }
 
@@ -4028,58 +4098,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
     }
 
     return 0;
-}
-
-static void fillToolInfoA(
-  TOOLINFOA* lptiA,
-  LPSTR      lpToolTipText,
-  HWND       hWnd)
-{
-    static unsigned int uId = 0;
-    RECT rect;
-
-    GetClientRect(hWnd, &rect);
-
-    lptiA->cbSize = sizeof(TOOLINFOA);
-    lptiA->uFlags = TTF_SUBCLASS;
-    lptiA->hwnd = hWnd;
-    lptiA->hinst = g_Plugin.hInstanceDLL;
-    lptiA->uId = uId;
-    lptiA->lpszText = lpToolTipText;
-    // ToolTip control will cover the whole window
-    lptiA->rect.left = rect.left;
-    lptiA->rect.top = rect.top;
-    lptiA->rect.right = rect.right;
-    lptiA->rect.bottom = rect.bottom;
-    lptiA->lParam = 0;
-
-    ++uId;
-}
-
-static void fillToolInfoW(
-  TOOLINFOW* lptiW,
-  LPWSTR     lpToolTipText,
-  HWND       hWnd)
-{
-    static unsigned int uId = 0;
-    RECT rect;
-
-    GetClientRect(hWnd, &rect);
-
-    lptiW->cbSize = sizeof(TOOLINFOW);
-    lptiW->uFlags = TTF_SUBCLASS;
-    lptiW->hwnd = hWnd;
-    lptiW->hinst = g_Plugin.hInstanceDLL;
-    lptiW->uId = uId;
-    lptiW->lpszText = lpToolTipText;
-    // ToolTip control will cover the whole window
-    lptiW->rect.left = rect.left;
-    lptiW->rect.top = rect.top;
-    lptiW->rect.right = rect.right;
-    lptiW->rect.bottom = rect.bottom;
-    lptiW->lParam = 0;
-
-    ++uId;
 }
 
 HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
@@ -4117,12 +4135,12 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             TOOLINFOA tiA;
             char szHintA[128];
 
-            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, hEdit );
+            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, hEdit, IDC_ED_FINDTEXT );
             // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
             lstrcpyA( szHintA, qsearchGetHintA(IDC_BT_CANCEL) );
-            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_BT_CANCEL) );
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_BT_CANCEL), IDC_BT_CANCEL );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
             lstrcpyA( szHintA, qsearchGetHintA(IDC_CH_MATCHCASE) );
@@ -4130,10 +4148,10 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             {
                 strAppendAltHotkeyA( szHintA, g_Options.dwAltMatchCase );
             }
-            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_MATCHCASE), IDC_CH_MATCHCASE );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
-            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, GetDlgItem(hDlg, IDC_CH_WHOLEWORD), IDC_CH_WHOLEWORD );
             // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hCheckbox"
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
@@ -4142,23 +4160,24 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             {
                 strAppendAltHotkeyA( szHintA, g_Options.dwAltHighlightAll );
             }
-            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
+            fillToolInfoA( &tiA, szHintA, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL), IDC_CH_HIGHLIGHTALL );
             SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
             if ( g_Options.dwNewUI == QS_UI_NEW_01 ||
                  g_Options.dwNewUI == QS_UI_NEW_02 )
             {
                 fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDNEXT),
-                  GetDlgItem(hDlg, IDC_BT_FINDNEXT) );
+                  GetDlgItem(hDlg, IDC_BT_FINDNEXT), IDC_BT_FINDNEXT );
                 SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
                 fillToolInfoA( &tiA, (LPSTR) qsearchGetHintA(IDC_BT_FINDPREV),
-                  GetDlgItem(hDlg, IDC_BT_FINDPREV) );
+                  GetDlgItem(hDlg, IDC_BT_FINDPREV), IDC_BT_FINDPREV );
                 SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
 
                 if ( g_Options.dwNewUI == QS_UI_NEW_02 )
                 {
-                    fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA,
+                      GetDlgItem(hDlg, IDC_BT_FINDALL), IDC_BT_FINDALL );
                     SendMessage( hToolTip, TTM_ADDTOOLA, 0, (LPARAM) &tiA );
                 }
             }
@@ -4168,12 +4187,12 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             TOOLINFOW tiW;
             wchar_t szHintW[128];
 
-            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, hEdit );
+            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, hEdit, IDC_ED_FINDTEXT );
             // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
             lstrcpyW( szHintW, qsearchGetHintW(IDC_BT_CANCEL) );
-            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_BT_CANCEL) );
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_BT_CANCEL), IDC_BT_CANCEL );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
             lstrcpyW( szHintW, qsearchGetHintW(IDC_CH_MATCHCASE) );
@@ -4181,10 +4200,10 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             {
                 strAppendAltHotkeyW( szHintW, g_Options.dwAltMatchCase );
             }
-            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_MATCHCASE) );
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_MATCHCASE), IDC_CH_MATCHCASE );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
-            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, GetDlgItem(hDlg, IDC_CH_WHOLEWORD) );
+            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, GetDlgItem(hDlg, IDC_CH_WHOLEWORD), IDC_CH_WHOLEWORD );
             // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hCheckbox"
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
@@ -4193,23 +4212,24 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             {
                 strAppendAltHotkeyW( szHintW, g_Options.dwAltHighlightAll );
             }
-            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL) );
+            fillToolInfoW( &tiW, szHintW, GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL), IDC_CH_HIGHLIGHTALL );
             SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
             if ( g_Options.dwNewUI == QS_UI_NEW_01 ||
                  g_Options.dwNewUI == QS_UI_NEW_02 )
             {
                 fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDNEXT),
-                  GetDlgItem(hDlg, IDC_BT_FINDNEXT) );
+                  GetDlgItem(hDlg, IDC_BT_FINDNEXT), IDC_BT_FINDNEXT );
                 SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
                 fillToolInfoW( &tiW, (LPWSTR) qsearchGetHintW(IDC_BT_FINDPREV),
-                  GetDlgItem(hDlg, IDC_BT_FINDPREV) );
+                  GetDlgItem(hDlg, IDC_BT_FINDPREV), IDC_BT_FINDPREV );
                 SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
 
                 if ( g_Options.dwNewUI == QS_UI_NEW_02 )
                 {
-                    fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, GetDlgItem(hDlg, IDC_BT_FINDALL) );
+                    fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW,
+                      GetDlgItem(hDlg, IDC_BT_FINDALL), IDC_BT_FINDALL );
                     SendMessageW( hToolTip, TTM_ADDTOOLW, 0, (LPARAM) &tiW );
                 }
             }
