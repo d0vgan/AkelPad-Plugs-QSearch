@@ -70,6 +70,8 @@
         DWORD    dwFindAllMode;
         DWORD    dwFindAllResult;
         DWORD    dwFindAllCountDelay;
+        DWORD    dwEditMinWidth;
+        DWORD    dwEditMaxWidth;
         FindResultsOutputPolicy LogOutputFRP;
         FindResultsOutputPolicy FileOutputFRP;
     } QSearchOpt;

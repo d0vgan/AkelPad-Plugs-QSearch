@@ -2940,6 +2940,46 @@ static void fillToolInfoW(
     lptiW->lParam = 0;
 }
 
+static HWND GetDlgItemAndRect(HWND hDlg, int nItemId, RECT* pRect)
+{
+    HWND hDlgItm;
+    
+    hDlgItm = GetDlgItem(hDlg, nItemId);
+    if ( hDlgItm )
+    {
+        GetWindowRect( hDlgItm, pRect );
+        ScreenToClient( hDlg, (POINT *) &pRect->left );
+        ScreenToClient( hDlg, (POINT *) &pRect->right );
+    }
+
+    return hDlgItm;
+}
+
+static void MoveWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
+{
+    if ( hWnd )
+    {
+        MoveWindow(hWnd, rc0->left + dx, rc0->top, rc0->right - rc0->left, rc0->bottom - rc0->top, TRUE);
+    }
+}
+
+static void ResizeWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
+{
+    if ( hWnd )
+    {
+        MoveWindow(hWnd, rc0->left, rc0->top, rc0->right - rc0->left + dx, rc0->bottom - rc0->top, TRUE);
+    }
+}
+
+static void RedrawWindowByDx(HWND hWnd)
+{
+    if ( hWnd )
+    {
+        InvalidateRect(hWnd, NULL, TRUE);
+        UpdateWindow(hWnd);
+    }
+}
+
 INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
   UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2958,44 +2998,17 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
     static HWND hChMatchCase = NULL, hChWholeWord = NULL, hChHighlightAll = NULL;
     static HWND hStInfo = NULL;
 
-    static RECT rcDlgInitial = { 0, 0, 0, 0 };
-    static RECT rcDlgCurrent = { 0, 0, 0, 0 };
-
-    static RESIZEDIALOG rds_UI_00[] = {
-        { &hChHighlightAll, RDS_MOVE | RDS_X, 0 },
-        { &hChWholeWord,    RDS_MOVE | RDS_X, 0 },
-        { &hChMatchCase,    RDS_MOVE | RDS_X, 0 },
-        { &hPbProgress,     RDS_MOVE | RDS_X, 0 },    
-        { &hCbFindText,     RDS_SIZE | RDS_X, 0 },
-        { &hEdFindText,     RDS_SIZE | RDS_X, 0 },
-        { 0, 0, 0 }
-    };
-
-    static RESIZEDIALOG rds_UI_01[] = {
-        { &hChHighlightAll, RDS_MOVE | RDS_X, 0 },
-        { &hChWholeWord,    RDS_MOVE | RDS_X, 0 },
-        { &hChMatchCase,    RDS_MOVE | RDS_X, 0 },
-        { &hPbProgress,     RDS_MOVE | RDS_X, 0 },    
-        { &hBtFindPrev,     RDS_MOVE | RDS_X, 0 },
-        { &hBtFindNext,     RDS_MOVE | RDS_X, 0 },
-        { &hCbFindText,     RDS_SIZE | RDS_X, 0 },
-        { &hEdFindText,     RDS_SIZE | RDS_X, 0 },
-        { 0, 0, 0 }
-    };
-
-    static RESIZEDIALOG rds_UI_02[] = {
-        { &hStInfo,         RDS_MOVE | RDS_X, 0 },
-        { &hChHighlightAll, RDS_MOVE | RDS_X, 0 },
-        { &hChWholeWord,    RDS_MOVE | RDS_X, 0 },
-        { &hChMatchCase,    RDS_MOVE | RDS_X, 0 },
-        { &hPbProgress,     RDS_MOVE | RDS_X, 0 },    
-        { &hBtFindAll,      RDS_MOVE | RDS_X, 0 },
-        { &hBtFindPrev,     RDS_MOVE | RDS_X, 0 },
-        { &hBtFindNext,     RDS_MOVE | RDS_X, 0 },
-        { &hCbFindText,     RDS_SIZE | RDS_X, 0 },
-        { &hEdFindText,     RDS_SIZE | RDS_X, 0 },
-        { 0, 0, 0 }
-    };
+    static RECT rcDlg_0 = { 0, 0, 0, 0 };
+    static RECT rcStInfo_0 = { 0, 0, 0, 0 };
+    static RECT rcChHighlightAll_0 = { 0, 0, 0, 0 };
+    static RECT rcChWholeWord_0 = { 0, 0, 0, 0 };
+    static RECT rcChMatchCase_0 = { 0, 0, 0, 0 };
+    static RECT rcPbProgress_0 = { 0, 0, 0, 0 };
+    static RECT rcBtFindAll_0 = { 0, 0, 0, 0 };
+    static RECT rcBtFindPrev_0 = { 0, 0, 0, 0 };
+    static RECT rcBtFindNext_0 = { 0, 0, 0, 0 };
+    static RECT rcCbFindText_0 = { 0, 0, 0, 0 };
+    static RECT rcEdFindText_0 = { 0, 0, 0, 0 };
 
 #ifdef _DEBUG
     Debug_Output("Dlg Msg 0x%X:  0x0%X  0x0%X\n", uMsg, wParam, lParam);
@@ -3542,20 +3555,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             break;
         }
-        case WM_SIZE:
-        {
-            if ( wParam != SIZE_MINIMIZED )
-            {
-                if ( g_QSearchDlg.pDockData )
-                {
-                    g_QSearchDlg.pDockData->rcDragDrop.left = 0;
-                    g_QSearchDlg.pDockData->rcDragDrop.top = 0;
-                    g_QSearchDlg.pDockData->rcDragDrop.right = LOWORD(lParam);
-                    g_QSearchDlg.pDockData->rcDragDrop.bottom = HIWORD(lParam);
-                }
-            }
-            break;
-        }
         case WM_CONTEXTMENU:
         {
             HMENU hPopMnu;
@@ -3889,19 +3888,18 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             InitializeCriticalSection(&csFindAllTimerId);
 
-            GetWindowRect(hDlg, &rcDlgInitial);
-
-            hEdFindText = GetDlgItem(hDlg, IDC_ED_FINDTEXT);
-            hCbFindText = GetDlgItem(hDlg, IDC_CB_FINDTEXT);
-            hBtFindNext = GetDlgItem(hDlg, IDC_BT_FINDNEXT);
-            hBtFindPrev = GetDlgItem(hDlg, IDC_BT_FINDPREV);
-            hBtFindAll = GetDlgItem(hDlg, IDC_BT_FINDALL);
+            GetClientRect(hDlg, &rcDlg_0);
+            hEdFindText = GetDlgItemAndRect(hDlg, IDC_ED_FINDTEXT, &rcEdFindText_0);
+            hCbFindText = GetDlgItemAndRect(hDlg, IDC_CB_FINDTEXT, &rcCbFindText_0);
+            hBtFindNext = GetDlgItemAndRect(hDlg, IDC_BT_FINDNEXT, &rcBtFindNext_0);
+            hBtFindPrev = GetDlgItemAndRect(hDlg, IDC_BT_FINDPREV, &rcBtFindPrev_0);
+            hBtFindAll = GetDlgItemAndRect(hDlg, IDC_BT_FINDALL, &rcBtFindAll_0);
             hBtCancel = GetDlgItem(hDlg, IDC_BT_CANCEL);
-            hPbProgress = GetDlgItem(hDlg, IDC_PB_PROGRESS);
-            hChMatchCase = GetDlgItem(hDlg, IDC_CH_MATCHCASE);
-            hChWholeWord = GetDlgItem(hDlg, IDC_CH_WHOLEWORD);
-            hChHighlightAll = GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL);
-            hStInfo = GetDlgItem(hDlg, IDC_ST_INFO);
+            hPbProgress = GetDlgItemAndRect(hDlg, IDC_PB_PROGRESS, &rcPbProgress_0);
+            hChMatchCase = GetDlgItemAndRect(hDlg, IDC_CH_MATCHCASE, &rcChMatchCase_0);
+            hChWholeWord = GetDlgItemAndRect(hDlg, IDC_CH_WHOLEWORD, &rcChWholeWord_0);
+            hChHighlightAll = GetDlgItemAndRect(hDlg, IDC_CH_HIGHLIGHTALL, &rcChHighlightAll_0);
+            hStInfo = GetDlgItemAndRect(hDlg, IDC_ST_INFO, &rcStInfo_0);
 
             g_QSearchDlg.bIsQSearchingRightNow = FALSE;
             g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
@@ -4042,53 +4040,83 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         case WM_SIZE:
         case WM_PAINT:
         {
-            RECT rcCurr = { 0, 0, 0, 0 };
+            LONG nWidthInit;
+            LONG nWidthCurr;
+            LONG dx;
+            BOOL bContinue;
+            RECT rcDlgCurr = { 0, 0, 0, 0 };
 
-            GetWindowRect(hDlg, &rcCurr);
+            GetClientRect(hDlg, &rcDlgCurr);
+            nWidthCurr = rcDlgCurr.right - rcDlgCurr.left;
+            nWidthInit = rcDlg_0.right - rcDlg_0.left;
+            dx = nWidthCurr - nWidthInit;
+            bContinue = TRUE;
 
-            if ( rcCurr.right - rcCurr.left >= rcDlgInitial.right - rcDlgInitial.left )
+            if ( dx < 0 )
             {
-                RESIZEDIALOGMSG rdsm;
-
-                if ( g_Options.dwNewUI == QS_UI_NEW_02 )
-                    rdsm.rds = rds_UI_02;
-                else if ( g_Options.dwNewUI == QS_UI_NEW_01 )
-                    rdsm.rds = rds_UI_01;
-                else
-                    rdsm.rds = rds_UI_00;
-                rdsm.rcMinMax = NULL;
-                rdsm.rcCurrent = &rcDlgCurrent;
-                rdsm.dwFlags = 0;
-                rdsm.hDlg = hDlg;
-                rdsm.uMsg = uMsg;
-                rdsm.wParam = wParam;
-                rdsm.lParam = lParam;
-
-                if ( SendMessage(g_Plugin.hMainWnd, AKD_RESIZEDIALOG, 0, (LPARAM)&rdsm) )
+                if ( g_Options.dwEditMinWidth != 0 )
                 {
-                    if ( g_QSearchDlg.pDockData )
+                    if ( rcEdFindText_0.right - rcEdFindText_0.left + dx < (LONG) g_Options.dwEditMinWidth )
+                        dx = rcEdFindText_0.left + g_Options.dwEditMinWidth - rcEdFindText_0.right;
+                }
+                else
+                    dx = 0;
+            }
+            else // dx >= 0
+            {
+                if ( g_Options.dwEditMaxWidth != 0 )
+                {
+                    if ( rcEdFindText_0.right - rcEdFindText_0.left + dx > (LONG) g_Options.dwEditMaxWidth )
+                        dx = rcEdFindText_0.left + g_Options.dwEditMaxWidth - rcEdFindText_0.right;
+                }
+            }
+
+            if ( bContinue )
+            {
+                MoveWindowByDx(hStInfo, &rcStInfo_0, dx);
+                MoveWindowByDx(hChHighlightAll, &rcChHighlightAll_0, dx);
+                MoveWindowByDx(hChWholeWord, &rcChWholeWord_0, dx);
+                MoveWindowByDx(hChMatchCase, &rcChMatchCase_0, dx);
+                MoveWindowByDx(hPbProgress, &rcPbProgress_0, dx);
+                MoveWindowByDx(hBtFindAll, &rcBtFindAll_0, dx);
+                MoveWindowByDx(hBtFindPrev, &rcBtFindPrev_0, dx);
+                MoveWindowByDx(hBtFindNext, &rcBtFindNext_0, dx);
+                ResizeWindowByDx(hCbFindText, &rcCbFindText_0, dx);
+                ResizeWindowByDx(hEdFindText, &rcEdFindText_0, dx);
+
+                RedrawWindowByDx(hEdFindText);
+                RedrawWindowByDx(hCbFindText);
+                RedrawWindowByDx(hBtFindNext);
+                RedrawWindowByDx(hBtFindPrev);
+                RedrawWindowByDx(hBtFindAll);
+                RedrawWindowByDx(hPbProgress);
+                RedrawWindowByDx(hChMatchCase);
+                RedrawWindowByDx(hChWholeWord);
+                RedrawWindowByDx(hChHighlightAll);
+                RedrawWindowByDx(hStInfo);
+
+                if ( g_QSearchDlg.pDockData )
+                {
+                    GetClientRect(hDlg, &g_QSearchDlg.pDockData->rcDragDrop);
+                }
+
+                if ( g_QSearchDlg.hFindEdit )
+                {
+                    if ( g_Plugin.bOldWindows )
                     {
-                        GetClientRect(hDlg, &g_QSearchDlg.pDockData->rcDragDrop);
+                        TOOLINFOA tiA;
+
+                        fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                        // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
+                        SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
                     }
-
-                    if ( g_QSearchDlg.hFindEdit )
+                    else
                     {
-                        if ( g_Plugin.bOldWindows )
-                        {
-                            TOOLINFOA tiA;
+                        TOOLINFOW tiW;
 
-                            fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
-                            // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
-                            SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
-                        }
-                        else
-                        {
-                            TOOLINFOW tiW;
-
-                            fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
-                            // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
-                            SendMessageW( hToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM) &tiW );
-                        }
+                        fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                        // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
+                        SendMessageW( hToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM) &tiW );
                     }
                 }
             }

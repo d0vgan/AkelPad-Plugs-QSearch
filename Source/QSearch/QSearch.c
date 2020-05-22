@@ -76,6 +76,8 @@ void CloseLog(void)
 #define  DEFAULT_FINDALL_MODE        QS_FINDALL_LOGOUTPUT
 #define  DEFAULT_FINDALL_RESULT      QS_FINDALL_RSLT_WHOLELINE | QS_FINDALL_RSLT_POS | QS_FINDALL_RSLT_SEARCHING
 #define  DEFAULT_FINDALL_COUNT_DELAY 400
+#define  DEFAULT_EDIT_MINWIDTH       0
+#define  DEFAULT_EDIT_MAXWIDTH       0
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
@@ -170,6 +172,8 @@ void CloseLog(void)
         pOptions->dwFindAllMode = WRONG_DWORD_VALUE;
         pOptions->dwFindAllResult = WRONG_DWORD_VALUE;
         pOptions->dwFindAllCountDelay = WRONG_DWORD_VALUE;
+        pOptions->dwEditMinWidth = WRONG_DWORD_VALUE;
+        pOptions->dwEditMaxWidth = WRONG_DWORD_VALUE;
         initializeFRP(&pOptions->LogOutputFRP);
         initializeFRP(&pOptions->FileOutputFRP);
     }
@@ -193,32 +197,34 @@ void CloseLog(void)
                 return FALSE;
         }
 
-        if ( (pOpt1->dockRect.left       !=  pOpt2->dockRect.left)      ||
-             (pOpt1->dockRect.right      !=  pOpt2->dockRect.right)     ||
-             (pOpt1->dockRect.top        !=  pOpt2->dockRect.top)       ||
-             (pOpt1->dockRect.bottom     !=  pOpt2->dockRect.bottom)    ||
-             (pOpt1->colorNotFound       !=  pOpt2->colorNotFound)      ||
-             (pOpt1->colorNotRegExp      !=  pOpt2->colorNotRegExp)     ||
-             (pOpt1->colorEOF            !=  pOpt2->colorEOF)           ||
-             (pOpt1->colorHighlight      !=  pOpt2->colorHighlight)     ||
-             (pOpt1->dwHighlightMarkID   !=  pOpt2->dwHighlightMarkID)  ||
-             (pOpt1->dwHighlightState    !=  pOpt2->dwHighlightState)   ||
-             (pOpt1->dwUseAltHotkeys     !=  pOpt2->dwUseAltHotkeys)    ||
-             (pOpt1->dwAltMatchCase      !=  pOpt2->dwAltMatchCase)     ||
-             (pOpt1->dwAltWholeWord      !=  pOpt2->dwAltWholeWord)     ||
-             (pOpt1->dwAltSearchMode     !=  pOpt2->dwAltSearchMode)    ||
-             (pOpt1->dwAltHighlightAll   !=  pOpt2->dwAltHighlightAll)  ||
-             (pOpt1->dwFindHistoryItems  !=  pOpt2->dwFindHistoryItems) ||
-             (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)      ||
-             (pOpt1->dwNewUI             !=  pOpt2->dwNewUI)            ||
-             (pOpt1->dwSelectByF3        !=  pOpt2->dwSelectByF3)       ||
-             (pOpt1->dwSelectByFnd       !=  pOpt2->dwSelectByFnd)      ||
-             (pOpt1->dwSelectBySelFnd    !=  pOpt2->dwSelectBySelFnd)   ||
-             (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp) ||
-             (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)      ||
-             (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)    ||
-             (pOpt1->dwFindAllCountDelay != pOpt2->dwFindAllCountDelay) ||
-             !equalFRP(&pOpt1->LogOutputFRP,  &pOpt2->LogOutputFRP)     ||
+        if ( (pOpt1->dockRect.left       !=  pOpt2->dockRect.left)       ||
+             (pOpt1->dockRect.right      !=  pOpt2->dockRect.right)      ||
+             (pOpt1->dockRect.top        !=  pOpt2->dockRect.top)        ||
+             (pOpt1->dockRect.bottom     !=  pOpt2->dockRect.bottom)     ||
+             (pOpt1->colorNotFound       !=  pOpt2->colorNotFound)       ||
+             (pOpt1->colorNotRegExp      !=  pOpt2->colorNotRegExp)      ||
+             (pOpt1->colorEOF            !=  pOpt2->colorEOF)            ||
+             (pOpt1->colorHighlight      !=  pOpt2->colorHighlight)      ||
+             (pOpt1->dwHighlightMarkID   !=  pOpt2->dwHighlightMarkID)   ||
+             (pOpt1->dwHighlightState    !=  pOpt2->dwHighlightState)    ||
+             (pOpt1->dwUseAltHotkeys     !=  pOpt2->dwUseAltHotkeys)     ||
+             (pOpt1->dwAltMatchCase      !=  pOpt2->dwAltMatchCase)      ||
+             (pOpt1->dwAltWholeWord      !=  pOpt2->dwAltWholeWord)      ||
+             (pOpt1->dwAltSearchMode     !=  pOpt2->dwAltSearchMode)     ||
+             (pOpt1->dwAltHighlightAll   !=  pOpt2->dwAltHighlightAll)   ||
+             (pOpt1->dwFindHistoryItems  !=  pOpt2->dwFindHistoryItems)  ||
+             (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)       ||
+             (pOpt1->dwNewUI             !=  pOpt2->dwNewUI)             ||
+             (pOpt1->dwSelectByF3        !=  pOpt2->dwSelectByF3)        ||
+             (pOpt1->dwSelectByFnd       !=  pOpt2->dwSelectByFnd)       ||
+             (pOpt1->dwSelectBySelFnd    !=  pOpt2->dwSelectBySelFnd)    ||
+             (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp)  ||
+             (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)       ||
+             (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)     ||
+             (pOpt1->dwFindAllCountDelay !=  pOpt2->dwFindAllCountDelay) ||
+             (pOpt1->dwEditMinWidth      !=  pOpt2->dwEditMinWidth)      ||
+             (pOpt1->dwEditMaxWidth      !=  pOpt2->dwEditMaxWidth)      ||
+             !equalFRP(&pOpt1->LogOutputFRP,  &pOpt2->LogOutputFRP)      ||
              !equalFRP(&pOpt1->FileOutputFRP, &pOpt2->FileOutputFRP) )
         {
             return FALSE;
@@ -280,7 +286,9 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_MODE      43 */  "fileoutput_frp_mode",
     /* OPT_FILEOUTPUT_FRP_BEFORE    44 */  "fileoutput_frp_before",
     /* OPT_FILEOUTPUT_FRP_AFTER     45 */  "fileoutput_frp_after",
-    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  "fileoutput_frp_highlight"
+    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  "fileoutput_frp_highlight",
+    /* OPT_EDIT_MINWIDTH            47 */  "edit_minwidth",
+    /* OPT_EDIT_MAXWIDTH            48 */  "edit_maxwidth"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -330,7 +338,9 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_MODE      43 */  L"fileoutput_frp_mode",
     /* OPT_FILEOUTPUT_FRP_BEFORE    44 */  L"fileoutput_frp_before",
     /* OPT_FILEOUTPUT_FRP_AFTER     45 */  L"fileoutput_frp_after",
-    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  L"fileoutput_frp_highlight"
+    /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  L"fileoutput_frp_highlight",
+    /* OPT_EDIT_MINWIDTH            47 */  L"edit_minwidth",
+    /* OPT_EDIT_MAXWIDTH            48 */  L"edit_maxwidth"
 };
 
 
@@ -1627,6 +1637,12 @@ void ReadOptions(void)
             g_Options.FileOutputFRP.nHighlight = (int) readDwordA( hOptions,
               CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
 
+            g_Options.dwEditMinWidth = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_EDIT_MINWIDTH], WRONG_DWORD_VALUE );
+
+            g_Options.dwEditMaxWidth = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_EDIT_MAXWIDTH], WRONG_DWORD_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1735,6 +1751,12 @@ void ReadOptions(void)
 
             g_Options.FileOutputFRP.nHighlight = (int) readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT], WRONG_INT_VALUE );
+
+            g_Options.dwEditMinWidth = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_EDIT_MINWIDTH], WRONG_DWORD_VALUE );
+
+            g_Options.dwEditMaxWidth = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH], WRONG_DWORD_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1892,6 +1914,12 @@ void ReadOptions(void)
 
     if ( g_Options.FileOutputFRP.nHighlight == WRONG_INT_VALUE )
         g_Options.FileOutputFRP.nHighlight = FILEOUTPUT_FRP_HIGHLIGHT;
+
+    if ( g_Options.dwEditMinWidth == WRONG_DWORD_VALUE )
+        g_Options.dwEditMinWidth = DEFAULT_EDIT_MINWIDTH;
+
+    if ( g_Options.dwEditMaxWidth == WRONG_DWORD_VALUE )
+        g_Options.dwEditMaxWidth = DEFAULT_EDIT_MAXWIDTH;
 }
 
 void SaveOptions(void)
@@ -2044,6 +2072,12 @@ void SaveOptions(void)
                 writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
                   g_Options.FileOutputFRP.nHighlight );
 
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MINWIDTH],
+                  g_Options.dwEditMinWidth );
+
+                writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
+                  g_Options.dwEditMaxWidth );
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -2164,6 +2198,12 @@ void SaveOptions(void)
 
                 writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
                   g_Options.FileOutputFRP.nHighlight );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MINWIDTH],
+                  g_Options.dwEditMinWidth );
+
+                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
+                  g_Options.dwEditMaxWidth );
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);

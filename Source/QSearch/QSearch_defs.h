@@ -52,8 +52,10 @@
 #define  OPT_FILEOUTPUT_FRP_BEFORE    44
 #define  OPT_FILEOUTPUT_FRP_AFTER     45
 #define  OPT_FILEOUTPUT_FRP_HIGHLIGHT 46
+#define  OPT_EDIT_MINWIDTH            47
+#define  OPT_EDIT_MAXWIDTH            48
 
-#define  OPT_TOTALCOUNT               47
+#define  OPT_TOTALCOUNT               49
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11
