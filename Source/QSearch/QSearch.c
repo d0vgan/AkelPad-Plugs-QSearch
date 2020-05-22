@@ -436,16 +436,21 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
         {
             if ( g_QSearchDlg.pDockData )
             {
-                //g_QSearchDlg.bOnDlgStart = TRUE;
-                if ( (g_QSearchDlg.pDockData->rcSize.right == 0) ||
-                     (g_QSearchDlg.pDockData->rcSize.bottom == 0) )
+                RECT rcDlg;
+
+                if ( GetWindowRect(g_QSearchDlg.hDlg, &rcDlg) )
                 {
-                    if ( GetWindowRect(g_QSearchDlg.hDlg, &g_QSearchDlg.pDockData->rcSize) )
+                    RECT* prcDockSize;
+
+                    prcDockSize = &g_QSearchDlg.pDockData->rcSize;
+                    //g_QSearchDlg.bOnDlgStart = TRUE;
+                    if ( (prcDockSize->right == 0) || (prcDockSize->bottom == 0) ||
+                         (prcDockSize->bottom - prcDockSize->top != rcDlg.bottom - rcDlg.top) )
                     {
-                        g_QSearchDlg.pDockData->rcSize.right -= g_QSearchDlg.pDockData->rcSize.left;
-                        g_QSearchDlg.pDockData->rcSize.bottom -= g_QSearchDlg.pDockData->rcSize.top;
-                        g_QSearchDlg.pDockData->rcSize.left = 0;
-                        g_QSearchDlg.pDockData->rcSize.top = 0;
+                        prcDockSize->right = rcDlg.right - rcDlg.left;
+                        prcDockSize->bottom = rcDlg.bottom - rcDlg.top;
+                        prcDockSize->left = 0;
+                        prcDockSize->top = 0;
                     }
                 }
                 g_QSearchDlg.pDockData->hWnd = g_QSearchDlg.hDlg;
