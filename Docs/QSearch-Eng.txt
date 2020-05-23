@@ -558,13 +558,26 @@ Additional options (QSearch panel's popup menu or file
       2 (QSFRH_IFCHECKED) - highlight if "Highlight All" is checked
       3 (QSFRH_ALWAYS)    - highlight always
 
+48) edit_minwidth = 0
+     Minimal width of the edit control of the QSearch panel.
+     The value of 0 means: not smaller than the standard width that was used
+     in previous versions of QSearch (when the panel was not resizable).
+
+49) edit_maxwidth = 0
+     Maximal width of the edit control of the QSearch panel.
+     The value of 0 means: not limited (i.e. the edit control width is always
+     proportional to the resized width of the QSearch panel).
+
 
 --------
 History:
 --------
 v.7.6 (May 2020)
  + added: now the QSearch panel is resizable
+ + added: 'edit_minwidth' and 'edit_maxwidth'
  * changed: max searching text length increased from 120 to 250
+ - fixed: the docked window height was insufficient for enlarged (e.g. 125%)
+   text size
  - fixed: a few corrections in the documentation (QSearch-*.txt)
 
 v.7.5 (March 2020)
