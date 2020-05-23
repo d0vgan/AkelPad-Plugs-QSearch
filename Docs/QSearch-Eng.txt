@@ -558,7 +558,7 @@ Additional options (QSearch panel's popup menu or file
       2 (QSFRH_IFCHECKED) - highlight if "Highlight All" is checked
       3 (QSFRH_ALWAYS)    - highlight always
 
-48) edit_minwidth = 180
+48) edit_minwidth = 0
      Minimal width of the edit control of the QSearch panel.
      The value of 0 means: not smaller than the standard width that was used
      in previous versions of QSearch (when the panel was not resizable).
