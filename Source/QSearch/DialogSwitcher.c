@@ -639,8 +639,8 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             {
                 if ( IsWindowVisible(hModelessDlg) )
                 {
-                    RECT rcEdit;
-                    RECT rcDlg;
+                    RECT rcEdit = { 0, 0, 0, 0 };
+                    RECT rcDlg = { 0, 0, 0, 0 };
 
                     GetWindowRect(ei.hWndEdit, &rcEdit);
                     GetWindowRect(hModelessDlg, &rcDlg);

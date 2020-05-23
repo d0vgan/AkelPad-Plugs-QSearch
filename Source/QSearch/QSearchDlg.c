@@ -2898,7 +2898,7 @@ static void fillToolInfoA(
     HWND       hWnd,
     UINT       uId)
 {
-    RECT rect;
+    RECT rect = { 0, 0, 0, 0 };
 
     GetClientRect(hWnd, &rect);
 
@@ -2922,7 +2922,7 @@ static void fillToolInfoW(
     HWND       hWnd,
     UINT       uId)
 {
-    RECT rect;
+    RECT rect = { 0, 0, 0, 0 };
 
     GetClientRect(hWnd, &rect);
 
@@ -4040,82 +4040,84 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         case WM_SIZE:
         case WM_PAINT:
         {
-            LONG nWidthInit;
-            LONG nWidthCurr;
-            LONG dx;
-            RECT rcDlgCurr = { 0, 0, 0, 0 };
+            RECT rcDlgCurr;
 
-            GetClientRect(hDlg, &rcDlgCurr);
-            nWidthCurr = rcDlgCurr.right - rcDlgCurr.left;
-            nWidthInit = rcDlg_0.right - rcDlg_0.left;
-            dx = nWidthCurr - nWidthInit;
-
-            if ( dx < 0 )
+            if ( GetClientRect(hDlg, &rcDlgCurr) )
             {
-                if ( g_Options.dwEditMinWidth != 0 )
+                LONG nWidthInit;
+                LONG nWidthCurr;
+                LONG dx;
+
+                nWidthCurr = rcDlgCurr.right - rcDlgCurr.left;
+                nWidthInit = rcDlg_0.right - rcDlg_0.left;
+                dx = nWidthCurr - nWidthInit;
+
+                if ( dx < 0 )
                 {
-                    if ( rcEdFindText_0.right - rcEdFindText_0.left + dx < (LONG) g_Options.dwEditMinWidth )
-                        dx = rcEdFindText_0.left + g_Options.dwEditMinWidth - rcEdFindText_0.right;
+                    if ( g_Options.dwEditMinWidth != 0 )
+                    {
+                        if ( rcEdFindText_0.right - rcEdFindText_0.left + dx < (LONG) g_Options.dwEditMinWidth )
+                            dx = rcEdFindText_0.left + g_Options.dwEditMinWidth - rcEdFindText_0.right;
+                    }
+                    else
+                        dx = 0;
                 }
-                else
-                    dx = 0;
-            }
-            else // dx >= 0
-            {
-                if ( g_Options.dwEditMaxWidth != 0 )
+                else // dx >= 0
                 {
-                    if ( rcEdFindText_0.right - rcEdFindText_0.left + dx > (LONG) g_Options.dwEditMaxWidth )
-                        dx = rcEdFindText_0.left + g_Options.dwEditMaxWidth - rcEdFindText_0.right;
+                    if ( g_Options.dwEditMaxWidth != 0 )
+                    {
+                        if ( rcEdFindText_0.right - rcEdFindText_0.left + dx > (LONG) g_Options.dwEditMaxWidth )
+                            dx = rcEdFindText_0.left + g_Options.dwEditMaxWidth - rcEdFindText_0.right;
+                    }
                 }
-            }
 
-            MoveWindowByDx(hStInfo, &rcStInfo_0, dx);
-            MoveWindowByDx(hChHighlightAll, &rcChHighlightAll_0, dx);
-            MoveWindowByDx(hChWholeWord, &rcChWholeWord_0, dx);
-            MoveWindowByDx(hChMatchCase, &rcChMatchCase_0, dx);
-            MoveWindowByDx(hPbProgress, &rcPbProgress_0, dx);
-            MoveWindowByDx(hBtFindAll, &rcBtFindAll_0, dx);
-            MoveWindowByDx(hBtFindPrev, &rcBtFindPrev_0, dx);
-            MoveWindowByDx(hBtFindNext, &rcBtFindNext_0, dx);
-            ResizeWindowByDx(hCbFindText, &rcCbFindText_0, dx);
-            ResizeWindowByDx(hEdFindText, &rcEdFindText_0, dx);
+                MoveWindowByDx(hStInfo, &rcStInfo_0, dx);
+                MoveWindowByDx(hChHighlightAll, &rcChHighlightAll_0, dx);
+                MoveWindowByDx(hChWholeWord, &rcChWholeWord_0, dx);
+                MoveWindowByDx(hChMatchCase, &rcChMatchCase_0, dx);
+                MoveWindowByDx(hPbProgress, &rcPbProgress_0, dx);
+                MoveWindowByDx(hBtFindAll, &rcBtFindAll_0, dx);
+                MoveWindowByDx(hBtFindPrev, &rcBtFindPrev_0, dx);
+                MoveWindowByDx(hBtFindNext, &rcBtFindNext_0, dx);
+                ResizeWindowByDx(hCbFindText, &rcCbFindText_0, dx);
+                ResizeWindowByDx(hEdFindText, &rcEdFindText_0, dx);
 
-            RedrawWindowByDx(hEdFindText);
-            RedrawWindowByDx(hCbFindText);
-            RedrawWindowByDx(hBtFindNext);
-            RedrawWindowByDx(hBtFindPrev);
-            RedrawWindowByDx(hBtFindAll);
-            RedrawWindowByDx(hPbProgress);
-            RedrawWindowByDx(hChMatchCase);
-            RedrawWindowByDx(hChWholeWord);
-            RedrawWindowByDx(hChHighlightAll);
-            RedrawWindowByDx(hStInfo);
+                RedrawWindowByDx(hEdFindText);
+                RedrawWindowByDx(hCbFindText);
+                RedrawWindowByDx(hBtFindNext);
+                RedrawWindowByDx(hBtFindPrev);
+                RedrawWindowByDx(hBtFindAll);
+                RedrawWindowByDx(hPbProgress);
+                RedrawWindowByDx(hChMatchCase);
+                RedrawWindowByDx(hChWholeWord);
+                RedrawWindowByDx(hChHighlightAll);
+                RedrawWindowByDx(hStInfo);
 
-            if ( g_QSearchDlg.pDockData )
-            {
-                GetClientRect(hDlg, &g_QSearchDlg.pDockData->rcDragDrop);
-            }
-
-            if ( g_QSearchDlg.hFindEdit )
-            {
-                if ( g_Plugin.bOldWindows )
+                if ( g_QSearchDlg.pDockData )
                 {
-                    TOOLINFOA tiA;
-
-                    fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
-                    // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
-                    SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
+                    GetClientRect(hDlg, &g_QSearchDlg.pDockData->rcDragDrop);
                 }
-                else
-                {
-                    TOOLINFOW tiW;
 
-                    fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
-                    // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
-                    SendMessageW( hToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM) &tiW );
+                if ( g_QSearchDlg.hFindEdit )
+                {
+                    if ( g_Plugin.bOldWindows )
+                    {
+                        TOOLINFOA tiA;
+
+                        fillToolInfoA( &tiA, LPSTR_TEXTCALLBACKA, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                        // LPSTR_TEXTCALLBACKA means "send TTN_GETDISPINFOA to hEdit"
+                        SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
+                    }
+                    else
+                    {
+                        TOOLINFOW tiW;
+
+                        fillToolInfoW( &tiW, LPSTR_TEXTCALLBACKW, g_QSearchDlg.hFindEdit, IDC_ED_FINDTEXT );
+                        // LPSTR_TEXTCALLBACKW means "send TTN_GETDISPINFOW to hEdit"
+                        SendMessageW( hToolTip, TTM_NEWTOOLRECTW, 0, (LPARAM) &tiW );
+                    }
                 }
             }
-
             break;
         }
     }
