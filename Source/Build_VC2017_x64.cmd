@@ -1,7 +1,21 @@
-REM Visual Studio 2017 Community
+REM Visual Studio 2017 Community or Professional
 
-call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+set VC_ROOT=%ProgramFiles(x86)%\Microsoft Visual Studio\2017
 
+if exist "%VC_ROOT%\Professional\VC\Auxiliary\Build\vcvarsall.bat" goto UseVcProfessional
+if exist "%VC_ROOT%\Community\VC\Auxiliary\Build\vcvarsall.bat" goto UseVcCommunity
+
+goto ErrorNoVcVarsAll
+
+:UseVcProfessional
+call "%VC_ROOT%\Professional\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+goto Building
+
+:UseVcCommunity
+call "%VC_ROOT%\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+goto Building
+
+:Building
 cd "%~dp0."
 if not exist "..\Plugs64" mkdir "..\Plugs64"
 cd .\QSearch
@@ -23,3 +37,10 @@ if exist QSearchFindEx.obj del QSearchFindEx.obj
 if exist DialogSwitcher.obj del DialogSwitcher.obj
 if exist XMemStrFunc.obj del XMemStrFunc.obj
 @PAUSE
+goto End
+
+:ErrorNoVcVarsAll
+echo ERROR: Could not find "vcvarsall.bat"
+goto End
+
+:End
