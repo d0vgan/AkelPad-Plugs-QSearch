@@ -37,6 +37,7 @@ extern QSearchOpt      g_Options;
 extern wchar_t         g_szFunctionQSearchW[128];
 extern BOOL            g_bHighlightPlugin;
 extern BOOL            g_bLogPlugin;
+extern BOOL            g_bWordJustSelectedUpByFnd;
 
 
 // helpers
@@ -1526,6 +1527,8 @@ static void cutEditText(HWND hEdit, BOOL bCutAfterCaret)
 static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD dwOptFlags[])
 {
     EDITINFO  ei;
+
+    g_bWordJustSelectedUpByFnd = FALSE;
 
     ei.hWndEdit = NULL;
     SendMessage( g_Plugin.hMainWnd,

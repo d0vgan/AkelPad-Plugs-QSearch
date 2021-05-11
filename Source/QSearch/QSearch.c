@@ -353,6 +353,7 @@ wchar_t         g_szFunctionQSearchW[128] = { 0 };
 BOOL            g_bHighlightPlugin = FALSE;
 BOOL            g_bLogPlugin = FALSE;
 BOOL            g_bFrameActivated = FALSE;
+BOOL            g_bWordJustSelectedUpByFnd = FALSE;
 
 
 // funcs
@@ -537,6 +538,8 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
 {
     DWORD dwSelectWord;
 
+    g_bWordJustSelectedUpByFnd = FALSE;
+
     if ( uSelectMode & SELECT_MODE_F3 )
         dwSelectWord = g_Options.dwSelectByF3;
     else if ( uSelectMode & SELECT_MODE_FND )
@@ -654,7 +657,14 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
                 nWordSelected = doSelectCurrentWord(pd->hWndEdit, uSelectMode, NULL);
                 SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, (LPARAM) &nPickedUp );
                 if ( nPickedUp & QS_PSF_TEXTCHANGED )
+                {
                     SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                }
+                if ( uSelectMode == SELECT_MODE_FND && (nWordSelected & SCW_WORDSELECTED) )
+                {
+                    g_bWordJustSelectedUpByFnd = TRUE;
+                    g_QSearchDlg.bQSearching = TRUE;
+                }
             }
 
             if ( (nWordSelected == 0) ||
@@ -707,7 +717,14 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
             nWordSelected = doSelectCurrentWord(pd->hWndEdit, uSelectMode, NULL);
             SendMessage( g_QSearchDlg.hDlg, QSM_PICKUPSELTEXT, QS_PS_UPDATEHISTORY, (LPARAM) &nPickedUp );
             if ( nPickedUp & QS_PSF_TEXTCHANGED )
+            {
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+            }
+            if ( uSelectMode == SELECT_MODE_FND && (nWordSelected & SCW_WORDSELECTED) )
+            {
+                g_bWordJustSelectedUpByFnd = TRUE;
+                g_QSearchDlg.bQSearching = TRUE;
+            }
         }
 
         if ( (nWordSelected == 0) ||
@@ -1300,7 +1317,8 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             }
 
                             bFindPrev = (LOWORD(wParam) == IDM_EDIT_FINDNEXTUP) ? TRUE : FALSE;
-                            SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, bFindPrev, 0 );
+                            SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, bFindPrev, g_bWordJustSelectedUpByFnd ? QS_FF_NOSETSELFIRST : 0 );
+                            g_bWordJustSelectedUpByFnd = FALSE;
                             return 0;
                         }
                     }
