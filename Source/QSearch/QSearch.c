@@ -353,7 +353,7 @@ wchar_t         g_szFunctionQSearchW[128] = { 0 };
 BOOL            g_bHighlightPlugin = FALSE;
 BOOL            g_bLogPlugin = FALSE;
 BOOL            g_bFrameActivated = FALSE;
-BOOL            g_bWordJustSelectedUpByFnd = FALSE;
+BOOL            g_bWordJustSelectedByFnd = FALSE;
 
 
 // funcs
@@ -538,7 +538,7 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
 {
     DWORD dwSelectWord;
 
-    g_bWordJustSelectedUpByFnd = FALSE;
+    g_bWordJustSelectedByFnd = FALSE;
 
     if ( uSelectMode & SELECT_MODE_F3 )
         dwSelectWord = g_Options.dwSelectByF3;
@@ -662,7 +662,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
                 }
                 if ( uSelectMode == SELECT_MODE_FND && (nWordSelected & SCW_WORDSELECTED) )
                 {
-                    g_bWordJustSelectedUpByFnd = TRUE;
+                    g_bWordJustSelectedByFnd = TRUE;
                     g_QSearchDlg.bQSearching = TRUE;
                 }
             }
@@ -722,7 +722,7 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
             }
             if ( uSelectMode == SELECT_MODE_FND && (nWordSelected & SCW_WORDSELECTED) )
             {
-                g_bWordJustSelectedUpByFnd = TRUE;
+                g_bWordJustSelectedByFnd = TRUE;
                 g_QSearchDlg.bQSearching = TRUE;
             }
         }
@@ -1317,8 +1317,8 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             }
 
                             bFindPrev = (LOWORD(wParam) == IDM_EDIT_FINDNEXTUP) ? TRUE : FALSE;
-                            SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, bFindPrev, g_bWordJustSelectedUpByFnd ? QS_FF_NOSETSELFIRST : 0 );
-                            g_bWordJustSelectedUpByFnd = FALSE;
+                            SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, bFindPrev, g_bWordJustSelectedByFnd ? QS_FF_NOSETSELFIRST : 0 );
+                            g_bWordJustSelectedByFnd = FALSE;
                             return 0;
                         }
                     }

@@ -597,6 +597,10 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 --------
 История:
 --------
+v.7.7 (Май 2021)
+ * улучшено: продолжение поиска по F3 (при 'catch_main_f3' вкл.) сразу после
+   Ctrl+F3 (при 'select_by_f3' вкл.)
+
 v.7.6 (Май 2020)
  + добавлено: теперь панель QSearch поддерживает изменение размеров
  + добавлено: 'edit_minwidth' и 'edit_maxwidth'
@@ -907,7 +911,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - May 2020, Vitaliy Dovgan aka DV
+(C) Sep 2007 - May 2021, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Этот плагин является бесплатным (бесплатным как для частного, так и для

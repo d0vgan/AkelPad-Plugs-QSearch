@@ -37,7 +37,7 @@ extern QSearchOpt      g_Options;
 extern wchar_t         g_szFunctionQSearchW[128];
 extern BOOL            g_bHighlightPlugin;
 extern BOOL            g_bLogPlugin;
-extern BOOL            g_bWordJustSelectedUpByFnd;
+extern BOOL            g_bWordJustSelectedByFnd;
 
 
 // helpers
@@ -1528,7 +1528,7 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
 {
     EDITINFO  ei;
 
-    g_bWordJustSelectedUpByFnd = FALSE;
+    g_bWordJustSelectedByFnd = FALSE;
 
     ei.hWndEdit = NULL;
     SendMessage( g_Plugin.hMainWnd,
