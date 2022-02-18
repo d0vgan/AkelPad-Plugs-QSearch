@@ -3026,6 +3026,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 // Originally we get here when Enter is pressed. Why? Ask M$ ;)
                 unsigned int uSearch;
+                BOOL bPrevNotFound;
 
                 if ( id == IDOK )
                 {
@@ -3057,8 +3058,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     qsPickUpSelection( g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE );
                 }*/
                 getEditFindText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW );
+                bPrevNotFound = qs_bEditNotFound;
                 qsearchDoSearchText( g_QSearchDlg.hFindEdit, uSearch, g_Options.dwFlags, NULL );
-                if ( uSearch & QSEARCH_FIRST )
+                if ( (uSearch & QSEARCH_FIRST) || (bPrevNotFound && !qs_bEditNotFound) )
                 {
                     qsearchDoTryHighlightAll( hDlg, g_Options.dwFlags, QHC_CHECKBOX_CHECKED );
                 }
@@ -3730,10 +3732,17 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             else
             {
+                BOOL bPrevNotFound;
+
+                bPrevNotFound = qs_bEditNotFound;
                 dwSearch |= QSEARCH_NEXT;
                 if ( wParam )
                     dwSearch |= QSEARCH_FINDUP;
                 qsearchDoSearchText( g_QSearchDlg.hFindEdit, dwSearch, g_Options.dwFlags, pqsfa );
+                if ( bPrevNotFound && !qs_bEditNotFound )
+                {
+                    qsearchDoTryHighlightAll( hDlg, g_Options.dwFlags, QHC_CHECKBOX_CHECKED );
+                }
             }
             return 1;
         }
@@ -4853,9 +4862,23 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
     else
     {
         // searching for the same text again
-        if ( qs_bEditNotFound )
-            if ( dwOptFlags[OPTF_SRCH_STOP_EOF] != STOP_EOF_WITHOUT_MSG )
+        if ( qs_bEditNotFound && ((dwParams & QSEARCH_FINDALLFILES) == 0) )
+        {
+            if ( dwOptFlags[OPTF_SRCH_STOP_EOF] != STOP_EOF_WITHOUT_MSG || qs_bEditNotFound != STOP_EOF_WITHOUT_MSG )
                 return;
+
+            if ( !pFindAll )
+            {
+                int srchEOF;
+                if ( (dwParams & QSEARCH_FINDUP) || (GetKeyState(VK_QS_FINDUP) & 0x80) )
+                    srchEOF = QSEARCH_EOF_UP;
+                else
+                    srchEOF = QSEARCH_EOF_DOWN;
+
+                if ( qs_nEditEOF == srchEOF )
+                    return;
+            }
+        }
     }
 
     if ( g_Plugin.bOldWindows )
@@ -5074,7 +5097,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 }
                 else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
                 {
-                    bNotFound = TRUE;
+                    bNotFound = STOP_EOF_WITHOUT_MSG;
                     bEOF = TRUE;
                     qs_nEditEOF = srchEOF;
                 }
@@ -5237,7 +5260,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 }
                 else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
                 {
-                    bNotFound = TRUE;
+                    bNotFound = STOP_EOF_WITHOUT_MSG;
                     bEOF = TRUE;
                     qs_nEditEOF = srchEOF;
                 }

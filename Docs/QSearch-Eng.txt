@@ -572,6 +572,11 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.7.8 (February 2022)
+ * improved: now "Find all in all files" does not depend on the "not found"
+   state (as this state applies only to the current document)
+ * improved: the behaviour of srch_stop_eof = 11
+
 v.7.7 (May 2021)
  * improved: find next by F3 (when 'catch_main_f3' is on) right after Ctrl+F3
    (when 'select_by_f3' is on)
@@ -882,7 +887,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - May 2021, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Feb 2022, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
