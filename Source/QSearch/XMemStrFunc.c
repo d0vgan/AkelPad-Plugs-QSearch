@@ -171,6 +171,22 @@ int x_wstr_findch(const WCHAR* str, WCHAR ch, int nOffset)
     return -1; // not found
 }
 
+int x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen)
+{
+    const WCHAR* p;
+    WCHAR cc;
+
+    p = str + nLen;
+    while ( p > str )
+    {
+        cc = *(--p);
+        if ( cc == ch )
+            return (int) (p - str);
+    }
+
+    return -1; // not found
+}
+
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext)
 {
     INT_PTR nNumber = 0;

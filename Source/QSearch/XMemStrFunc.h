@@ -25,6 +25,7 @@ void  x_mem_free(void* ptr);
 BOOL x_wstr_startswith(const WCHAR* str, const WCHAR* substr);
 BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSubstrLen);
 int  x_wstr_findch(const WCHAR* str, WCHAR ch, int nOffset);
+int  x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen);
 
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext);
 int xitoaW(INT_PTR nNumber, wchar_t *wszStr);
