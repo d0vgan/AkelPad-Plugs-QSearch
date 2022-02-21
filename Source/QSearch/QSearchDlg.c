@@ -352,6 +352,7 @@ typedef struct sFindAllContext {
     unsigned int nFilesWithOccurrences;
     // output
     int nLastLine; // last line in the results
+    int nLastOccurrenceLine; // last line with the occurrence
     tDynamicBuffer ResultsBuf;
     tDynamicBuffer OccurrencesBuf;
 } tFindAllContext;
@@ -1202,8 +1203,8 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     nLinesBeforeAfter[0] = pfrPolicy->nBefore - nBefore;
                 }
 
-                nLines = 1 + pFindContext->nLastLine - tr.cr.ciMin.nLine;
-                if ( nLines > 0 || (nLines == 0 && pFindContext->nLastLine != -1) )
+                nLines = pFindContext->nLastLine - tr.cr.ciMin.nLine;
+                if ( nLines > 0 || ((nLines == 0 || nLines == -1) && pFindContext->nLastLine != -1) )
                 {
                     if ( pfrPolicy->nMode == QSFRM_LINE_CR )
                     {
@@ -1211,27 +1212,24 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                             pFindContext->OccurrencesBuf.nBytesStored -= 1*sizeof(wchar_t); // exclude the trailing '\r'
                     }
                 }
-                if ( nLines > 0 )
+                if ( nLines >= 0 )
                 {
-                    int nLn;
                     int nPos;
 
-                    for ( nLn = nLines; nLn > 0; --nLn )
+                    if ( pfrPolicy->nAfter > 0 )
                     {
-                        nPos = x_wstr_rfindch( (const wchar_t *) pFindContext->OccurrencesBuf.ptr, L'\r', pFindContext->OccurrencesBuf.nBytesStored/sizeof(wchar_t) );
-                        if ( nPos == -1 )
-                        {
-                            pFindContext->OccurrencesBuf.nBytesStored = 0;
-                            break;
-                        }
-
-                        pFindContext->OccurrencesBuf.nBytesStored = nPos*sizeof(wchar_t);
+                        if ( pFindContext->nLastOccurrenceLine < pcrFound->ciMin.nLine )
+                            ++nLines;
                     }
 
-                    if ( nLn != nLines && pFindContext->OccurrencesBuf.nBytesStored != 0 )
+                    nPos = (int) (pFindContext->OccurrencesBuf.nBytesStored/sizeof(wchar_t)) - 1; // position of the trailing '\r'
+                    for ( ; nLines > 0 && nPos >= 0; --nLines )
                     {
-                        // restoring the last removed '\r'
-                        tDynamicBuffer_Append( &pFindContext->OccurrencesBuf, L"\r", 1*sizeof(wchar_t) );
+                        nPos = x_wstr_rfindch( (const wchar_t *) pFindContext->OccurrencesBuf.ptr, L'\r', nPos ); // searches backwards starting from (nPos - 1)
+                        if ( nPos != -1 ) // position of the trailing '\r'
+                            pFindContext->OccurrencesBuf.nBytesStored = (nPos + 1)*sizeof(wchar_t); // preserving the trailing '\r'
+                        else
+                            pFindContext->OccurrencesBuf.nBytesStored = 0;
                     }
                 }
 
@@ -1254,6 +1252,8 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
             }
         }
     }
+
+    pFindContext->nLastOccurrenceLine = pcrFound->ciMin.nLine;
 
     tr.bColumnSel = FALSE;
     tr.pBuffer = NULL;
@@ -5456,6 +5456,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             FindContext.nTotalFiles = 0;
             FindContext.nFilesWithOccurrences = 0;
             FindContext.nLastLine = -1;
+            FindContext.nLastOccurrenceLine = -1;
             tDynamicBuffer_Init( &FindContext.ResultsBuf );
             tDynamicBuffer_Init( &FindContext.OccurrencesBuf );
             tDynamicBuffer_Allocate( &FindContext.ResultsBuf, 128*1024*sizeof(wchar_t) );
