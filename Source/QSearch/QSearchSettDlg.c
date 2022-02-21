@@ -7,6 +7,12 @@
 extern PluginState  g_Plugin;
 extern QSearchOpt   g_Options;
 
+// tGetFindResultPolicy.nMode
+#define QSFRM_LINE        1 // number of lines
+#define QSFRM_LINE_CR     2 // number of lines + trailing '\r'
+#define QSFRM_CHARINLINE  3 // number of chars within the current line
+#define QSFRM_CHAR        4 // number of chars
+
 
 //////////////// Helpers... ////////////////
 
@@ -33,7 +39,7 @@ static BOOL CheckBox_IsChecked(HWND hDlg, UINT idCheckBox)
     HWND hCheckBox = GetDlgItem(hDlg, idCheckBox);
     if ( hCheckBox )
     {
-        UINT uState = (UINT) SendMessage(hCheckBox, BM_GETCHECK, 0, 0);
+        UINT uState = (UINT) SendMessageW(hCheckBox, BM_GETCHECK, 0, 0);
         if ( uState == BST_CHECKED || uState == BST_INDETERMINATE )
             return TRUE;
     }
@@ -45,7 +51,7 @@ static BOOL CheckBox_SetCheck(HWND hDlg, UINT idCheckBox, BOOL bChecked)
     HWND hCheckBox = GetDlgItem(hDlg, idCheckBox);
     if ( hCheckBox )
     {
-        SendMessage( hCheckBox, BM_SETCHECK, (bChecked ? BST_CHECKED : BST_UNCHECKED), 0 );
+        SendMessageW( hCheckBox, BM_SETCHECK, (bChecked ? BST_CHECKED : BST_UNCHECKED), 0 );
         return TRUE;
     }
     return FALSE;
@@ -70,6 +76,7 @@ static const tCheckBoxOptFlagItem arrCheckBoxOptions[] = {
 
 static void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg);
 static BOOL FndAllSettDlg_OnOK(HWND hDlg);
+static void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg);
 static void FndAllSettDlg_OnInitDialog(HWND hDlg);
 static void FndAllSettDlg_EndDialog(HWND hDlg, INT_PTR nResult);
 
@@ -111,6 +118,15 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 break;
             }
 
+            case IDC_CB_OUTPUT_DEST:
+            {
+                if ( HIWORD(wParam) == CBN_SELCHANGE )
+                {
+                    FndAllSettDlg_OnCbOutputDestChanged(hDlg);
+                }
+                break;
+            }
+
             default:
                 break;
         }
@@ -145,6 +161,56 @@ static DWORD getFindAllResultFlags(HWND hDlg)
         dwFindAllResultFlags |= QS_FINDALL_RSLT_WHOLELINE;
 
     return dwFindAllResultFlags;
+}
+
+static void applyOutputOptions(HWND hDlg)
+{
+    HWND hCbOutputDest;
+    HWND hCbMode;
+    HWND hEdBefore;
+    HWND hEdAfter;
+    int nOutputDest;
+    int nMode;
+    int nBefore;
+    int nAfter;
+    wchar_t szNum[8];
+
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
+    nOutputDest = 1 + (int) SendMessageW(hCbOutputDest, CB_GETCURSEL, 0, 0);
+
+    if ( nOutputDest >= QS_FINDALL_COUNTONLY && nOutputDest <= QS_FINDALL_FILEOUTPUT_SNGL )
+    {
+        g_Options.dwFindAllMode = (g_Options.dwFindAllMode & 0xFF00) + nOutputDest;
+    }
+
+    if ( nOutputDest >= QS_FINDALL_LOGOUTPUT && nOutputDest <= QS_FINDALL_FILEOUTPUT_SNGL )
+    {
+        hCbMode = GetDlgItem(hDlg, IDC_CB_MODE);
+        nMode = 1 + (int) SendMessageW(hCbMode, CB_GETCURSEL, 0, 0);
+
+        szNum[0] = 0;
+        hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
+        GetWindowTextW(hEdBefore, szNum, 7);
+        nBefore = xatoiW(szNum, NULL);
+
+        szNum[0] = 0;
+        hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
+        GetWindowTextW(hEdAfter, szNum, 7);
+        nAfter = xatoiW(szNum, NULL);
+
+        if ( nOutputDest == QS_FINDALL_LOGOUTPUT )
+        {
+            g_Options.LogOutputFRP.nMode = nMode;
+            g_Options.LogOutputFRP.nBefore = nBefore;
+            g_Options.LogOutputFRP.nAfter = nAfter;
+        }
+        else
+        {
+            g_Options.FileOutputFRP.nMode = nMode;
+            g_Options.FileOutputFRP.nBefore = nBefore;
+            g_Options.FileOutputFRP.nAfter = nAfter;
+        }
+    }
 }
 
 void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
@@ -226,12 +292,110 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
 BOOL FndAllSettDlg_OnOK(HWND hDlg)
 {
     g_Options.dwFindAllResult = getFindAllResultFlags(hDlg);
+    applyOutputOptions(hDlg);
 
     return TRUE;
 }
 
+void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg)
+{
+    HWND hCbOutputDest;
+    HWND hStMode;
+    HWND hCbMode;
+    HWND hStBefore;
+    HWND hEdBefore;
+    HWND hStAfter;
+    HWND hEdAfter;
+    int nOutputDest;
+    int nMode;
+    int nBefore;
+    int nAfter;
+    wchar_t szNum[8];
+
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
+    hStMode = GetDlgItem(hDlg, IDC_ST_MODE);
+    hCbMode = GetDlgItem(hDlg, IDC_CB_MODE);
+    hStBefore = GetDlgItem(hDlg, IDC_ST_BEFORE);
+    hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
+    hStAfter = GetDlgItem(hDlg, IDC_ST_AFTER);
+    hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
+
+    nOutputDest = 1 + (int) SendMessageW(hCbOutputDest, CB_GETCURSEL, 0, 0);
+    if ( nOutputDest == QS_FINDALL_LOGOUTPUT )
+    {
+        nMode = g_Options.LogOutputFRP.nMode;
+        nBefore = g_Options.LogOutputFRP.nBefore;
+        nAfter = g_Options.LogOutputFRP.nAfter;
+    }
+    else if ( nOutputDest == QS_FINDALL_FILEOUTPUT_MULT || nOutputDest == QS_FINDALL_FILEOUTPUT_SNGL )
+    {
+        nMode = g_Options.FileOutputFRP.nMode;
+        nBefore = g_Options.FileOutputFRP.nBefore;
+        nAfter = g_Options.FileOutputFRP.nAfter;
+    }
+    else // Count Only or unknown
+    {
+        nMode = -1;
+        nBefore = -1;
+        nAfter = -1;
+    }
+
+    if ( nMode >= QSFRM_LINE && nMode <= QSFRM_CHAR )
+    {
+        EnableWindow(hStMode, TRUE);
+        EnableWindow(hCbMode, TRUE);
+        EnableWindow(hStBefore, TRUE);
+        EnableWindow(hStAfter, TRUE);
+        EnableWindow(hEdBefore, TRUE);
+        EnableWindow(hEdAfter, TRUE);
+
+        SendMessageW( hCbMode, CB_RESETCONTENT, 0, 0 );
+        SendMessageW( hCbMode, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_CTX_LINES) );
+        SendMessageW( hCbMode, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_CTX_LINESCR) );
+        SendMessageW( hCbMode, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_CTX_CHARSINLINE) );
+        SendMessageW( hCbMode, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_CTX_CHARS) );
+
+        SendMessageW(hCbMode, CB_SETCURSEL, nMode - 1, 0);
+
+        if ( nBefore >= 0 && nBefore <= 999 )
+        {
+            wsprintfW(szNum, L"%d", nBefore);
+            SetWindowTextW(hEdBefore, szNum);
+        }
+        else
+        {
+            SetWindowTextW(hEdBefore, L"0");
+        }
+        
+        if ( nAfter >= 0 && nAfter <= 999 )
+        {
+            wsprintfW(szNum, L"%d", nAfter);
+            SetWindowTextW(hEdAfter, szNum);
+        }
+        else
+        {
+            SetWindowTextW(hEdAfter, L"0");
+        }
+    }
+    else
+    {
+        EnableWindow(hStMode, FALSE);
+        EnableWindow(hCbMode, FALSE);
+        EnableWindow(hStBefore, FALSE);
+        EnableWindow(hStAfter, FALSE);
+        EnableWindow(hEdBefore, FALSE);
+        EnableWindow(hEdAfter, FALSE);
+        SendMessageW(hCbMode, CB_RESETCONTENT, 0, 0);
+        SetWindowTextW(hEdBefore, L"");
+        SetWindowTextW(hEdAfter, L"");
+    }
+}
+
 void FndAllSettDlg_OnInitDialog(HWND hDlg)
 {
+    HWND hCbOutputDest;
+    HWND hEdBefore;
+    HWND hEdAfter;
     unsigned int i;
     BOOL bChecked;
 
@@ -254,6 +418,25 @@ void FndAllSettDlg_OnInitDialog(HWND hDlg)
         CheckBox_SetCheck(hDlg, IDC_RB_FA_WHOLELINE, TRUE);
 
     FndAllSettDlg_OnCheckBoxClicked(hDlg);
+
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
+    SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_COUNTONLY) );
+    SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_LOG) );
+    SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_FILEN) );
+    SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_FILE1) );
+
+    hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
+    SendMessageW(hEdBefore, EM_SETLIMITTEXT, 3, 0);
+
+    hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
+    SendMessageW(hEdAfter, EM_SETLIMITTEXT, 3, 0);
+
+    i = g_Options.dwFindAllMode & 0x0F;
+    if ( i >= QS_FINDALL_COUNTONLY && i <= QS_FINDALL_FILEOUTPUT_SNGL )
+    {
+        SendMessageW(hCbOutputDest, CB_SETCURSEL, i - 1, 0);
+    }
+    FndAllSettDlg_OnCbOutputDestChanged(hDlg);
 }
 
 void FndAllSettDlg_EndDialog(HWND hDlg, INT_PTR nResult)

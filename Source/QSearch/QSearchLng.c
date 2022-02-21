@@ -784,6 +784,41 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
         L"\x041F\x0440\x0438\x043A\x043B\x0430\x0434:"
     };
 
+    static const wchar_t* szFindAllOutputModeW[INLNG_COUNT] = {
+        /* eng */
+        L"Search Results",
+        /* rus */
+        L"\x0420\x0435\x0437\x0443\x043B\x044C\x0442\x0430\x0442\x044B\x0020\x043F\x043E\x0438\x0441\x043A\x0430",
+        /* ukr */
+        L"\x0420\x0435\x0437\x0443\x043B\x044C\x0442\x0430\x0442\x0438\x0020\x043F\x043E\x0448\x0443\x043A\x0443"
+    };
+
+    static const wchar_t* szFindAllOutputContextW[INLNG_COUNT] = {
+        /* eng */
+        L"Context:",
+        /* rus */
+        L"\x041A\x043E\x043D\x0442\x0435\x043A\x0441\x0442:",
+        /* ukr */
+        L"\x041A\x043E\x043D\x0442\x0435\x043A\x0441\x0442:"
+    };
+
+    static const wchar_t* szFindAllContextBeforeW[INLNG_COUNT] = {
+        /* eng */
+        L"Before:",
+        /* rus */
+        L"\x041F\x0435\x0440\x0435\x0434:",
+        /* ukr */
+        L"\x041F\x0435\x0440\x0435\x0434:"
+    };
+
+    static const wchar_t* szFindAllContextAfterW[INLNG_COUNT] = {
+        /* eng */
+        L"After:",
+        /* rus */
+        L"\x041F\x043E\x0441\x043B\x0435:",
+        /* ukr */
+        L"\x041F\x0456\x0441\x043B\x044F:"
+    };
     unsigned int uInternalLng;
 
     uInternalLng = getInternalLng();
@@ -797,6 +832,10 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
     SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FILTERMODE),  szFindAllOutputFilterModeW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_SYNTAXTHEME), szFindAllOutputSyntaxThemeW[uInternalLng] );
     SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE),     szFindAllOutputExampleW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_GB_OUTPUT),         szFindAllOutputModeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_MODE),           szFindAllOutputContextW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_BEFORE),         szFindAllContextBeforeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_AFTER),          szFindAllContextAfterW[uInternalLng] );
 }
 
 void qsearchSetPopupMenuLang(HMENU hPopupMenu)
@@ -1041,6 +1080,110 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
                 L"\x0423\x0441\x044C\x043E\x0433\x043E\x0020\x0437\x043D\x0430\x0439\x0434\x0435\x043D\x043E: %u \x0443 %d \x0444\x0430\x0439\x043B\x0430\x0445."
             };
             return szFindAllOccurrencesFoundInFilesW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_CTX_LINES:
+        {
+            static const wchar_t* szFindAllOutputCtxLinesW[INLNG_COUNT] = {
+                /* eng */
+                L"Lines",
+                /* rus */
+                L"\x0421\x0442\x0440\x043E\x043A\x0438",
+                /* ukr */
+                L"\x0420\x044F\x0434\x043A\x0438"
+            };
+            return szFindAllOutputCtxLinesW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_CTX_LINESCR:
+        {
+            static const wchar_t* szFindAllOutputCtxLinesCRW[INLNG_COUNT] = {
+                /* eng */
+                L"Lines+CR",
+                /* rus */
+                L"\x0421\x0442\x0440\x043E\x043A\x0438+CR",
+                /* ukr */
+                L"\x0420\x044F\x0434\x043A\x0438+CR"
+            };
+            return szFindAllOutputCtxLinesCRW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_CTX_CHARSINLINE:
+        {
+            static const wchar_t* szFindAllOutputCtxCharsInLineW[INLNG_COUNT] = {
+                /* eng */
+                L"Chars in Line",
+                /* rus */
+                L"\x0421\x0438\x043C\x0432. \x0432\x0020\x0441\x0442\x0440\x043E\x043A\x0435",
+                /* ukr */
+                L"\x0421\x0438\x043C\x0432. \x0432\x0020\x0440\x044F\x0434\x043A\x0443"
+            };
+            return szFindAllOutputCtxCharsInLineW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_CTX_CHARS:
+        {
+            static const wchar_t* szFindAllOutputCtxCharsW[INLNG_COUNT] = {
+                /* eng */
+                L"Chars",
+                /* rus */
+                L"\x0421\x0438\x043C\x0432\x043E\x043B\x044B",
+                /* ukr */
+                L"\x0421\x0438\x043C\x0432\x043E\x043B\x0438"
+            };
+            return szFindAllOutputCtxCharsW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_DST_COUNTONLY:
+        {
+            static const wchar_t* szFindAllOutputDstCountOnlyW[INLNG_COUNT] = {
+                /* eng */
+                L"Count Only",
+                /* rus */
+                L"\x0422\x043E\x043B\x044C\x043A\x043E\x0020\x043F\x043E\x0434\x0441\x0447\x0451\x0442",
+                /* ukr */
+                L"\x0422\x0456\x043B\x044C\x043A\x0438\x0020\x043F\x0456\x0434\x0440\x0430\x0445\x0443\x043D\x043E\x043A"
+            };
+            return szFindAllOutputDstCountOnlyW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_DST_LOG:
+        {
+            static const wchar_t* szFindAllOutputDstLogW[INLNG_COUNT] = {
+                /* eng */
+                L"Log Output",
+                /* rus */
+                L"\x0412\x044B\x0432\x043E\x0434\x0020\x0432 Log::Output",
+                /* ukr */
+                L"\x0412\x0438\x0432\x0456\x0434\x0020\x0443 Log::Output"
+            };
+            return szFindAllOutputDstLogW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_DST_FILEN:
+        {
+            static const wchar_t* szFindAllOutputDstFileNW[INLNG_COUNT] = {
+                /* eng */
+                L"File Output: N tabs",
+                /* rus */
+                L"\x0412\x0020\x0444\x0430\x0439\x043B: N \x0432\x043A\x043B\x0430\x0434\x043E\x043A",
+                /* ukr */
+                L"\x0423\x0020\x0444\x0430\x0439\x043B: N \x0432\x043A\x043B\x0430\x0434\x043E\x043A"
+            };
+            return szFindAllOutputDstFileNW[uInternalLng];
+        }
+
+        case QS_STRID_FINDALL_OUTPUT_DST_FILE1:
+        {
+            static const wchar_t* szFindAllOutputDstFile1W[INLNG_COUNT] = {
+                /* eng */
+                L"File Output: 1 tab",
+                /* rus */
+                L"\x0412\x0020\x0444\x0430\x0439\x043B: 1 \x0432\x043A\x043B\x0430\x0434\x043A\x0430",
+                /* ukr */
+                L"\x0423\x0020\x0444\x0430\x0439\x043B: 1 \x0432\x043A\x043B\x0430\x0434\x043A\x0430"
+            };
+            return szFindAllOutputDstFile1W[uInternalLng];
         }
 
     };

@@ -40,6 +40,14 @@
 #define  IDC_CH_FA_SYNTAXTHEME      3021
 #define  IDC_ST_FA_EXAMPLE          3031
 #define  IDC_ST_FA_EXAMPLE_DATA     3032
+#define  IDC_GB_OUTPUT              3041
+#define  IDC_CB_OUTPUT_DEST         3042
+#define  IDC_ST_MODE                3043
+#define  IDC_CB_MODE                3044
+#define  IDC_ST_BEFORE              3045
+#define  IDC_ED_BEFORE              3046
+#define  IDC_ST_AFTER               3047
+#define  IDC_ED_AFTER               3048
 
 #define  IDM_START                  10001
 #define  IDM_SRCHONTHEFLYMODE       (IDM_START + OPTF_SRCH_ONTHEFLY_MODE)
