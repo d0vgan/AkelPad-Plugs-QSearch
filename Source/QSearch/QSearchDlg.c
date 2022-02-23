@@ -351,8 +351,8 @@ typedef struct sFindAllContext {
     unsigned int nTotalFiles;
     unsigned int nFilesWithOccurrences;
     // output
-    int nLastLine; // last line in the results
-    int nLastOccurrenceLine; // last line with the occurrence
+    int nLastLine; // last line in the results (in current file)
+    int nLastOccurrenceLine; // last line with the occurrence (in current file)
     tDynamicBuffer ResultsBuf;
     tDynamicBuffer OccurrencesBuf;
 } tFindAllContext;
@@ -1112,6 +1112,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     AETEXTRANGEW tr;
     HWND         hWndEdit;
     UINT_PTR     nBytesToAllocate;
+    BOOL         bAddLineCR;
     int          nLinesBeforeAfter[2];
 
     if ( !pfrPolicy->pfnStoreResultCallback )
@@ -1123,6 +1124,13 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
     nLinesBeforeAfter[0] = 0;
     nLinesBeforeAfter[1] = 0;
+
+    bAddLineCR = FALSE;
+    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+    {
+        if ( !(pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) || (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERCONTEXT) )
+            bAddLineCR = TRUE;
+    }
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
     {
@@ -1146,6 +1154,19 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                 io.nOffset = pfrPolicy->nAfter;
                 io.nNewLine = AELB_R;
                 SendMessage( hWndEdit, AEM_INDEXOFFSET, 0, (LPARAM) &io );
+            }
+            if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) && !(pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERCONTEXT) )
+            {
+                if ( tr.cr.ciMin.nLine < pcrFound->ciMin.nLine )
+                {
+                    x_mem_cpy( &tr.cr.ciMin, &pcrFound->ciMin, sizeof(AECHARINDEX) );
+                    AEC_WrapLineBegin(&tr.cr.ciMin);
+                }
+                if ( tr.cr.ciMax.nLine > pcrFound->ciMax.nLine )
+                {
+                    x_mem_cpy( &tr.cr.ciMax, &pcrFound->ciMax, sizeof(AECHARINDEX) );
+                    AEC_WrapLineEnd(&tr.cr.ciMax);
+                }
             }
         }
         else if ( pfrPolicy->nMode == QSFRM_CHARINLINE )
@@ -1176,7 +1197,8 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
         }
         else // QSFRM_LINE or QSFRM_LINE_CR
         {
-            if ( pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0 )
+            if ( (pfrPolicy->nBefore == 0 && pfrPolicy->nAfter == 0) ||
+                 ((pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) && !(pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERCONTEXT)) )
             {
                 AEC_WrapLineBegin(&tr.cr.ciMin);
                 AEC_WrapLineEnd(&tr.cr.ciMax);
@@ -1206,7 +1228,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                 nLines = pFindContext->nLastLine - tr.cr.ciMin.nLine;
                 if ( nLines > 0 || ((nLines == 0 || nLines == -1) && pFindContext->nLastLine != -1) )
                 {
-                    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+                    if ( bAddLineCR )
                     {
                         if ( pFindContext->OccurrencesBuf.nBytesStored != 0 )
                             pFindContext->OccurrencesBuf.nBytesStored -= 1*sizeof(wchar_t); // exclude the trailing '\r'
@@ -1265,7 +1287,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
         return; // no text to retrieve
 
     nBytesToAllocate = sizeof(wchar_t) * tr.dwBufferMax;
-    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+    if ( bAddLineCR )
         nBytesToAllocate += 1*sizeof(wchar_t); // for the trailing '\r'
 
     if ( !tDynamicBuffer_Allocate(pTempBuf, nBytesToAllocate) )
@@ -1275,7 +1297,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     tr.pBuffer = (wchar_t *) pTempBuf->ptr;
     tr.pBuffer[0] = 0;
     pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
-    if ( pfrPolicy->nMode == QSFRM_LINE_CR )
+    if ( bAddLineCR )
     {
         tr.pBuffer += pTempBuf->nBytesStored / sizeof(wchar_t);
         *tr.pBuffer = L'\r'; // the trailing '\r'
@@ -5538,6 +5560,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
 
                 FindContext.nOccurrences = 0;
+                FindContext.nLastLine = -1;
+                FindContext.nLastOccurrenceLine = -1;
 
                 pFindAll->ShowFindResults.pfnInit(&FindContext, &pFindAll->tempBuf);
 

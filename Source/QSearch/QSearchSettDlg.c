@@ -65,18 +65,21 @@ typedef struct sCheckBoxOptFlagItem {
 } tCheckBoxOptFlagItem;
 
 static const tCheckBoxOptFlagItem arrCheckBoxOptions[] = {
-    { IDC_CH_FA_HEADER,      QS_FINDALL_RSLT_SEARCHING  },
-    { IDC_CH_FA_POSITION,    QS_FINDALL_RSLT_POS        },
-    { IDC_CH_FA_LENGTH,      QS_FINDALL_RSLT_LEN        },
-    { IDC_CH_FA_FOOTER,      QS_FINDALL_RSLT_OCCFOUND   },
-    { IDC_CH_FA_FILTERMODE,  QS_FINDALL_RSLT_FILTERMODE },
-    { IDC_CH_FA_SYNTAXTHEME, QS_FINDALL_RSLT_CODERALIAS },
-    { 0,                     0 } // trailing "empty" item
+    { IDC_CH_FA_HEADER,        QS_FINDALL_RSLT_SEARCHING     },
+    { IDC_CH_FA_POSITION,      QS_FINDALL_RSLT_POS           },
+    { IDC_CH_FA_LENGTH,        QS_FINDALL_RSLT_LEN           },
+    { IDC_CH_FA_FOOTER,        QS_FINDALL_RSLT_OCCFOUND      },
+    { IDC_CH_FA_FILTERMODE,    QS_FINDALL_RSLT_FILTERMODE    },
+    { IDC_CH_FA_FILTERCONTEXT, QS_FINDALL_RSLT_FILTERCONTEXT },
+    { IDC_CH_FA_SYNTAXTHEME,   QS_FINDALL_RSLT_CODERALIAS    },
+    { 0,                       0 } // trailing "empty" item
 };
 
 static void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg);
 static BOOL FndAllSettDlg_OnOK(HWND hDlg);
 static void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg);
+static void FndAllSettDlg_OnCbModeChanged(HWND hDlg);
+static void FndAllSettDlg_OnEdModeChanged(HWND hDlg);
 static void FndAllSettDlg_OnInitDialog(HWND hDlg);
 static void FndAllSettDlg_EndDialog(HWND hDlg, INT_PTR nResult);
 
@@ -110,6 +113,7 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             case IDC_RB_FA_WHOLELINE:
             case IDC_RB_FA_MATCHONLY:
             case IDC_CH_FA_FILTERMODE:
+            case IDC_CH_FA_FILTERCONTEXT:
             {
                 if ( HIWORD(wParam) == BN_CLICKED )
                 {
@@ -118,11 +122,30 @@ INT_PTR CALLBACK QSFndAllSettDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
                 break;
             }
 
-            case IDC_CB_OUTPUT_DEST:
+            case IDC_CB_FA_OUTPUT_DEST:
             {
                 if ( HIWORD(wParam) == CBN_SELCHANGE )
                 {
                     FndAllSettDlg_OnCbOutputDestChanged(hDlg);
+                }
+                break;
+            }
+
+            case IDC_CB_FA_MODE:
+            {
+                if ( HIWORD(wParam) == CBN_SELCHANGE )
+                {
+                    FndAllSettDlg_OnCbModeChanged(hDlg);
+                }
+                break;
+            }
+
+            case IDC_ED_FA_BEFORE:
+            case IDC_ED_FA_AFTER:
+            {
+                if ( HIWORD(wParam) == EN_CHANGE )
+                {
+                    FndAllSettDlg_OnEdModeChanged(hDlg);
                 }
                 break;
             }
@@ -163,19 +186,36 @@ static DWORD getFindAllResultFlags(HWND hDlg)
     return dwFindAllResultFlags;
 }
 
-static void applyOutputOptions(HWND hDlg)
+static int getFindAllOutputMode(HWND hDlg, int* pnBefore, int* pnAfter)
 {
-    HWND hCbOutputDest;
     HWND hCbMode;
     HWND hEdBefore;
     HWND hEdAfter;
-    int nOutputDest;
     int nMode;
-    int nBefore;
-    int nAfter;
     wchar_t szNum[8];
 
-    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
+    hCbMode = GetDlgItem(hDlg, IDC_CB_FA_MODE);
+    nMode = 1 + (int) SendMessageW(hCbMode, CB_GETCURSEL, 0, 0);
+
+    szNum[0] = 0;
+    hEdBefore = GetDlgItem(hDlg, IDC_ED_FA_BEFORE);
+    GetWindowTextW(hEdBefore, szNum, 7);
+    *pnBefore = xatoiW(szNum, NULL);
+
+    szNum[0] = 0;
+    hEdAfter = GetDlgItem(hDlg, IDC_ED_FA_AFTER);
+    GetWindowTextW(hEdAfter, szNum, 7);
+    *pnAfter = xatoiW(szNum, NULL);
+
+    return nMode;
+}
+
+static void applyOutputOptions(HWND hDlg)
+{
+    HWND hCbOutputDest;
+    int nOutputDest;
+
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_FA_OUTPUT_DEST);
     nOutputDest = 1 + (int) SendMessageW(hCbOutputDest, CB_GETCURSEL, 0, 0);
 
     if ( nOutputDest >= QS_FINDALL_COUNTONLY && nOutputDest <= QS_FINDALL_FILEOUTPUT_SNGL )
@@ -185,18 +225,11 @@ static void applyOutputOptions(HWND hDlg)
 
     if ( nOutputDest >= QS_FINDALL_LOGOUTPUT && nOutputDest <= QS_FINDALL_FILEOUTPUT_SNGL )
     {
-        hCbMode = GetDlgItem(hDlg, IDC_CB_MODE);
-        nMode = 1 + (int) SendMessageW(hCbMode, CB_GETCURSEL, 0, 0);
+        int nMode;
+        int nBefore = 0;
+        int nAfter = 0;
 
-        szNum[0] = 0;
-        hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
-        GetWindowTextW(hEdBefore, szNum, 7);
-        nBefore = xatoiW(szNum, NULL);
-
-        szNum[0] = 0;
-        hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
-        GetWindowTextW(hEdAfter, szNum, 7);
-        nAfter = xatoiW(szNum, NULL);
+        nMode = getFindAllOutputMode(hDlg, &nBefore, &nAfter);
 
         if ( nOutputDest == QS_FINDALL_LOGOUTPUT )
         {
@@ -213,14 +246,18 @@ static void applyOutputOptions(HWND hDlg)
     }
 }
 
-void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
+static void updateExampleData(HWND hDlg)
 {
     HWND hStExampleData;
     const wchar_t* cszTextFormat;
+    const wchar_t* pszBegin;
     int nLen;
     DWORD dwFindAllResultFlags;
+    int nMode;
+    int nBefore = 0;
+    int nAfter = 0;
     tDynamicBuffer infoBuf;
-    wchar_t szText[128];
+    wchar_t szTempText[128];
     wchar_t szMatch1[64];
     wchar_t szMatch2[64];
 
@@ -230,14 +267,16 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     szMatch1[0] = 0;
     szMatch2[0] = 0;
 
+    nMode = getFindAllOutputMode(hDlg, &nBefore, &nAfter);
     dwFindAllResultFlags = getFindAllResultFlags(hDlg);
+
     if ( (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) == 0 )
     {
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_SEARCHING )
         {
             cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_SEARCHINGFOR);
-            nLen = wsprintfW(szText, cszTextFormat, L'/', L"w[a-z]+d", L'/', L"Example.txt", 2);
-            tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
+            nLen = wsprintfW(szTempText, cszTextFormat, L'/', L"w[a-z]+d", L'/', L"Example.txt", 2);
+            tDynamicBuffer_Append(&infoBuf, szTempText, nLen*sizeof(wchar_t));
             tDynamicBuffer_Append(&infoBuf, L"\n", 1*sizeof(wchar_t));
             lstrcatW(szMatch1, L"   ");
             lstrcatW(szMatch2, L"   ");
@@ -255,21 +294,86 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
     }
 
     {
+        const wchar_t* const szEntireLine = L"A world of words.\n";
+        int nTempBefore;
+        int nTempAfter;
+
         if ( szMatch1[0] != 0 )
             lstrcatW(szMatch1, L"\t");
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
             lstrcatW(szMatch1, L"world\n");
         else
-            lstrcatW(szMatch1, L"A world of words.\n");
+        {
+            if ( nMode == QSFRM_CHAR || nMode == QSFRM_CHARINLINE )
+            {
+                pszBegin = szEntireLine + 2; // position before "world"
+                nLen = 5; // length of "world"
+
+                nTempBefore = nBefore;
+                if ( nTempBefore > 2 ) // characters before "world"
+                    nTempBefore = 2;
+                if ( nTempBefore > 0 )
+                {
+                    pszBegin -= nTempBefore;
+                    nLen += nTempBefore;
+                }
+
+                nTempAfter = nAfter;
+                if ( nTempAfter > 10 ) // characters after "world"
+                    nTempAfter = 10;
+                if ( nTempAfter > 0 )
+                    nLen += nTempAfter;
+
+                lstrcpynW(szTempText, pszBegin, nLen + 1);
+                szTempText[nLen++] = L'\n';
+                szTempText[nLen] = 0;
+                lstrcatW(szMatch1, szTempText);
+            }
+            else
+                lstrcatW(szMatch1, szEntireLine);
+        }
 
         if ( szMatch2[0] != 0 )
             lstrcatW(szMatch2, L"\t");
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_MATCHONLY )
             lstrcatW(szMatch2, L"word\n");
         else
-            lstrcatW(szMatch2, L"A world of words.\n");
+        {
+            if ( nMode == QSFRM_CHAR || nMode == QSFRM_CHARINLINE )
+            {
+                pszBegin = szEntireLine + 11; // position before "word"
+                nLen = 4; // length of "word"
+
+                nTempBefore = nBefore;
+                if ( nTempBefore > 11 ) // characters before "word"
+                    nTempBefore = 11;
+                if ( nTempBefore > 0 )
+                {
+                    pszBegin -= nTempBefore;
+                    nLen += nTempBefore;
+                }
+
+                nTempAfter = nAfter;
+                if ( nTempAfter > 2 ) // characters after "word"
+                    nTempAfter = 2;
+                if ( nTempAfter > 0 )
+                    nLen += nTempAfter;
+
+                lstrcpynW(szTempText, pszBegin, nLen + 1);
+                szTempText[nLen++] = L'\n';
+                szTempText[nLen] = 0;
+                lstrcatW(szMatch2, szTempText);
+            }
+            else
+                lstrcatW(szMatch2, szEntireLine);
+        }
 
         tDynamicBuffer_Append(&infoBuf, szMatch1, lstrlenW(szMatch1)*sizeof(wchar_t));
+        if ( nMode == QSFRM_LINE_CR )
+        {
+            if ( !(dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) || (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERCONTEXT) )
+                tDynamicBuffer_Append(&infoBuf, L"\n", 1*sizeof(wchar_t));
+        }
         tDynamicBuffer_Append(&infoBuf, szMatch2, lstrlenW(szMatch2)*sizeof(wchar_t));
     }
 
@@ -278,15 +382,22 @@ void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
         if ( dwFindAllResultFlags & QS_FINDALL_RSLT_OCCFOUND )
         {
             cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-            nLen = wsprintfW(szText, cszTextFormat, 2); // "2 found."
-            tDynamicBuffer_Append(&infoBuf, szText, nLen*sizeof(wchar_t));
+            nLen = wsprintfW(szTempText, cszTextFormat, 2); // "2 found."
+            tDynamicBuffer_Append(&infoBuf, szTempText, nLen*sizeof(wchar_t));
         }
     }
+    EnableWindow( GetDlgItem(hDlg, IDC_CH_FA_FILTERCONTEXT), 
+      (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) != 0 ? TRUE : FALSE );
 
     tDynamicBuffer_Append(&infoBuf, L"\0", 1*sizeof(wchar_t));
 
     hStExampleData = GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE_DATA);
     SetWindowTextW(hStExampleData, (const wchar_t *) infoBuf.ptr);
+}
+
+void FndAllSettDlg_OnCheckBoxClicked(HWND hDlg)
+{
+    updateExampleData(hDlg);
 }
 
 BOOL FndAllSettDlg_OnOK(HWND hDlg)
@@ -312,13 +423,13 @@ void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg)
     int nAfter;
     wchar_t szNum[8];
 
-    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
-    hStMode = GetDlgItem(hDlg, IDC_ST_MODE);
-    hCbMode = GetDlgItem(hDlg, IDC_CB_MODE);
-    hStBefore = GetDlgItem(hDlg, IDC_ST_BEFORE);
-    hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
-    hStAfter = GetDlgItem(hDlg, IDC_ST_AFTER);
-    hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_FA_OUTPUT_DEST);
+    hStMode = GetDlgItem(hDlg, IDC_ST_FA_MODE);
+    hCbMode = GetDlgItem(hDlg, IDC_CB_FA_MODE);
+    hStBefore = GetDlgItem(hDlg, IDC_ST_FA_BEFORE);
+    hEdBefore = GetDlgItem(hDlg, IDC_ED_FA_BEFORE);
+    hStAfter = GetDlgItem(hDlg, IDC_ST_FA_AFTER);
+    hEdAfter = GetDlgItem(hDlg, IDC_ED_FA_AFTER);
 
     nOutputDest = 1 + (int) SendMessageW(hCbOutputDest, CB_GETCURSEL, 0, 0);
     if ( nOutputDest == QS_FINDALL_LOGOUTPUT )
@@ -376,6 +487,8 @@ void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg)
         {
             SetWindowTextW(hEdAfter, L"0");
         }
+
+        FndAllSettDlg_OnCbModeChanged(hDlg);
     }
     else
     {
@@ -389,6 +502,16 @@ void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg)
         SetWindowTextW(hEdBefore, L"");
         SetWindowTextW(hEdAfter, L"");
     }
+}
+
+void FndAllSettDlg_OnCbModeChanged(HWND hDlg)
+{
+    updateExampleData(hDlg);
+}
+
+void FndAllSettDlg_OnEdModeChanged(HWND hDlg)
+{
+    updateExampleData(hDlg);
 }
 
 void FndAllSettDlg_OnInitDialog(HWND hDlg)
@@ -419,16 +542,16 @@ void FndAllSettDlg_OnInitDialog(HWND hDlg)
 
     FndAllSettDlg_OnCheckBoxClicked(hDlg);
 
-    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_OUTPUT_DEST);
+    hCbOutputDest = GetDlgItem(hDlg, IDC_CB_FA_OUTPUT_DEST);
     SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_COUNTONLY) );
     SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_LOG) );
     SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_FILEN) );
     SendMessageW( hCbOutputDest, CB_ADDSTRING, 0, (LPARAM) qsearchGetStringW(QS_STRID_FINDALL_OUTPUT_DST_FILE1) );
 
-    hEdBefore = GetDlgItem(hDlg, IDC_ED_BEFORE);
+    hEdBefore = GetDlgItem(hDlg, IDC_ED_FA_BEFORE);
     SendMessageW(hEdBefore, EM_SETLIMITTEXT, 3, 0);
 
-    hEdAfter = GetDlgItem(hDlg, IDC_ED_AFTER);
+    hEdAfter = GetDlgItem(hDlg, IDC_ED_FA_AFTER);
     SendMessageW(hEdAfter, EM_SETLIMITTEXT, 3, 0);
 
     i = g_Options.dwFindAllMode & 0x0F;

@@ -766,6 +766,15 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
         L"\x0420\x0435\x0436\x0438\x043C\x0020\x0444\x0456\x043B\x044C\x0442\x0440\x0430"
     };
 
+    static const wchar_t* szFindAllOutputFilterContextW[INLNG_COUNT] = {
+        /* eng */
+        L"Add the context",
+        /* rus */
+        L"\x0414\x043E\x0431\x0430\x0432\x0438\x0442\x044C\x0020\x043A\x043E\x043D\x0442\x0435\x043A\x0441\x0442",
+        /* ukr */
+        L"\x0414\x043E\x0434\x0430\x0442\x0438\x0020\x043A\x043E\x043D\x0442\x0435\x043A\x0441\x0442"
+    };
+
     static const wchar_t* szFindAllOutputSyntaxThemeW[INLNG_COUNT] = {
         /* eng */
         L"Apply the syntax theme",
@@ -823,19 +832,20 @@ void qsearchSetFindAllSettDlgLang(HWND hDlg)
 
     uInternalLng = getInternalLng();
     SetWindowTextW( hDlg, szFindAllSettTitleW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_HEADER),      szFindAllOutputHeaderW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_POSITION),    szFindAllOutputPositionW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_LENGTH),      szFindAllOutputLengthW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_WHOLELINE),   szFindAllOutputWholeLineW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_MATCHONLY),   szFindAllOutputMatchOnlyW[uInternalLng] );
-    // SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FOOTER),      szFindAllOutputFooterW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FILTERMODE),  szFindAllOutputFilterModeW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_SYNTAXTHEME), szFindAllOutputSyntaxThemeW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE),     szFindAllOutputExampleW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_GB_OUTPUT),         szFindAllOutputModeW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_MODE),           szFindAllOutputContextW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_BEFORE),         szFindAllContextBeforeW[uInternalLng] );
-    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_AFTER),          szFindAllContextAfterW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_HEADER),        szFindAllOutputHeaderW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_POSITION),      szFindAllOutputPositionW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_LENGTH),        szFindAllOutputLengthW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_WHOLELINE),     szFindAllOutputWholeLineW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_RB_FA_MATCHONLY),     szFindAllOutputMatchOnlyW[uInternalLng] );
+    // SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FOOTER),        szFindAllOutputFooterW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FILTERMODE),    szFindAllOutputFilterModeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_FILTERCONTEXT), szFindAllOutputFilterContextW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_CH_FA_SYNTAXTHEME),   szFindAllOutputSyntaxThemeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_EXAMPLE),       szFindAllOutputExampleW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_GB_FA_OUTPUT),        szFindAllOutputModeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_MODE),          szFindAllOutputContextW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_BEFORE),        szFindAllContextBeforeW[uInternalLng] );
+    SetWindowTextW( GetDlgItem(hDlg, IDC_ST_FA_AFTER),         szFindAllContextAfterW[uInternalLng] );
 }
 
 void qsearchSetPopupMenuLang(HMENU hPopupMenu)

@@ -484,11 +484,12 @@ Additional options (QSearch panel's popup menu or file
       * Log Output (output to Log::Output when "Find All" is pressed)
 
 38) findall_result = 272
-     Represents the "Find All Results Format" dialog.
+     Represents the "Output options" dialog (for "Find all").
      The value will be the sum of the following numbers:
       0 - Include the line with the occurrence
       1 - Include only the match (occurrence) itself
       2 - Filter mode: pure text without header/footer/position
+      4 - Filter mode: add the context (refer to FindResultsPolicy)
       16 - Include the position: (Ln:Pos)
       32 - Include the match length: (Len)
       256 - Include the header: "Searching for %s ..."
@@ -576,6 +577,9 @@ v.7.8 (February 2022)
  * improved: now "Find all in all files" does not depend on the "not found"
    state (as this state applies only to the current document)
  * improved: the behaviour of srch_stop_eof = 11
+ + added: "Search results" options in the "Output options" dialog
+ + added: "Add the context" option for the "Filter mode" check-box in the
+   "Output options" dialog
 
 v.7.7 (May 2021)
  * improved: find next by F3 (when 'catch_main_f3' is on) right after Ctrl+F3
