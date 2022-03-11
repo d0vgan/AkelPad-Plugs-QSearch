@@ -4918,6 +4918,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
     BOOL     bNeedsFindAllCountOnly = FALSE;
     DWORD    dwSearchFlags = FR_DOWN;
 
+    qs_bEditTextChanged = FALSE;
+
     if ( dwParams & QSEARCH_FIRST )
     {
         // searching for the first time, clear the EOF flag
