@@ -140,6 +140,18 @@ void CloseLog(void)
         return TRUE;
     }
 
+    BOOL equalRect(const RECT* pRect1, const RECT* pRect2)
+    {
+        if ( (pRect1->left   != pRect2->left)  ||
+             (pRect1->top    != pRect2->top)   ||
+             (pRect1->right  != pRect2->right) ||
+             (pRect1->bottom != pRect2->bottom) )
+        {
+            return FALSE;
+        }
+        return TRUE;
+    }
+
     void initializeOptions(QSearchOpt* pOptions)
     {
         int i;
@@ -197,10 +209,7 @@ void CloseLog(void)
                 return FALSE;
         }
 
-        if ( (pOpt1->dockRect.left       !=  pOpt2->dockRect.left)       ||
-             (pOpt1->dockRect.right      !=  pOpt2->dockRect.right)      ||
-             (pOpt1->dockRect.top        !=  pOpt2->dockRect.top)        ||
-             (pOpt1->dockRect.bottom     !=  pOpt2->dockRect.bottom)     ||
+        if ( !equalRect(&pOpt1->dockRect,   &pOpt2->dockRect)            ||
              (pOpt1->colorNotFound       !=  pOpt2->colorNotFound)       ||
              (pOpt1->colorNotRegExp      !=  pOpt2->colorNotRegExp)      ||
              (pOpt1->colorEOF            !=  pOpt2->colorEOF)            ||
@@ -1990,111 +1999,210 @@ void SaveOptions(void)
 
                 for ( i = 0; i < OPTF_COUNT; i++ )
                 {
-                    writeDwordA( hOptions,
-                      CSZ_OPTIONS[i], g_Options.dwFlags[i] );
+                    if ( g_Options0.dwFlags[i] != g_Options.dwFlags[i] )
+                    {
+                        writeDwordA( hOptions,
+                          CSZ_OPTIONS[i], g_Options.dwFlags[i] );
+                    }
                 }
 
                 if ( !g_Options.dwFlags[OPTF_DOCK_RECT_DISABLED] )
                 {
-                    writeBinaryA( hOptions, CSZ_OPTIONS[OPT_DOCK_RECT],
-                      &g_Options.dockRect, sizeof(RECT) );
+                    if ( !equalRect(&g_Options0.dockRect, &g_Options.dockRect) )
+                    {
+                        writeBinaryA( hOptions, CSZ_OPTIONS[OPT_DOCK_RECT],
+                          &g_Options.dockRect, sizeof(RECT) );
+                    }
                 }
 
-                writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_NOTFOUND],
-                  &g_Options.colorNotFound, sizeof(COLORREF) );
+                if ( g_Options0.colorNotFound != g_Options.colorNotFound )
+                {
+                    writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_NOTFOUND],
+                      &g_Options.colorNotFound, sizeof(COLORREF) );
+                }
 
-                writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_NOTREGEXP],
-                  &g_Options.colorNotRegExp, sizeof(COLORREF) );
+                if ( g_Options0.colorNotRegExp != g_Options.colorNotRegExp )
+                {
+                    writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_NOTREGEXP],
+                      &g_Options.colorNotRegExp, sizeof(COLORREF) );
+                }
 
-                writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_EOF],
-                  &g_Options.colorEOF, sizeof(COLORREF) );
+                if ( g_Options0.colorEOF != g_Options.colorEOF )
+                {
+                    writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_EOF],
+                      &g_Options.colorEOF, sizeof(COLORREF) );
+                }
 
-                writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_HIGHLIGHT],
-                  &g_Options.colorHighlight, sizeof(COLORREF) );
+                if ( g_Options0.colorHighlight != g_Options.colorHighlight )
+                {
+                    writeBinaryA( hOptions, CSZ_OPTIONS[OPT_COLOR_HIGHLIGHT],
+                      &g_Options.colorHighlight, sizeof(COLORREF) );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_HIGHLIGHT_MARK_ID],
-                  g_Options.dwHighlightMarkID );
+                if ( g_Options0.dwHighlightMarkID != g_Options.dwHighlightMarkID )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_HIGHLIGHT_MARK_ID],
+                      g_Options.dwHighlightMarkID );
+                }
 
                 if ( (g_Options.dwHighlightState & HLS_SET_ALWAYS) != HLS_SET_ALWAYS )
                 {
-                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_HIGHLIGHT_STATE],
-                      g_Options.dwHighlightState );
+                    if ( g_Options0.dwHighlightState != g_Options.dwHighlightState )
+                    {
+                        writeDwordA( hOptions, CSZ_OPTIONS[OPT_HIGHLIGHT_STATE],
+                          g_Options.dwHighlightState );
+                    }
                 }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
-                  g_Options.dwUseAltHotkeys );
+                if ( g_Options0.dwUseAltHotkeys != g_Options.dwUseAltHotkeys )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
+                      g_Options.dwUseAltHotkeys );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_MATCHCASE],
-                  g_Options.dwAltMatchCase );
+                if ( g_Options0.dwAltMatchCase != g_Options.dwAltMatchCase )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_MATCHCASE],
+                      g_Options.dwAltMatchCase );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_WHOLEWORD],
-                  g_Options.dwAltWholeWord );
+                if ( g_Options0.dwAltWholeWord != g_Options.dwAltWholeWord )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_WHOLEWORD],
+                      g_Options.dwAltWholeWord );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_SEARCHMODE],
-                  g_Options.dwAltSearchMode );
+                if ( g_Options0.dwAltSearchMode != g_Options.dwAltSearchMode )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_SEARCHMODE],
+                      g_Options.dwAltSearchMode );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
-                  g_Options.dwAltHighlightAll );
+                if ( g_Options0.dwAltHighlightAll != g_Options.dwAltHighlightAll )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
+                      g_Options.dwAltHighlightAll );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
-                  g_Options.dwFindHistoryItems );
+                if ( g_Options0.dwFindHistoryItems != g_Options.dwFindHistoryItems )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
+                      g_Options.dwFindHistoryItems );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_HISTORY_SAVE],
-                  g_Options.dwHistorySave );
+                if ( g_Options0.dwHistorySave != g_Options.dwHistorySave )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_HISTORY_SAVE],
+                      g_Options.dwHistorySave );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_NEW_UI],
-                  g_Options.dwNewUI );
+                if ( g_Options0.dwNewUI != g_Options.dwNewUI )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_NEW_UI],
+                      g_Options.dwNewUI );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_F3],
-                  g_Options.dwSelectByF3 );
+                if ( g_Options0.dwSelectByF3 != g_Options.dwSelectByF3 )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_F3],
+                      g_Options.dwSelectByF3 );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_FND],
-                  g_Options.dwSelectByFnd );
+                if ( g_Options0.dwSelectByFnd != g_Options.dwSelectByFnd )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_FND],
+                      g_Options.dwSelectByFnd );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_SELFND],
-                  g_Options.dwSelectBySelFnd );
+                if ( g_Options0.dwSelectBySelFnd != g_Options.dwSelectBySelFnd )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_SELECT_BY_SELFND],
+                      g_Options.dwSelectBySelFnd );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
-                  g_Options.dwAdjIncomplRegExp );
+                if ( g_Options0.dwAdjIncomplRegExp != g_Options.dwAdjIncomplRegExp )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
+                      g_Options.dwAdjIncomplRegExp );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_MODE],
-                  g_Options.dwFindAllMode );
+                if ( g_Options0.dwFindAllMode != g_Options.dwFindAllMode )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_MODE],
+                      g_Options.dwFindAllMode );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_RESULT],
-                  g_Options.dwFindAllResult );
+                if ( g_Options0.dwFindAllResult != g_Options.dwFindAllResult )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_RESULT],
+                      g_Options.dwFindAllResult );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
-                  g_Options.dwFindAllCountDelay );
+                if ( g_Options0.dwFindAllCountDelay != g_Options.dwFindAllCountDelay )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
+                      g_Options.dwFindAllCountDelay );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
-                  g_Options.LogOutputFRP.nMode );
+                if ( g_Options0.LogOutputFRP.nMode != g_Options.LogOutputFRP.nMode )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
+                      g_Options.LogOutputFRP.nMode );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
-                  g_Options.LogOutputFRP.nBefore );
+                if ( g_Options0.LogOutputFRP.nBefore != g_Options.LogOutputFRP.nBefore )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
+                      g_Options.LogOutputFRP.nBefore );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
-                  g_Options.LogOutputFRP.nAfter );
+                if ( g_Options0.LogOutputFRP.nAfter != g_Options.LogOutputFRP.nAfter )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
+                      g_Options.LogOutputFRP.nAfter );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
-                  g_Options.LogOutputFRP.nHighlight );
+                if ( g_Options0.LogOutputFRP.nHighlight != g_Options.LogOutputFRP.nHighlight )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
+                      g_Options.LogOutputFRP.nHighlight );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
-                  g_Options.FileOutputFRP.nMode );
+                if ( g_Options0.FileOutputFRP.nMode != g_Options.FileOutputFRP.nMode )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
+                      g_Options.FileOutputFRP.nMode );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
-                  g_Options.FileOutputFRP.nBefore );
+                if ( g_Options0.FileOutputFRP.nBefore != g_Options.FileOutputFRP.nBefore )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
+                      g_Options.FileOutputFRP.nBefore );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
-                  g_Options.FileOutputFRP.nAfter );
+                if ( g_Options0.FileOutputFRP.nAfter != g_Options.FileOutputFRP.nAfter )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
+                      g_Options.FileOutputFRP.nAfter );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
-                  g_Options.FileOutputFRP.nHighlight );
+                if ( g_Options0.FileOutputFRP.nHighlight != g_Options.FileOutputFRP.nHighlight )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
+                      g_Options.FileOutputFRP.nHighlight );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MINWIDTH],
-                  g_Options.dwEditMinWidth );
+                if ( g_Options0.dwEditMinWidth != g_Options.dwEditMinWidth )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MINWIDTH],
+                      g_Options.dwEditMinWidth );
+                }
 
-                writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
-                  g_Options.dwEditMaxWidth );
+                if ( g_Options0.dwEditMaxWidth != g_Options.dwEditMaxWidth )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
+                      g_Options.dwEditMaxWidth );
+                }
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -2117,111 +2225,210 @@ void SaveOptions(void)
 
                 for ( i = 0; i < OPTF_COUNT; i++ )
                 {
-                    writeDwordW( hOptions,
-                      CWSZ_OPTIONS[i], g_Options.dwFlags[i] );
+                    if ( g_Options0.dwFlags[i] != g_Options.dwFlags[i] )
+                    {
+                        writeDwordW( hOptions,
+                          CWSZ_OPTIONS[i], g_Options.dwFlags[i] );
+                    }
                 }
 
                 if ( !g_Options.dwFlags[OPTF_DOCK_RECT_DISABLED] )
                 {
-                    writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_DOCK_RECT],
-                      &g_Options.dockRect, sizeof(RECT) );
+                    if ( !equalRect(&g_Options0.dockRect, &g_Options.dockRect) )
+                    {
+                        writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_DOCK_RECT],
+                          &g_Options.dockRect, sizeof(RECT) );
+                    }
                 }
 
-                writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_NOTFOUND],
-                  &g_Options.colorNotFound, sizeof(COLORREF) );
+                if ( g_Options0.colorNotFound != g_Options.colorNotFound )
+                {
+                    writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_NOTFOUND],
+                      &g_Options.colorNotFound, sizeof(COLORREF) );
+                }
 
-                writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_NOTREGEXP],
-                  &g_Options.colorNotRegExp, sizeof(COLORREF) );
+                if ( g_Options0.colorNotRegExp != g_Options.colorNotRegExp )
+                {
+                    writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_NOTREGEXP],
+                      &g_Options.colorNotRegExp, sizeof(COLORREF) );
+                }
 
-                writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_EOF],
-                  &g_Options.colorEOF, sizeof(COLORREF) );
+                if ( g_Options0.colorEOF != g_Options.colorEOF )
+                {
+                    writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_EOF],
+                      &g_Options.colorEOF, sizeof(COLORREF) );
+                }
 
-                writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_HIGHLIGHT],
-                  &g_Options.colorHighlight, sizeof(COLORREF) );
+                if ( g_Options0.colorHighlight != g_Options.colorHighlight )
+                {
+                    writeBinaryW( hOptions, CWSZ_OPTIONS[OPT_COLOR_HIGHLIGHT],
+                      &g_Options.colorHighlight, sizeof(COLORREF) );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HIGHLIGHT_MARK_ID],
-                  g_Options.dwHighlightMarkID );
+                if ( g_Options0.dwHighlightMarkID != g_Options.dwHighlightMarkID )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HIGHLIGHT_MARK_ID],
+                      g_Options.dwHighlightMarkID );
+                }
 
                 if ( (g_Options.dwHighlightState & HLS_SET_ALWAYS) != HLS_SET_ALWAYS )
                 {
-                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HIGHLIGHT_STATE],
-                      g_Options.dwHighlightState );
+                    if ( g_Options0.dwHighlightState != g_Options.dwHighlightState )
+                    {
+                        writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HIGHLIGHT_STATE],
+                          g_Options.dwHighlightState );
+                    }
                 }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
-                  g_Options.dwUseAltHotkeys );
+                if ( g_Options0.dwUseAltHotkeys != g_Options.dwUseAltHotkeys )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_USE_ALT_HOTKEYS],
+                      g_Options.dwUseAltHotkeys );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_MATCHCASE],
-                  g_Options.dwAltMatchCase );
+                if ( g_Options0.dwAltMatchCase != g_Options.dwAltMatchCase )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_MATCHCASE],
+                      g_Options.dwAltMatchCase );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_WHOLEWORD],
-                  g_Options.dwAltWholeWord );
+                if ( g_Options0.dwAltWholeWord != g_Options.dwAltWholeWord )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_WHOLEWORD],
+                      g_Options.dwAltWholeWord );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_SEARCHMODE],
-                  g_Options.dwAltSearchMode );
+                if ( g_Options0.dwAltSearchMode != g_Options.dwAltSearchMode )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_SEARCHMODE],
+                      g_Options.dwAltSearchMode );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
-                  g_Options.dwAltHighlightAll );
+                if ( g_Options0.dwAltHighlightAll != g_Options.dwAltHighlightAll )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ALT_HIGHLIGHTALL],
+                      g_Options.dwAltHighlightAll );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
-                  g_Options.dwFindHistoryItems );
+                if ( g_Options0.dwFindHistoryItems != g_Options.dwFindHistoryItems )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FIND_HISTORY_ITEMS],
+                      g_Options.dwFindHistoryItems );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HISTORY_SAVE],
-                  g_Options.dwHistorySave );
+                if ( g_Options0.dwHistorySave != g_Options.dwHistorySave )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_HISTORY_SAVE],
+                      g_Options.dwHistorySave );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_NEW_UI],
-                  g_Options.dwNewUI );
+                if ( g_Options0.dwNewUI != g_Options.dwNewUI )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_NEW_UI],
+                      g_Options.dwNewUI );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_F3],
-                  g_Options.dwSelectByF3 );
+                if ( g_Options0.dwSelectByF3 != g_Options.dwSelectByF3 )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_F3],
+                      g_Options.dwSelectByF3 );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_FND],
-                  g_Options.dwSelectByFnd );
+                if ( g_Options0.dwSelectByFnd != g_Options.dwSelectByFnd )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_FND],
+                      g_Options.dwSelectByFnd );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_SELFND],
-                  g_Options.dwSelectBySelFnd );
+                if ( g_Options0.dwSelectBySelFnd != g_Options.dwSelectBySelFnd )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_SELECT_BY_SELFND],
+                      g_Options.dwSelectBySelFnd );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
-                  g_Options.dwAdjIncomplRegExp );
+                if ( g_Options0.dwAdjIncomplRegExp != g_Options.dwAdjIncomplRegExp )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_ADJ_INCOMPL_REGEXP],
+                      g_Options.dwAdjIncomplRegExp );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_MODE],
-                  g_Options.dwFindAllMode );
+                if ( g_Options0.dwFindAllMode != g_Options.dwFindAllMode )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_MODE],
+                      g_Options.dwFindAllMode );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_RESULT],
-                  g_Options.dwFindAllResult );
+                if ( g_Options0.dwFindAllResult != g_Options.dwFindAllResult )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_RESULT],
+                      g_Options.dwFindAllResult );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
-                  g_Options.dwFindAllCountDelay );
+                if ( g_Options0.dwFindAllCountDelay != g_Options.dwFindAllCountDelay )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FINDALL_COUNT_DELAY],
+                      g_Options.dwFindAllCountDelay );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
-                  g_Options.LogOutputFRP.nMode );
+                if ( g_Options0.LogOutputFRP.nMode != g_Options.LogOutputFRP.nMode )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_MODE],
+                      g_Options.LogOutputFRP.nMode );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
-                  g_Options.LogOutputFRP.nBefore );
+                if ( g_Options0.LogOutputFRP.nBefore != g_Options.LogOutputFRP.nBefore )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_BEFORE],
+                      g_Options.LogOutputFRP.nBefore );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
-                  g_Options.LogOutputFRP.nAfter );
+                if ( g_Options0.LogOutputFRP.nAfter != g_Options.LogOutputFRP.nAfter )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_AFTER],
+                      g_Options.LogOutputFRP.nAfter );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
-                  g_Options.LogOutputFRP.nHighlight );
+                if ( g_Options0.LogOutputFRP.nHighlight != g_Options.LogOutputFRP.nHighlight )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_FRP_HIGHLIGHT],
+                      g_Options.LogOutputFRP.nHighlight );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
-                  g_Options.FileOutputFRP.nMode );
+                if ( g_Options0.FileOutputFRP.nMode != g_Options.FileOutputFRP.nMode )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_MODE],
+                      g_Options.FileOutputFRP.nMode );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
-                  g_Options.FileOutputFRP.nBefore );
+                if ( g_Options0.FileOutputFRP.nBefore != g_Options.FileOutputFRP.nBefore )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_BEFORE],
+                      g_Options.FileOutputFRP.nBefore );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
-                  g_Options.FileOutputFRP.nAfter );
+                if ( g_Options0.FileOutputFRP.nAfter != g_Options.FileOutputFRP.nAfter )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_AFTER],
+                      g_Options.FileOutputFRP.nAfter );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
-                  g_Options.FileOutputFRP.nHighlight );
+                if ( g_Options0.FileOutputFRP.nHighlight != g_Options.FileOutputFRP.nHighlight )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_FILEOUTPUT_FRP_HIGHLIGHT],
+                      g_Options.FileOutputFRP.nHighlight );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MINWIDTH],
-                  g_Options.dwEditMinWidth );
+                if ( g_Options0.dwEditMinWidth != g_Options.dwEditMinWidth )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MINWIDTH],
+                      g_Options.dwEditMinWidth );
+                }
 
-                writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
-                  g_Options.dwEditMaxWidth );
+                if ( g_Options0.dwEditMaxWidth != g_Options.dwEditMaxWidth )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
+                      g_Options.dwEditMaxWidth );
+                }
 
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
