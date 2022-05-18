@@ -6078,6 +6078,9 @@ HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox)
 {
     HWND hEdit;
 
+    if ( phListBox )
+        *phListBox = NULL;
+
     if ( qsearchIsFindHistoryEnabled() )
     {
         HWND  hCombo;
@@ -6088,23 +6091,22 @@ HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox)
         pt.y = 5;
         hEdit = ChildWindowFromPoint(hCombo, pt);
 
-        if ( phListBox )
+        if ( phListBox && !g_Plugin.bOldWindows )
         {
+#ifndef CB_GETCOMBOBOXINFO
+    #define CB_GETCOMBOBOXINFO          0x0164
+#endif
             COMBOBOXINFO info;
 
             x_zero_mem(&info, sizeof(info));
             info.cbSize = sizeof(info);
             if ( SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM) &info) )
                 *phListBox = info.hwndList;
-            else
-                *phListBox = NULL;
         }
     }
     else
     {
         hEdit = GetDlgItem(hDlg, IDC_ED_FINDTEXT);
-        if ( phListBox )
-            *phListBox = NULL;
     }
 
     return hEdit;
