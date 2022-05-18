@@ -109,9 +109,33 @@ void x_mem_cpy(void *pDest, const void *pSrc, UINT_PTR nBytes)
 // compiler from replace this code with memset call.
 void x_mem_set(void *pDest, unsigned int c, UINT_PTR nBytes)
 {
+    unsigned int* pDestUint = (unsigned int *) pDest;
+
+    if ( nBytes >= sizeof(unsigned int) )
+    {
+        unsigned int nValue;
+
+        if ( c != 0 )
+        {
+            c &= 0xFF;
+            nValue = c + (c << 8) + (c << 16) + (c << 24);
+        }
+        else
+            nValue = 0;
+
+        for ( ; ; )
+        {
+            *pDestUint = nValue;
+            ++pDestUint;
+            nBytes -= sizeof(unsigned int);
+            if ( nBytes < sizeof(unsigned int) )
+                break;
+        }
+    }
+
     if ( nBytes != 0 )
     {
-        unsigned char *pDestByte = (unsigned char *) pDest;
+        unsigned char *pDestByte = (unsigned char *) pDestUint;
 
         for ( ; ; )
         {
