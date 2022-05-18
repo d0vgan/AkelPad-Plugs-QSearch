@@ -72,6 +72,7 @@
         DWORD    dwFindAllCountDelay;
         DWORD    dwEditMinWidth;
         DWORD    dwEditMaxWidth;
+        DWORD    dwUseEditorColors;
         FindResultsOutputPolicy LogOutputFRP;
         FindResultsOutputPolicy FileOutputFRP;
     } QSearchOpt;
@@ -86,6 +87,8 @@
 // funcs
 void  Initialize(PLUGINDATA* pd);
 void  Uninitialize(void);
+
+HWND  GetWndEdit(HWND hMainWnd);
 
 void  ReadFindHistoryA(void);
 void  ReadFindHistoryW(void);

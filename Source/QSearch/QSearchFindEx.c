@@ -96,13 +96,12 @@ int is_wordbreakw(int whole_word, const wchar_t wch)
             if ( VersionCompare(getProgramVersion(&g_Plugin), MAKE_IDENTIFIER(4, 5, 1, 0)) >= 0 )
 #endif
             {
-                EDITINFO ei;
+                HWND hWndEdit;
 
-                ei.hWndEdit = NULL;
-                SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
-                if ( ei.hWndEdit )
+                hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+                if ( hWndEdit )
                 {
-                    AemGetWordDelimiters(ei.hWndEdit, &wordDelimiters);
+                    AemGetWordDelimiters(hWndEdit, &wordDelimiters);
                     if ( wordDelimiters.nLen > 0 )
                         ok = 1;
                 }

@@ -569,11 +569,18 @@ Additional options (QSearch panel's popup menu or file
      The value of 0 means: not limited (i.e. the edit control width is always
      proportional to the resized width of the QSearch panel).
 
+50) use_editor_colors = 0
+     The QSearch'es edit control uses the standard (system) text and background
+     colors.
+    use_editor_colors = 1
+     The QSearch'es edit control uses AkelPad's text and background colors.
+
 
 --------
 History:
 --------
 v.7.9 (May 2022)
+ + added: 'use_editor_colors'
  * improved: only changed options are overwritten (it is useful when editing
    the "QSearch.ini" in AkelPad)
 

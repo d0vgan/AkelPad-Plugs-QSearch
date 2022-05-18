@@ -242,6 +242,7 @@ static void CallLogOutput(void* ploParams)
     {
         pQSearchDlg->hDlg = NULL;
         pQSearchDlg->hFindEdit = NULL;
+        pQSearchDlg->hFindListBox = NULL;
         pQSearchDlg->hBtnFindNext = NULL;
         pQSearchDlg->hBtnFindPrev = NULL;
         pQSearchDlg->hBtnFindAll = NULL;
@@ -258,6 +259,9 @@ static void CallLogOutput(void* ploParams)
         pQSearchDlg->szFindTextW[0] = 0;
         pQSearchDlg->uSearchOrigin = QS_SO_UNKNOWN;
         pQSearchDlg->uWmShowFlags = 0;
+        pQSearchDlg->crTextColor = GetSysColor(COLOR_WINDOWTEXT);
+        pQSearchDlg->crBkgndColor = GetSysColor(COLOR_WINDOW);
+        pQSearchDlg->hBkgndBrush = NULL;
     }
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -783,16 +787,15 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
     if ( bOutputResult )
     {
-        EDITINFO  ei;
+        HWND hWndEdit;
 
         if ( g_QSearchDlg.pSearchResultsFrame == NULL )
         {
             g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW( g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
         }
 
-        ei.hWndEdit = NULL;
-        SendMessageW( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-        if ( ei.hWndEdit )
+        hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+        if ( hWndEdit )
         {
             INT_PTR nStartPos;
             AEAPPENDTEXTW aeatW;
@@ -802,7 +805,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
                 setCoderAliasW(szCoderAlias);
             }
 
-            nStartPos = SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) ei.hWndEdit, 0);
+            nStartPos = SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hWndEdit, 0);
 
             if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) )
             {
@@ -811,7 +814,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
                     aeatW.pText = L"\r"; // new line
                     aeatW.dwTextLen = (UINT_PTR) (-1);
                     aeatW.nNewLine = AELB_ASINPUT;
-                    SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+                    SendMessageW( hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
                     nStartPos += 1; // the new line above
                 }
             }
@@ -820,9 +823,9 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
             aeatW.pText = (const wchar_t *) pFindContext->ResultsBuf.ptr;
             aeatW.dwTextLen = pFindContext->ResultsBuf.nBytesStored/sizeof(wchar_t) - 1; // excluding the trailing '\0'
             aeatW.nNewLine = AELB_ASINPUT;
-            SendMessageW( ei.hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+            SendMessageW( hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
 
-            scrollEditToPosition(ei.hWndEdit, nStartPos, g_Options.FileOutputFRP.nHighlight, pFindContext);
+            scrollEditToPosition(hWndEdit, nStartPos, g_Options.FileOutputFRP.nHighlight, pFindContext);
         }
     }
 }
@@ -1322,7 +1325,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[]);
 void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF);
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[]);
-HWND qsearchGetFindEdit(HWND hDlg);
+HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox);
 
 #define UFHF_MOVE_TO_TOP_IF_EXISTS 0x0001
 #define UFHF_KEEP_EDIT_TEXT        0x0002
@@ -1590,18 +1593,16 @@ static void cutEditText(HWND hEdit, BOOL bCutAfterCaret)
 
 static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD dwOptFlags[])
 {
-    EDITINFO  ei;
+    HWND hWndEdit;
 
     g_bWordJustSelectedByFnd = FALSE;
 
-    ei.hWndEdit = NULL;
-    SendMessage( g_Plugin.hMainWnd,
-      AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-    if ( ei.hWndEdit )
+    hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+    if ( hWndEdit )
     {
         CHARRANGE_X cr = { 0, 0 };
 
-        SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+        SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
         if ( cr.cpMin != cr.cpMax )
         {
             if ( cr.cpMax >= cr.cpMin + MAX_TEXT_SIZE )
@@ -1614,7 +1615,7 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
                 trA.chrg.cpMin = cr.cpMin;
                 trA.chrg.cpMax = cr.cpMax;
                 trA.lpstrText = (LPSTR) szTextAW;
-                SendMessageA( ei.hWndEdit, EM_GETTEXTRANGE_X, 0, (LPARAM) &trA );
+                SendMessageA( hWndEdit, EM_GETTEXTRANGE_X, 0, (LPARAM) &trA );
                 if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] ||
                      dwOptFlags[OPTF_SRCH_USE_REGEXP] )
                 {
@@ -1688,7 +1689,7 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
                 trW.chrg.cpMin = cr.cpMin;
                 trW.chrg.cpMax = cr.cpMax;
                 trW.lpstrText = (LPWSTR) szTextAW;
-                SendMessageW( ei.hWndEdit, EM_GETTEXTRANGE_X, 0, (LPARAM) &trW );
+                SendMessageW( hWndEdit, EM_GETTEXTRANGE_X, 0, (LPARAM) &trW );
                 if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] ||
                      dwOptFlags[OPTF_SRCH_USE_REGEXP] )
                 {
@@ -2916,6 +2917,122 @@ INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam)
     return 0;
 }
 
+static BOOL getEditorColors(COLORREF* pcrTextColor, COLORREF* pcrBkgndColor)
+{
+    PLUGINFUNCTION* pf;
+    int nValuesRead;
+
+    if ( g_Plugin.bOldWindows )
+        return FALSE;
+
+    nValuesRead = 0;
+    pf = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd, AKD_DLLFINDW, (WPARAM) L"Coder::HighLight", 0 );
+
+    if ( pf && pf->bRunning )
+    {
+        struct sCallParams
+        {
+            UINT_PTR dwStructSize;
+            INT_PTR nAction;
+            HWND hEditWnd;
+            LPVOID hEditDoc;
+            LPCWSTR pszVarName;
+            LPWSTR pszVarValue;
+            int* pnVarValueLen;
+        };
+
+        PLUGINCALLSENDW pcs;
+        struct sCallParams callParams;
+        COLORREF crColor;
+        int nValueLen;
+        WCHAR szValue[64];
+
+        nValueLen = 0;
+        szValue[0] = 0;
+        callParams.dwStructSize = sizeof(callParams);
+        callParams.nAction = 22; // DLLA_CODER_GETVARIABLE
+        callParams.hEditWnd = GetWndEdit(g_Plugin.hMainWnd);
+        callParams.hEditDoc = NULL;
+        callParams.pszVarName = L"HighLight_BasicTextColor";
+        callParams.pszVarValue = szValue;
+        callParams.pnVarValueLen = &nValueLen;
+
+        pcs.pFunction = L"Coder::Settings";
+        pcs.lParam = (LPARAM) &callParams;
+        pcs.dwSupport = 0;
+
+        SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcs );
+        if ( nValueLen != 0 )
+        {
+            if ( szValue[0] == _T('#') && nValueLen >= 7 )
+            {
+                crColor = (COLORREF) xhextoiW(szValue + 1);
+                *pcrTextColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
+                ++nValuesRead;
+            }
+        }
+
+        nValueLen = 0;
+        szValue[0] = 0;
+        callParams.pszVarName = L"HighLight_BasicBkColor";
+
+        pcs.pFunction = L"Coder::Settings";
+        pcs.lParam = (LPARAM) &callParams;
+        pcs.dwSupport = 0;
+
+        SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcs );
+        if ( nValueLen != 0 )
+        {
+            if ( szValue[0] == _T('#') && nValueLen >= 7 )
+            {
+                crColor = (COLORREF) xhextoiW(szValue + 1);
+                *pcrBkgndColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
+                ++nValuesRead;
+            }
+        }
+    }
+
+    return (nValuesRead == 2);
+}
+
+void qsearchDlgApplyEditorColors()
+{
+    COLORREF crTextColor;
+    COLORREF crBkgndColor;
+    BOOL bColorChanged;
+
+    bColorChanged = FALSE;
+
+    if ( !g_Options.dwUseEditorColors || !getEditorColors(&crTextColor, &crBkgndColor) )
+    {
+        crTextColor = GetSysColor(COLOR_WINDOWTEXT);
+        crBkgndColor = GetSysColor(COLOR_WINDOW);
+    }
+
+    if ( g_QSearchDlg.crTextColor != crTextColor )
+    {
+        g_QSearchDlg.crTextColor = crTextColor;
+        bColorChanged = TRUE;
+    }
+
+    if ( g_QSearchDlg.crBkgndColor != crBkgndColor )
+    {
+        g_QSearchDlg.crBkgndColor = crBkgndColor;
+        if ( g_QSearchDlg.hBkgndBrush )
+        {
+            DeleteObject(g_QSearchDlg.hBkgndBrush);
+        }
+        g_QSearchDlg.hBkgndBrush = CreateSolidBrush(g_QSearchDlg.crBkgndColor);
+        bColorChanged = TRUE;
+    }
+
+    if ( bColorChanged && g_QSearchDlg.hFindEdit && IsWindowVisible(g_QSearchDlg.hFindEdit) )
+    {
+        InvalidateRect(g_QSearchDlg.hFindEdit, NULL, TRUE);
+        UpdateWindow(g_QSearchDlg.hFindEdit);
+    }
+}
+
 static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
 {
     UINT nPickedUp = 0;
@@ -3428,16 +3545,15 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 if ( GetKeyState(VK_CONTROL) & 0x80 ) // Ctrl+Tab, Ctrl+Shift+Tab, ...
                 {
-                    EDITINFO ei;
+                    HWND hWndEdit;
 
-                    ei.hWndEdit = 0;
-                    SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
-                    if ( ei.hWndEdit )
+                    hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+                    if ( hWndEdit )
                     {
                         if ( g_Plugin.bOldWindows )
-                            PostMessageA(ei.hWndEdit, WM_KEYDOWN, wParam, lParam);
+                            PostMessageA(hWndEdit, WM_KEYDOWN, wParam, lParam);
                         else
-                            PostMessageW(ei.hWndEdit, WM_KEYDOWN, wParam, lParam);
+                            PostMessageW(hWndEdit, WM_KEYDOWN, wParam, lParam);
                         return 1;
                     }
                 }
@@ -3518,7 +3634,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             if ( !g_QSearchDlg.hFindEdit )
             {
-                g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg);
+                g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg, &g_QSearchDlg.hFindListBox);
             }
             if ( g_Plugin.nDockedDlgIsWaitingForOnStart == 0 )
             {
@@ -3536,44 +3652,84 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         {
             if ( g_QSearchDlg.hFindEdit == (HWND) lParam )
             {
-                int nBkColor = COLOR_BTNFACE; // normal inactive
+                HBRUSH   hBkBrush;
+                COLORREF crBkColor;
+                COLORREF crTextColor;
+
                 if ( qs_bEditIsActive || qs_bBtnFindIsFocused )
                 {
                     if ( !qs_bEditNotFound )
                     {
                         if ( (!qs_bEditIsEOF) || (g_Options.colorEOF == RGB(0xFF,0xFF,0xFF)) )
-                            nBkColor = COLOR_WINDOW; // normal active
+                        {
+                            // normal active
+                            if ( g_QSearchDlg.hBkgndBrush )
+                            {
+                                hBkBrush = g_QSearchDlg.hBkgndBrush;
+                                crBkColor = g_QSearchDlg.crBkgndColor;
+                                crTextColor = g_QSearchDlg.crTextColor;
+                            }
+                            else
+                            {
+                                hBkBrush = GetSysColorBrush(COLOR_WINDOW);
+                                crBkColor = GetSysColor(COLOR_WINDOW);
+                                crTextColor = GetSysColor(COLOR_WINDOWTEXT);
+                            }
+                        }
                         else
-                            nBkColor = 0x7FFE; // EOF active
+                        {
+                            // EOF active
+                            if ( hTextEOFBrush )
+                                hBkBrush = hTextEOFBrush;
+                            else if ( g_QSearchDlg.hBkgndBrush )
+                                hBkBrush = g_QSearchDlg.hBkgndBrush;
+                            else
+                                hBkBrush = GetSysColorBrush(COLOR_WINDOW);
+                            crBkColor = g_Options.colorEOF;
+                            crTextColor = g_QSearchDlg.crTextColor;
+                        }
                     }
-                    else
+                    else // not found
                     {
                         if ( !qs_bEditNotRegExp )
-                            nBkColor = 0x7FFF; // not found active
+                        {
+                            // not found active
+                            hBkBrush = hTextNotFoundBrush;
+                            crBkColor = g_Options.colorNotFound;
+                            crTextColor = g_QSearchDlg.crTextColor;
+                        }
                         else
-                            nBkColor = 0x7FFD; // not regexp
+                        {
+                            // not regexp
+                            hBkBrush = hTextNotRegExpBrush;
+                            crBkColor = g_Options.colorNotRegExp;
+                            crTextColor = g_QSearchDlg.crTextColor;
+                        }
                     }
                 }
-                SetTextColor( (HDC) wParam, GetSysColor(COLOR_WINDOWTEXT) );
-                SetBkMode( (HDC) wParam, TRANSPARENT );
-                switch ( nBkColor )
+                else // not active
                 {
-                    case 0x7FFF:
-                        SetBkColor( (HDC) wParam, g_Options.colorNotFound );
-                        return (LRESULT) hTextNotFoundBrush;
-
-                    case 0x7FFE:
-                        SetBkColor( (HDC) wParam, g_Options.colorEOF );
-                        return (LRESULT) hTextEOFBrush;
-
-                    case 0x7FFD:
-                        SetBkColor( (HDC) wParam, g_Options.colorNotRegExp );
-                        return (LRESULT) hTextNotRegExpBrush;
-
-                    default:
-                        SetBkColor( (HDC) wParam, GetSysColor(nBkColor) );
-                        return (LRESULT) GetSysColorBrush(nBkColor);
+                    // normal inactive
+                    hBkBrush = GetSysColorBrush(COLOR_BTNFACE);
+                    crBkColor = GetSysColor(COLOR_BTNFACE);
+                    crTextColor = GetSysColor(COLOR_WINDOWTEXT);
                 }
+
+                SetTextColor( (HDC) wParam, crTextColor );
+                SetBkMode( (HDC) wParam, TRANSPARENT );
+                SetBkColor( (HDC) wParam, crBkColor );
+                return (LRESULT) hBkBrush;
+            }
+            break;
+        }
+        case WM_CTLCOLORLISTBOX:
+        {
+            if ( g_QSearchDlg.hFindListBox == (HWND) lParam )
+            {
+                SetTextColor( (HDC) wParam, g_QSearchDlg.hBkgndBrush ? g_QSearchDlg.crTextColor : GetSysColor(COLOR_WINDOWTEXT) );
+                SetBkMode( (HDC) wParam, TRANSPARENT );
+                SetBkColor( (HDC) wParam, g_QSearchDlg.hBkgndBrush ? g_QSearchDlg.crBkgndColor : GetSysColor(COLOR_WINDOW) );
+                return (LRESULT) ( g_QSearchDlg.hBkgndBrush ? g_QSearchDlg.hBkgndBrush : GetSysColorBrush(COLOR_WINDOW) );
             }
             break;
         }
@@ -3933,7 +4089,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 }
 
                 // update hFindEdit
-                g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg);
+                g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg, &g_QSearchDlg.hFindListBox);
                 // set focus if needed
                 if ( isFindEditFocused )
                     SetFocus(g_QSearchDlg.hFindEdit);
@@ -3980,7 +4136,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             g_QSearchDlg.bIsQSearchingRightNow = FALSE;
             g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
             g_QSearchDlg.hDlg = hDlg;
-            g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg);
+            g_QSearchDlg.hFindEdit = qsearchGetFindEdit(hDlg, &g_QSearchDlg.hFindListBox);
 
             if ( hChMatchCase )
             {
@@ -4000,6 +4156,8 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             qs_bHotKeyPressedOnShow = FALSE;
             qs_bBtnFindIsFocused = FALSE;
             qs_dwHotKey = 0;
+
+            qsearchDlgApplyEditorColors();
 
             hTextNotFoundBrush = CreateSolidBrush(g_Options.colorNotFound);
             hTextNotRegExpBrush = CreateSolidBrush(g_Options.colorNotRegExp);
@@ -4412,6 +4570,11 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
     {
         DeleteObject(hBrush3);
     }
+    if ( g_QSearchDlg.hBkgndBrush )
+    {
+        DeleteObject(g_QSearchDlg.hBkgndBrush);
+        g_QSearchDlg.hBkgndBrush = NULL;
+    }
     if ( hPopupMenuLoaded )
     {
         DestroyMenu(hPopupMenuLoaded);
@@ -4448,7 +4611,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
 {
     BOOL bChangeSelection = !IsWindowVisible(hDlg);
 
-    qsearchDoSetNotFound( qsearchGetFindEdit(hDlg), FALSE, FALSE, FALSE );
+    qsearchDoSetNotFound( qsearchGetFindEdit(hDlg, NULL), FALSE, FALSE, FALSE );
     qsSetInfoEmpty();
 
     if ( bShow )
@@ -4512,7 +4675,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     if ( bShow )
     {
         BOOL bGotSelectedText = FALSE;
-        HWND hEdit = qsearchGetFindEdit(hDlg);
+        HWND hEdit = qsearchGetFindEdit(hDlg, NULL);
 
         if ( uShowFlags & QS_SF_CANPICKUPSELTEXT )
         {
@@ -4910,7 +5073,7 @@ static void CALLBACK CountAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, D
 // searches for g_QSearchDlg.szFindTextW
 void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], tQSFindAll* pFindAll)
 {
-    EDITINFO ei;
+    HWND     hWndEdit;
     HWND     hDlgItm;
     BOOL     bNotFound = FALSE;
     BOOL     bNotRegExp = FALSE;
@@ -5030,9 +5193,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         }
     }
 
-    ei.hWndEdit = 0;
-    SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
-    if ( !ei.hWndEdit )
+    hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+    if ( !hWndEdit )
     {
         return;
     }
@@ -5098,9 +5260,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         {
             CHARRANGE_X cr = {0, 0};
 
-            SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+            SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
             cr.cpMax = cr.cpMin;
-            SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+            SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
         }
         if ( dwOptFlags[OPTF_SRCH_FROM_BEGINNING] && ((dwParams & QSEARCH_NOFINDBEGIN) != QSEARCH_NOFINDBEGIN) )
             dwSearchFlags |= FR_BEGINNING;
@@ -5142,11 +5304,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 if ( !bSearchEx )
                 {
                     iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                      AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
+                      AKD_TEXTFINDA, (WPARAM) hWndEdit, (LPARAM) &tfA );
                 }
                 else
                 {
-                    iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
+                    iFindResult = doFindTextExA( hWndEdit, &tfA ) ;
                 }
             }
             if ( iFindResult < 0 )
@@ -5190,10 +5352,10 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         qs_nEditEOF = srchEOF;
                     }
 
-                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
+                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != hWndEdit) )
                         SetFocus(hEdit);
                     else
-                        SetFocus(ei.hWndEdit);
+                        SetFocus(hWndEdit);
                 }
                 else
                 {
@@ -5209,11 +5371,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         INT_X       pos = 0;
                         CHARRANGE_X cr = {0, 0};
 
-                        SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+                        SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                         pos = cr.cpMin;
                         cr.cpMin = -1;
                         cr.cpMax = -1;
-                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                        SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                         if ( tfA.dwFlags & FR_BEGINNING )
                         {
                             tfA.dwFlags -= FR_BEGINNING;
@@ -5221,17 +5383,17 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         if ( !bSearchEx )
                         {
                             iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                              AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
+                              AKD_TEXTFINDA, (WPARAM) hWndEdit, (LPARAM) &tfA );
                         }
                         else
                         {
-                            iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
+                            iFindResult = doFindTextExA( hWndEdit, &tfA ) ;
                         }
                         if ( iFindResult < 0 )
                         {
                             cr.cpMin = pos;
                             cr.cpMax = pos;
-                            SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                            SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
                     }
@@ -5244,11 +5406,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                             if ( !bSearchEx )
                             {
                                 iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                                  AKD_TEXTFINDA, (WPARAM) ei.hWndEdit, (LPARAM) &tfA );
+                                  AKD_TEXTFINDA, (WPARAM) hWndEdit, (LPARAM) &tfA );
                             }
                             else
                             {
-                                iFindResult = doFindTextExA( ei.hWndEdit, &tfA ) ;
+                                iFindResult = doFindTextExA( hWndEdit, &tfA ) ;
                             }
                             if ( iFindResult < 0 )
                             {
@@ -5305,11 +5467,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 if ( !bSearchEx )
                 {
                     iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                      AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
+                      AKD_TEXTFINDW, (WPARAM) hWndEdit, (LPARAM) &tfW );
                 }
                 else
                 {
-                    iFindResult = doFindTextExW( ei.hWndEdit, &tfW ) ;
+                    iFindResult = doFindTextExW( hWndEdit, &tfW ) ;
                 }
             }
             if ( iFindResult < 0 )
@@ -5353,10 +5515,10 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         qs_nEditEOF = srchEOF;
                     }
 
-                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != ei.hWndEdit) )
+                    if ( IsWindowVisible(g_QSearchDlg.hDlg) && (hWndFocused != hWndEdit) )
                         SetFocus(hEdit);
                     else
-                        SetFocus(ei.hWndEdit);
+                        SetFocus(hWndEdit);
                 }
                 else
                 {
@@ -5372,11 +5534,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         INT_X       pos = 0;
                         CHARRANGE_X cr = {0, 0};
 
-                        SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+                        SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                         pos = cr.cpMin;
                         cr.cpMin = -1;
                         cr.cpMax = -1;
-                        SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                        SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                         if ( tfW.dwFlags & FR_BEGINNING )
                         {
                             tfW.dwFlags -= FR_BEGINNING;
@@ -5384,17 +5546,17 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         if ( !bSearchEx )
                         {
                             iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                              AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
+                              AKD_TEXTFINDW, (WPARAM) hWndEdit, (LPARAM) &tfW );
                         }
                         else
                         {
-                            iFindResult = doFindTextExW( ei.hWndEdit, &tfW );
+                            iFindResult = doFindTextExW( hWndEdit, &tfW );
                         }
                         if ( iFindResult < 0 )
                         {
                             cr.cpMin = pos;
                             cr.cpMax = pos;
-                            SendMessage( ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+                            SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
                     }
@@ -5407,11 +5569,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                             if ( !bSearchEx )
                             {
                                 iFindResult = (INT_X) SendMessage( g_Plugin.hMainWnd,
-                                  AKD_TEXTFINDW, (WPARAM) ei.hWndEdit, (LPARAM) &tfW );
+                                  AKD_TEXTFINDW, (WPARAM) hWndEdit, (LPARAM) &tfW );
                             }
                             else
                             {
-                                iFindResult = doFindTextExW( ei.hWndEdit, &tfW );
+                                iFindResult = doFindTextExW( hWndEdit, &tfW );
                             }
                             if ( iFindResult < 0 )
                             {
@@ -5434,7 +5596,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         else // pFindAll
         {
             const FRAMEDATA*     pFrameInitial;   // all files
-            HWND                 hWndEdit;
+            HWND                 hFrameWndEdit;
             unsigned int         nCurrentMatches; // current (initial) file
             BOOL                 bAllFiles;
             tFindAllContext      FindContext;
@@ -5557,9 +5719,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         break;
                 }
 
-                hWndEdit = FindContext.pFrame->ei.hWndEdit;
-                SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
-                SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
+                hFrameWndEdit = FindContext.pFrame->ei.hWndEdit;
+                SendMessageW( hFrameWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
+                SendMessageW( hFrameWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
 
                 FindContext.nOccurrences = 0;
                 FindContext.nLastLine = -1;
@@ -5567,7 +5729,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 pFindAll->ShowFindResults.pfnInit(&FindContext, &pFindAll->tempBuf);
 
-                while ( SendMessageW(hWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
+                while ( SendMessageW(hFrameWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
                 {
                     ++FindContext.nOccurrences;
                     ++FindContext.nTotalOccurrences;
@@ -5662,12 +5824,12 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             int         nLine1st;
             CHARRANGE_X cr = { 0, 0 };
 
-            SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
-            nLine = (int) SendMessage(ei.hWndEdit, EM_EXLINEFROMCHAR, 0, cr.cpMin);
-            nLine1st = (int) SendMessage(ei.hWndEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
+            SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+            nLine = (int) SendMessage(hWndEdit, EM_EXLINEFROMCHAR, 0, cr.cpMin);
+            nLine1st = (int) SendMessage(hWndEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
             if ( nLine < nLine1st )
             {
-                SendMessage(ei.hWndEdit, EM_LINESCROLL, 0, nLine - nLine1st);
+                SendMessage(hWndEdit, EM_LINESCROLL, 0, nLine - nLine1st);
             }
 
             if ( (dwParams & QSEARCH_NEXT) ||
@@ -5754,17 +5916,14 @@ void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[], DWORD dwHighl
         if ( (dwHighlightCondition == QHC_ALWAYS) ||
              isCheckBoxChecked(hDlg, IDC_CH_HIGHLIGHTALL) )
         {
-            EDITINFO  ei;
+            HWND  hWndEdit;
 
-            ei.hWndEdit = NULL;
-            SendMessage( g_Plugin.hMainWnd,
-            AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-
-            if ( ei.hWndEdit )
+            hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+            if ( hWndEdit )
             {
                 CHARRANGE_X cr = { 0, 0 };
 
-                SendMessage( ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+                SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                 if ( cr.cpMin != cr.cpMax )
                 {
                     DLLECHIGHLIGHT_MARK hlParams;
@@ -5915,7 +6074,7 @@ void qsearchDoTryUnhighlightAll(void)
     }
 }
 
-HWND qsearchGetFindEdit(HWND hDlg)
+HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox)
 {
     HWND hEdit;
 
@@ -5928,10 +6087,24 @@ HWND qsearchGetFindEdit(HWND hDlg)
         pt.x = 5;
         pt.y = 5;
         hEdit = ChildWindowFromPoint(hCombo, pt);
+
+        if ( phListBox )
+        {
+            COMBOBOXINFO info;
+
+            x_zero_mem(&info, sizeof(info));
+            info.cbSize = sizeof(info);
+            if ( SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM) &info) )
+                *phListBox = info.hwndList;
+            else
+                *phListBox = NULL;
+        }
     }
     else
     {
         hEdit = GetDlgItem(hDlg, IDC_ED_FINDTEXT);
+        if ( phListBox )
+            *phListBox = NULL;
     }
 
     return hEdit;

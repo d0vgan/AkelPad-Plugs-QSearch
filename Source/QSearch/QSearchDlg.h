@@ -105,6 +105,7 @@
     typedef struct tQSearchDlgState {
         HWND             hDlg;
         HWND             hFindEdit;
+        HWND             hFindListBox;
         HWND             hBtnFindNext;
         HWND             hBtnFindPrev;
         HWND             hBtnFindAll;
@@ -120,6 +121,9 @@
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
         UINT             uSearchOrigin; // see QS_SO_*
         UINT             uWmShowFlags; // see QS_SF_*
+        COLORREF         crTextColor;
+        COLORREF         crBkgndColor;
+        HBRUSH           hBkgndBrush;
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
@@ -133,6 +137,7 @@ BOOL qsearchIsSearchFlagsBeingSaved(void);
 BOOL qsearchIsSavingHistoryToStdLocation(void);
 
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
+void qsearchDlgApplyEditorColors();
 
 //---------------------------------------------------------------------------
 #endif

@@ -200,12 +200,12 @@ static int getFindAllOutputMode(HWND hDlg, int* pnBefore, int* pnAfter)
     szNum[0] = 0;
     hEdBefore = GetDlgItem(hDlg, IDC_ED_FA_BEFORE);
     GetWindowTextW(hEdBefore, szNum, 7);
-    *pnBefore = xatoiW(szNum, NULL);
+    *pnBefore = (int) xatoiW(szNum, NULL);
 
     szNum[0] = 0;
     hEdAfter = GetDlgItem(hDlg, IDC_ED_FA_AFTER);
     GetWindowTextW(hEdAfter, szNum, 7);
-    *pnAfter = xatoiW(szNum, NULL);
+    *pnAfter = (int) xatoiW(szNum, NULL);
 
     return nMode;
 }

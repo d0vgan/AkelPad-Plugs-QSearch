@@ -78,6 +78,7 @@ void CloseLog(void)
 #define  DEFAULT_FINDALL_COUNT_DELAY 400
 #define  DEFAULT_EDIT_MINWIDTH       0
 #define  DEFAULT_EDIT_MAXWIDTH       640
+#define  DEFAULT_USE_EDITOR_COLORS   0
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
@@ -186,6 +187,7 @@ void CloseLog(void)
         pOptions->dwFindAllCountDelay = WRONG_DWORD_VALUE;
         pOptions->dwEditMinWidth = WRONG_DWORD_VALUE;
         pOptions->dwEditMaxWidth = WRONG_DWORD_VALUE;
+        pOptions->dwUseEditorColors = WRONG_DWORD_VALUE;
         initializeFRP(&pOptions->LogOutputFRP);
         initializeFRP(&pOptions->FileOutputFRP);
     }
@@ -233,6 +235,7 @@ void CloseLog(void)
              (pOpt1->dwFindAllCountDelay !=  pOpt2->dwFindAllCountDelay) ||
              (pOpt1->dwEditMinWidth      !=  pOpt2->dwEditMinWidth)      ||
              (pOpt1->dwEditMaxWidth      !=  pOpt2->dwEditMaxWidth)      ||
+             (pOpt1->dwUseEditorColors   !=  pOpt2->dwUseEditorColors)   ||
              !equalFRP(&pOpt1->LogOutputFRP,  &pOpt2->LogOutputFRP)      ||
              !equalFRP(&pOpt1->FileOutputFRP, &pOpt2->FileOutputFRP) )
         {
@@ -297,7 +300,8 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_AFTER     45 */  "fileoutput_frp_after",
     /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  "fileoutput_frp_highlight",
     /* OPT_EDIT_MINWIDTH            47 */  "edit_minwidth",
-    /* OPT_EDIT_MAXWIDTH            48 */  "edit_maxwidth"
+    /* OPT_EDIT_MAXWIDTH            48 */  "edit_maxwidth",
+    /* OPT_USE_EDITOR_COLORS        49 */  "use_editor_colors"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -349,7 +353,8 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_AFTER     45 */  L"fileoutput_frp_after",
     /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  L"fileoutput_frp_highlight",
     /* OPT_EDIT_MINWIDTH            47 */  L"edit_minwidth",
-    /* OPT_EDIT_MAXWIDTH            48 */  L"edit_maxwidth"
+    /* OPT_EDIT_MAXWIDTH            48 */  L"edit_maxwidth",
+    /* OPT_USE_EDITOR_COLORS        49 */  L"use_editor_colors"
 };
 
 
@@ -762,7 +767,7 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
     doQSearch(pd, TRUE);
     if ( g_QSearchDlg.hDlg )
     {
-        EDITINFO ei;
+        HWND hWndEdit;
         DWORD dwAdditionalFlags = 0;
         UINT uSelectMode = SELECT_MODE_NONE;
         UINT nWordSelected = 0;
@@ -807,11 +812,10 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
             }
             SendMessage( g_QSearchDlg.hDlg, QSM_FINDALL, g_Options.dwFindAllMode | dwAdditionalFlags, 0 );
 
-            ei.hWndEdit = NULL;
-            SendMessage( g_Plugin.hMainWnd, AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-            if ( ei.hWndEdit )
+            hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+            if ( hWndEdit )
             {
-               SetFocus(ei.hWndEdit);
+               SetFocus(hWndEdit);
             }
         }
     }
@@ -1171,6 +1175,16 @@ void Uninitialize(void)
 #endif
 }
 
+HWND GetWndEdit(HWND hMainWnd)
+{
+    EDITINFO ei;
+
+    ei.hWndEdit = NULL;
+    SendMessage( hMainWnd, AKD_GETEDITINFO, 0, (LPARAM) &ei );
+
+    return ei.hWndEdit;
+}
+
 #define xbr_diff(a, b) (((a) > (b)) ? ((a) - (b)) : ((b) - (a)))
 
 static BOOL GetLineAtIndex(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf);
@@ -1271,6 +1285,10 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
             }
             break;
+
+        case WM_PAINT:
+            qsearchDlgApplyEditorColors();
+            break;
     }
 
     if ( g_Plugin.pEditProcData && g_Plugin.pEditProcData->NextProc )
@@ -1311,14 +1329,12 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                             if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
                             {
-                                EDITINFO  ei;
+                                HWND hWndEdit;
 
-                                ei.hWndEdit = NULL;
-                                SendMessage( g_Plugin.hMainWnd,
-                                  AKD_GETEDITINFO, (WPARAM) NULL, (LPARAM) &ei );
-                                if ( ei.hWndEdit )
+                                hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+                                if ( hWndEdit )
                                 {
-                                    if ( doSelectCurrentWord(ei.hWndEdit, SELECT_MODE_F3, NULL) & SCW_WORDSELECTED )
+                                    if ( doSelectCurrentWord(hWndEdit, SELECT_MODE_F3, NULL) & SCW_WORDSELECTED )
                                     {
                                         return 0; // just select current word - and nothing more
                                     }
@@ -1468,6 +1484,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             if ( g_QSearchDlg.hDlg )
             {
+                qsearchDlgApplyEditorColors();
                 PostMessage(g_QSearchDlg.hDlg, QSM_CHECKHIGHLIGHT, 0, 0);
             }
             break;
@@ -1670,6 +1687,9 @@ void ReadOptions(void)
             g_Options.dwEditMaxWidth = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_EDIT_MAXWIDTH], WRONG_DWORD_VALUE );
 
+            g_Options.dwUseEditorColors = readDwordA( hOptions,
+              CSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1784,6 +1804,9 @@ void ReadOptions(void)
 
             g_Options.dwEditMaxWidth = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH], WRONG_DWORD_VALUE );
+
+            g_Options.dwUseEditorColors = readDwordW( hOptions,
+              CWSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -1947,6 +1970,9 @@ void ReadOptions(void)
 
     if ( g_Options.dwEditMaxWidth == WRONG_DWORD_VALUE )
         g_Options.dwEditMaxWidth = DEFAULT_EDIT_MAXWIDTH;
+
+    if ( g_Options.dwUseEditorColors == WRONG_DWORD_VALUE )
+        g_Options.dwUseEditorColors = DEFAULT_USE_EDITOR_COLORS;
 }
 
 void SaveOptions(void)
@@ -2204,6 +2230,12 @@ void SaveOptions(void)
                       g_Options.dwEditMaxWidth );
                 }
 
+                if ( g_Options0.dwUseEditorColors != g_Options.dwUseEditorColors )
+                {
+                    writeDwordA( hOptions, CSZ_OPTIONS[OPT_USE_EDITOR_COLORS],
+                      g_Options.dwUseEditorColors );
+                }
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -2428,6 +2460,12 @@ void SaveOptions(void)
                 {
                     writeDwordW( hOptions, CWSZ_OPTIONS[OPT_EDIT_MAXWIDTH],
                       g_Options.dwEditMaxWidth );
+                }
+
+                if ( g_Options0.dwUseEditorColors != g_Options.dwUseEditorColors )
+                {
+                    writeDwordW( hOptions, CWSZ_OPTIONS[OPT_USE_EDITOR_COLORS],
+                      g_Options.dwUseEditorColors );
                 }
 
                 // all options have been saved

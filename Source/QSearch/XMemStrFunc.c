@@ -194,19 +194,19 @@ INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext)
     INT_PTR nNumber = 0;
     BOOL bMinus = FALSE;
 
-    while (*wpStr == ' ' || *wpStr == '\t')
+    while (*wpStr == L' ' || *wpStr == L'\t')
         ++wpStr;
-    if (*wpStr == '+')
+    if (*wpStr == L'+')
         ++wpStr;
-    else if (*wpStr == '-')
+    else if (*wpStr == L'-')
     {
         bMinus = TRUE;
         ++wpStr;
     }
 
-    while (*wpStr >= '0' && *wpStr <= '9')
+    while (*wpStr >= L'0' && *wpStr <= L'9')
     {
-        nNumber = (nNumber * 10) + (*wpStr - '0');
+        nNumber = (nNumber * 10) + (*wpStr - L'0');
         ++wpStr;
     }
     if (bMinus == TRUE) nNumber = 0 - nNumber;
@@ -241,6 +241,36 @@ int xitoaW(INT_PTR nNumber, wchar_t *wszStr)
     while (--a >= 0) wszStr[b++] = wszReverse[a];
     wszStr[b] = L'\0';
     return b;
+}
+
+INT_PTR xhextoiW(const wchar_t *wpHexStr)
+{
+    INT_PTR nNumber = 0;
+    INT_PTR nDigit;
+    wchar_t ch;
+
+    while (*wpHexStr == L' ' || *wpHexStr == L'\t')
+        ++wpHexStr;
+    if (*wpHexStr == L'0' && (*(wpHexStr+1) == L'x' || *(wpHexStr+1) == L'X'))
+        wpHexStr += 2;
+
+    for (;;)
+    {
+        ch = *wpHexStr;
+        if (ch >= L'0' && ch <= L'9')
+            nDigit = ch - L'0';
+        else if (ch >= L'a' && ch <= L'f')
+            nDigit = ch - L'a' + 10;
+        else if (ch >= L'A' && ch <= L'F')
+            nDigit = ch - L'A' + 10;
+        else
+            break;
+        nNumber *= 16;
+        nNumber += nDigit;
+        ++wpHexStr;
+    }
+
+    return nNumber;
 }
 
 // tDynamicBuffer

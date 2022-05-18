@@ -30,6 +30,8 @@ int  x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen);
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext);
 int xitoaW(INT_PTR nNumber, wchar_t *wszStr);
 
+INT_PTR xhextoiW(const wchar_t *wpHexStr);
+
 // tDynamicBuffer
 typedef struct sDynamicBuffer {
     void* ptr; // pointer to the allocated memory
