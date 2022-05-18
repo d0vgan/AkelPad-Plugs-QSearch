@@ -1,5 +1,60 @@
 #include "XMemStrFunc.h"
 
+// Special form of memcmp implementation to avoid
+// compiler from replace this code with memcpy call.
+int x_mem_cmp(const void *pSrc1, const void *pSrc2, UINT_PTR nBytes)
+{
+    if ( pSrc1 != pSrc2 )
+    {
+        const unsigned int* pSrcUint1 = (const unsigned int *) pSrc1;
+        const unsigned int* pSrcUint2 = (const unsigned int *) pSrc2;
+
+        if ( nBytes >= sizeof(unsigned int) )
+        {
+            for ( ; ; )
+            {
+                if ( *pSrcUint1 != *pSrcUint2 )
+                    return ( *pSrcUint1 < *pSrcUint2 ? (-1) : 1 );
+
+                nBytes -= sizeof(unsigned int);
+                if ( nBytes < sizeof(unsigned int) )
+                {
+                    pSrc2 = NULL;
+                    break;
+                }
+                ++pSrcUint1;
+                ++pSrcUint2;
+            }
+        }
+
+        if ( nBytes != 0 )
+        {
+            const unsigned char* pSrcByte1;
+            const unsigned char* pSrcByte2;
+
+            if ( pSrc2 == NULL )
+            {
+                ++pSrcUint1;
+                ++pSrcUint2;
+            }
+            pSrcByte1 = (const unsigned char *) pSrcUint1;
+            pSrcByte2 = (const unsigned char *) pSrcUint2;
+
+            for ( ; ; )
+            {
+                if ( *pSrcByte1 != *pSrcByte2 )
+                    return ( *pSrcByte1 < *pSrcByte2 ? (-1) : 1 );
+                if ( --nBytes == 0 )
+                    break;
+                ++pSrcByte1;
+                ++pSrcByte2;
+            }
+        }
+    }
+
+    return 0; // equal
+}
+
 // Special form of memcpy implementation to avoid
 // compiler from replace this code with memcpy call.
 void x_mem_cpy(void *pDest, const void *pSrc, UINT_PTR nBytes)

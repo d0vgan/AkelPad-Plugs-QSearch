@@ -131,26 +131,12 @@ void CloseLog(void)
 
     BOOL equalFRP(const FindResultsOutputPolicy* pFRP1, const FindResultsOutputPolicy* pFRP2)
     {
-        if ( (pFRP1->nMode      != pFRP2->nMode)   ||
-             (pFRP1->nBefore    != pFRP2->nBefore) ||
-             (pFRP1->nAfter     != pFRP2->nAfter)  ||
-             (pFRP1->nHighlight != pFRP2->nHighlight) )
-        {
-            return FALSE;
-        }
-        return TRUE;
+        return ( x_mem_cmp(pFRP1, pFRP2, sizeof(FindResultsOutputPolicy)) == 0 );
     }
 
     BOOL equalRect(const RECT* pRect1, const RECT* pRect2)
     {
-        if ( (pRect1->left   != pRect2->left)  ||
-             (pRect1->top    != pRect2->top)   ||
-             (pRect1->right  != pRect2->right) ||
-             (pRect1->bottom != pRect2->bottom) )
-        {
-            return FALSE;
-        }
-        return TRUE;
+        return ( x_mem_cmp(pRect1, pRect2, sizeof(RECT)) == 0 );
     }
 
     void initializeOptions(QSearchOpt* pOptions)
@@ -204,45 +190,7 @@ void CloseLog(void)
 
     BOOL equalOptions(const QSearchOpt* pOpt1, const QSearchOpt* pOpt2)
     {
-        int i;
-        for ( i = 0; i < OPTF_COUNT; i++ )
-        {
-            if ( pOpt1->dwFlags[i] != pOpt2->dwFlags[i] )
-                return FALSE;
-        }
-
-        if ( !equalRect(&pOpt1->dockRect,   &pOpt2->dockRect)            ||
-             (pOpt1->colorNotFound       !=  pOpt2->colorNotFound)       ||
-             (pOpt1->colorNotRegExp      !=  pOpt2->colorNotRegExp)      ||
-             (pOpt1->colorEOF            !=  pOpt2->colorEOF)            ||
-             (pOpt1->colorHighlight      !=  pOpt2->colorHighlight)      ||
-             (pOpt1->dwHighlightMarkID   !=  pOpt2->dwHighlightMarkID)   ||
-             (pOpt1->dwHighlightState    !=  pOpt2->dwHighlightState)    ||
-             (pOpt1->dwUseAltHotkeys     !=  pOpt2->dwUseAltHotkeys)     ||
-             (pOpt1->dwAltMatchCase      !=  pOpt2->dwAltMatchCase)      ||
-             (pOpt1->dwAltWholeWord      !=  pOpt2->dwAltWholeWord)      ||
-             (pOpt1->dwAltSearchMode     !=  pOpt2->dwAltSearchMode)     ||
-             (pOpt1->dwAltHighlightAll   !=  pOpt2->dwAltHighlightAll)   ||
-             (pOpt1->dwFindHistoryItems  !=  pOpt2->dwFindHistoryItems)  ||
-             (pOpt1->dwHistorySave       !=  pOpt2->dwHistorySave)       ||
-             (pOpt1->dwNewUI             !=  pOpt2->dwNewUI)             ||
-             (pOpt1->dwSelectByF3        !=  pOpt2->dwSelectByF3)        ||
-             (pOpt1->dwSelectByFnd       !=  pOpt2->dwSelectByFnd)       ||
-             (pOpt1->dwSelectBySelFnd    !=  pOpt2->dwSelectBySelFnd)    ||
-             (pOpt1->dwAdjIncomplRegExp  !=  pOpt2->dwAdjIncomplRegExp)  ||
-             (pOpt1->dwFindAllMode       !=  pOpt2->dwFindAllMode)       ||
-             (pOpt1->dwFindAllResult     !=  pOpt2->dwFindAllResult)     ||
-             (pOpt1->dwFindAllCountDelay !=  pOpt2->dwFindAllCountDelay) ||
-             (pOpt1->dwEditMinWidth      !=  pOpt2->dwEditMinWidth)      ||
-             (pOpt1->dwEditMaxWidth      !=  pOpt2->dwEditMaxWidth)      ||
-             (pOpt1->dwUseEditorColors   !=  pOpt2->dwUseEditorColors)   ||
-             !equalFRP(&pOpt1->LogOutputFRP,  &pOpt2->LogOutputFRP)      ||
-             !equalFRP(&pOpt1->FileOutputFRP, &pOpt2->FileOutputFRP) )
-        {
-            return FALSE;
-        }
-
-        return TRUE;
+        return ( x_mem_cmp(pOpt1, pOpt2, sizeof(QSearchOpt)) == 0 );
     }
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearch options <<<<<<<<<<<<<<<<<<<<<<<< */
 
