@@ -1,7 +1,7 @@
 #include "XMemStrFunc.h"
 
 // Special form of memcmp implementation to avoid
-// compiler from replace this code with memcpy call.
+// compiler from replace this code with memcmp call.
 int x_mem_cmp(const void *pSrc1, const void *pSrc2, UINT_PTR nBytes)
 {
     if ( pSrc1 != pSrc2 )
@@ -109,41 +109,51 @@ void x_mem_cpy(void *pDest, const void *pSrc, UINT_PTR nBytes)
 // compiler from replace this code with memset call.
 void x_mem_set(void *pDest, unsigned int c, UINT_PTR nBytes)
 {
-    unsigned int* pDestUint = (unsigned int *) pDest;
+    c &= 0xFF;
 
-    if ( nBytes >= sizeof(unsigned int) )
+    if ( c != 0 )
     {
-        unsigned int nValue;
+        unsigned int* pDestUint = (unsigned int *) pDest;
 
-        if ( c != 0 )
+        if ( nBytes >= sizeof(unsigned int) )
         {
-            c &= 0xFF;
-            nValue = c + (c << 8) + (c << 16) + (c << 24);
+            unsigned int nValue = c + (c << 8) + (c << 16) + (c << 24);
+
+            for ( ; ; )
+            {
+                *pDestUint = nValue;
+                nBytes -= sizeof(unsigned int);
+                if ( nBytes < sizeof(unsigned int) )
+                {
+                    pDest = NULL;
+                    break;
+                }
+                ++pDestUint;
+            }
         }
-        else
-            nValue = 0;
 
-        for ( ; ; )
+        if ( nBytes != 0 )
         {
-            *pDestUint = nValue;
-            ++pDestUint;
-            nBytes -= sizeof(unsigned int);
-            if ( nBytes < sizeof(unsigned int) )
-                break;
+            unsigned char *pDestByte;
+
+            if ( pDest == NULL )
+            {
+                ++pDestUint;
+            }
+            pDestByte = (unsigned char *) pDestUint;
+
+            for ( ; ; )
+            {
+                *pDestByte = (unsigned char) c;
+                if ( --nBytes == 0 )
+                    break;
+                ++pDestByte;
+            }
         }
     }
-
-    if ( nBytes != 0 )
+    else
     {
-        unsigned char *pDestByte = (unsigned char *) pDestUint;
-
-        for ( ; ; )
-        {
-            *pDestByte = (unsigned char) c;
-            if ( --nBytes == 0 )
-                break;
-            ++pDestByte;
-        }
+        x_zero_mem(pDest, nBytes);
     }
 }
 
