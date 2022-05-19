@@ -352,6 +352,116 @@ static INT_PTR GetExtCallParam(LPARAM lParam, int nIndex)
     return 0;
 }
 
+typedef struct sDLGTEMPLATEEX_HEAD {
+    WORD      dlgVer;
+    WORD      signature;
+    DWORD     helpID;
+    DWORD     exStyle;
+    DWORD     style;
+    WORD      cDlgItems;
+    short     x;
+    short     y;
+    short     cx;
+    short     cy;
+    void*     pFurtherData;
+} DLGTEMPLATEEX_HEAD;
+
+static HWND createDlgExW(const PLUGINDATA* pd, int iddQSearch)
+{
+    // all this code is needed with the only purpose to add the DS_FIXEDSYS style...
+    HWND hDlg = NULL;
+    HRSRC hResSrc = FindResourceW(pd->hInstanceDLL, MAKEINTRESOURCEW(iddQSearch), (LPCWSTR) RT_DIALOG);
+    if ( hResSrc )
+    {
+        DWORD dwResSize = SizeofResource(pd->hInstanceDLL, hResSrc);
+        if ( dwResSize == sizeof(DLGTEMPLATE) || dwResSize >= sizeof(DLGTEMPLATEEX_HEAD) )
+        {
+            HGLOBAL hResLoaded = LoadResource(pd->hInstanceDLL, hResSrc);
+            if ( hResLoaded )
+            {
+                LPVOID pResLock = LockResource(hResLoaded);
+                if ( pResLock )
+                {
+                    void* pMem = x_mem_alloc(dwResSize);
+                    if ( pMem )
+                    {
+                        x_mem_cpy(pMem, pResLock, dwResSize);
+                        if ( dwResSize == sizeof(DLGTEMPLATE) )
+                        {
+                            DLGTEMPLATE* pDlgTemplate = (DLGTEMPLATE *) pMem;
+                            pDlgTemplate->style |= DS_FIXEDSYS;
+                        }
+                        else
+                        {
+                            DLGTEMPLATEEX_HEAD* pDlgTemplateEx = (DLGTEMPLATEEX_HEAD *) pMem;
+                            pDlgTemplateEx->style |= DS_FIXEDSYS;
+                        }
+
+                        hDlg = CreateDialogIndirectParamW(
+                            pd->hInstanceDLL,
+                            (DLGTEMPLATE *) pMem,
+                            pd->hMainWnd,
+                            qsearchDlgProc,
+                            0
+                        );
+
+                        x_mem_free(pMem);
+                    }
+                }
+            }
+        }
+    }
+    return hDlg;
+}
+
+static HWND createDlgExA(const PLUGINDATA* pd, int iddQSearch)
+{
+    // all this code is needed with the only purpose to add the DS_FIXEDSYS style...
+    HWND hDlg = NULL;
+    HRSRC hResSrc = FindResourceA(pd->hInstanceDLL, MAKEINTRESOURCEA(iddQSearch), (LPCSTR) RT_DIALOG);
+    if ( hResSrc )
+    {
+        DWORD dwResSize = SizeofResource(pd->hInstanceDLL, hResSrc);
+        if ( dwResSize == sizeof(DLGTEMPLATE) || dwResSize >= sizeof(DLGTEMPLATEEX_HEAD) )
+        {
+            HGLOBAL hResLoaded = LoadResource(pd->hInstanceDLL, hResSrc);
+            if ( hResLoaded )
+            {
+                LPVOID pResLock = LockResource(hResLoaded);
+                if ( pResLock )
+                {
+                    void* pMem = x_mem_alloc(dwResSize);
+                    if ( pMem )
+                    {
+                        x_mem_cpy(pMem, pResLock, dwResSize);
+                        if ( dwResSize == sizeof(DLGTEMPLATE) )
+                        {
+                            DLGTEMPLATE* pDlgTemplate = (DLGTEMPLATE *) pMem;
+                            pDlgTemplate->style |= DS_FIXEDSYS;
+                        }
+                        else
+                        {
+                            DLGTEMPLATEEX_HEAD* pDlgTemplateEx = (DLGTEMPLATEEX_HEAD *) pMem;
+                            pDlgTemplateEx->style |= DS_FIXEDSYS;
+                        }
+
+                        hDlg = CreateDialogIndirectParamA(
+                            pd->hInstanceDLL,
+                            (DLGTEMPLATE *) pMem,
+                            pd->hMainWnd,
+                            qsearchDlgProc,
+                            0
+                        );
+
+                        x_mem_free(pMem);
+                    }
+                }
+            }
+        }
+    }
+    return hDlg;
+}
+
 static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 {
     if ( !g_Plugin.bInitialized )
@@ -388,21 +498,32 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                 break;
         }
 
-        if ( g_Plugin.bOldWindows )
+        if ( g_Options.dwUseEditorColors )
         {
-            g_QSearchDlg.hDlg = CreateDialogA(
-                g_Plugin.hInstanceDLL,
-                MAKEINTRESOURCEA(iddQSearch),
-                g_Plugin.hMainWnd,
-                qsearchDlgProc );
+            if ( g_Plugin.bOldWindows )
+                g_QSearchDlg.hDlg = createDlgExA(pd, iddQSearch);
+            else
+                g_QSearchDlg.hDlg = createDlgExW(pd, iddQSearch);
         }
-        else
+
+        if ( !g_QSearchDlg.hDlg )
         {
-            g_QSearchDlg.hDlg = CreateDialogW(
-                g_Plugin.hInstanceDLL,
-                MAKEINTRESOURCEW(iddQSearch),
-                g_Plugin.hMainWnd,
-                qsearchDlgProc );
+            if ( g_Plugin.bOldWindows )
+            {
+                g_QSearchDlg.hDlg = CreateDialogA(
+                    g_Plugin.hInstanceDLL,
+                    MAKEINTRESOURCEA(iddQSearch),
+                    g_Plugin.hMainWnd,
+                    qsearchDlgProc );
+            }
+            else
+            {
+                g_QSearchDlg.hDlg = CreateDialogW(
+                    g_Plugin.hInstanceDLL,
+                    MAKEINTRESOURCEW(iddQSearch),
+                    g_Plugin.hMainWnd,
+                    qsearchDlgProc );
+            }
         }
 
         if ( g_QSearchDlg.hDlg )
