@@ -599,6 +599,16 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      фона.
     use_editor_colors = 1
      Строка поиска QSearch использует цвета текста и фона из AkelPad.
+     Для тёмных цветовых тем можно использовать такие цвета для QSearch:
+       color_notfound=88383800
+       color_notregexp=78487800
+       color_eof=40784000
+       color_highlight=78507800
+     Цвета по умолчанию для светлых цветовых тем:
+       color_notfound=FFE0E000
+       color_notregexp=F8E8F800
+       color_eof=E4FFE400
+       color_highlight=C0FFC000
 
 
 --------

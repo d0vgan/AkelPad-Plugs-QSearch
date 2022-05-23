@@ -574,6 +574,16 @@ Additional options (QSearch panel's popup menu or file
      colors.
     use_editor_colors = 1
      The QSearch'es edit control uses AkelPad's text and background colors.
+     For dark color themes, the following colors may be used for QSearch:
+       color_notfound=88383800
+       color_notregexp=78487800
+       color_eof=40784000
+       color_highlight=78507800
+     Here are the default colors for bright color themes:
+       color_notfound=FFE0E000
+       color_notregexp=F8E8F800
+       color_eof=E4FFE400
+       color_highlight=C0FFC000
 
 
 --------
