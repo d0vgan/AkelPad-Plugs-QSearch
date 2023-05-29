@@ -11,7 +11,9 @@ int x_mem_cmp(const void *pSrc1, const void *pSrc2, UINT_PTR nBytes)
 
         if ( nBytes >= sizeof(unsigned int) )
         {
-            for ( ; ; )
+            BOOL bContinue = TRUE;
+
+            for ( ; bContinue; )
             {
                 if ( *pSrcUint1 != *pSrcUint2 )
                     return ( *pSrcUint1 < *pSrcUint2 ? (-1) : 1 );
@@ -19,8 +21,7 @@ int x_mem_cmp(const void *pSrc1, const void *pSrc2, UINT_PTR nBytes)
                 nBytes -= sizeof(unsigned int);
                 if ( nBytes < sizeof(unsigned int) )
                 {
-                    pSrc2 = NULL;
-                    break;
+                    bContinue = FALSE;
                 }
                 ++pSrcUint1;
                 ++pSrcUint2;
@@ -29,16 +30,8 @@ int x_mem_cmp(const void *pSrc1, const void *pSrc2, UINT_PTR nBytes)
 
         if ( nBytes != 0 )
         {
-            const unsigned char* pSrcByte1;
-            const unsigned char* pSrcByte2;
-
-            if ( pSrc2 == NULL )
-            {
-                ++pSrcUint1;
-                ++pSrcUint2;
-            }
-            pSrcByte1 = (const unsigned char *) pSrcUint1;
-            pSrcByte2 = (const unsigned char *) pSrcUint2;
+            const unsigned char* pSrcByte1 = (const unsigned char *) pSrcUint1;
+            const unsigned char* pSrcByte2 = (const unsigned char *) pSrcUint2;
 
             for ( ; ; )
             {
@@ -66,14 +59,15 @@ void x_mem_cpy(void *pDest, const void *pSrc, UINT_PTR nBytes)
 
         if ( nBytes >= sizeof(unsigned int) )
         {
-            for ( ; ; )
+            BOOL bContinue = TRUE;
+
+            for ( ; bContinue; )
             {
                 *pDestUint = *pSrcUint;
                 nBytes -= sizeof(unsigned int);
                 if ( nBytes < sizeof(unsigned int) )
                 {
-                    pDest = NULL;
-                    break;
+                    bContinue = FALSE;
                 }
                 ++pDestUint;
                 ++pSrcUint;
@@ -82,16 +76,8 @@ void x_mem_cpy(void *pDest, const void *pSrc, UINT_PTR nBytes)
 
         if ( nBytes != 0 )
         {
-            unsigned char* pDestByte;
-            const unsigned char* pSrcByte;
-
-            if ( pDest == NULL )
-            {
-                ++pDestUint;
-                ++pSrcUint;
-            }
-            pDestByte = (unsigned char *) pDestUint;
-            pSrcByte = (const unsigned char *) pSrcUint;
+            unsigned char* pDestByte = (unsigned char *) pDestUint;
+            const unsigned char* pSrcByte = (const unsigned char *) pSrcUint;
 
             for ( ; ; )
             {
@@ -118,15 +104,15 @@ void x_mem_set(void *pDest, unsigned int c, UINT_PTR nBytes)
         if ( nBytes >= sizeof(unsigned int) )
         {
             unsigned int nValue = c + (c << 8) + (c << 16) + (c << 24);
+            BOOL bContinue = TRUE;
 
-            for ( ; ; )
+            for ( ; bContinue; )
             {
                 *pDestUint = nValue;
                 nBytes -= sizeof(unsigned int);
                 if ( nBytes < sizeof(unsigned int) )
                 {
-                    pDest = NULL;
-                    break;
+                    bContinue = FALSE;
                 }
                 ++pDestUint;
             }
@@ -134,13 +120,7 @@ void x_mem_set(void *pDest, unsigned int c, UINT_PTR nBytes)
 
         if ( nBytes != 0 )
         {
-            unsigned char *pDestByte;
-
-            if ( pDest == NULL )
-            {
-                ++pDestUint;
-            }
-            pDestByte = (unsigned char *) pDestUint;
+            unsigned char *pDestByte = (unsigned char *) pDestUint;
 
             for ( ; ; )
             {
@@ -165,14 +145,15 @@ void x_zero_mem(void* pDest, UINT_PTR nBytes)
 
     if ( nBytes >= sizeof(unsigned int) )
     {
-        for ( ; ; )
+        BOOL bContinue = TRUE;
+
+        for ( ; bContinue; )
         {
             *pDestUint = 0;
             nBytes -= sizeof(unsigned int);
             if ( nBytes < sizeof(unsigned int) )
             {
-                pDest = NULL;
-                break;
+                bContinue = FALSE;
             }
             ++pDestUint;
         }
@@ -180,13 +161,7 @@ void x_zero_mem(void* pDest, UINT_PTR nBytes)
 
     if ( nBytes != 0 )
     {
-        unsigned char *pDestByte;
-
-        if ( pDest == NULL )
-        {
-            ++pDestUint;
-        }
-        pDestByte = (unsigned char *) pDestUint;
+        unsigned char *pDestByte = (unsigned char *) pDestUint;
 
         for ( ; ; )
         {
