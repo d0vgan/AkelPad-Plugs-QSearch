@@ -750,7 +750,11 @@ static void qsShowFindResults_FileOutput_AddOccurrence(tFindAllContext* pFindCon
 
 static void addResultsToFileOutput(tFindAllContext* pFindContext)
 {
+    HWND hMainWnd;
+    HWND hWndEdit;
+    BOOL bSingleFileOutput;
     BOOL bOutputResult;
+    BOOL bNewWindow;
     wchar_t szCoderAlias[MAX_CODERALIAS + 1];
 
     if ( g_bHighlightPlugin )
@@ -765,19 +769,30 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         szCoderAlias[0] = 0;
     }
 
+    hMainWnd = g_Plugin.hMainWnd;
+    hWndEdit = NULL;
+    bSingleFileOutput = ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) ? TRUE : FALSE;
     bOutputResult = FALSE;
+    bNewWindow = FALSE;
 
-    if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) &&
-         (g_Plugin.nMDI == WMD_SDI) )
+    if ( bSingleFileOutput && (g_Plugin.nMDI == WMD_SDI) )
     {
         bOutputResult = TRUE;
     }
-    else if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) &&
-              (g_QSearchDlg.pSearchResultsFrame != NULL) &&
+    else if ( bSingleFileOutput && (g_QSearchDlg.pSearchResultsFrame != NULL) &&
               SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
     {
         SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame);
         bOutputResult = TRUE;
+    }
+    else if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_MULT) &&
+              (g_Plugin.nMDI == WMD_SDI) )
+    {
+        hMainWnd = (HWND) SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_CREATENEW, 0); // creates a new SDI window
+        hWndEdit = (HWND) SendMessageW(hMainWnd, AKD_GETFRAMEINFO, FI_WNDEDIT, 0);
+        g_QSearchDlg.pSearchResultsFrame = NULL;
+        bOutputResult = TRUE;
+        bNewWindow = TRUE;
     }
     else if ( SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
     {
@@ -787,15 +802,17 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
     if ( bOutputResult )
     {
-        HWND hWndEdit;
-
         if ( g_QSearchDlg.pSearchResultsFrame == NULL )
         {
-            g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW( g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
+            g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
         }
 
-        hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
-        if ( hWndEdit )
+        if ( bNewWindow && hWndEdit )
+        {
+            // This successfully works with AkelEdit control that belongs to another process
+            SendMessageW(hWndEdit, WM_SETTEXT, 0, (LPARAM) pFindContext->ResultsBuf.ptr);
+        }
+        else if ( (hWndEdit = GetWndEdit(hMainWnd)) != NULL )
         {
             INT_PTR nStartPos;
             AEAPPENDTEXTW aeatW;
@@ -805,10 +822,12 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
                 setCoderAliasW(szCoderAlias);
             }
 
-            nStartPos = SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hWndEdit, 0);
+            nStartPos = SendMessageW(hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hWndEdit, 0);
 
-            if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) )
+            if ( bSingleFileOutput )
             {
+                SendMessageW( hWndEdit, AEM_BEGINUNDOACTION, 0, 0 );
+
                 if ( nStartPos != 0 )
                 {
                     aeatW.pText = L"\r"; // new line
@@ -824,6 +843,11 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
             aeatW.dwTextLen = pFindContext->ResultsBuf.nBytesStored/sizeof(wchar_t) - 1; // excluding the trailing '\0'
             aeatW.nNewLine = AELB_ASINPUT;
             SendMessageW( hWndEdit, AEM_APPENDTEXTW, 0, (LPARAM) &aeatW );
+
+            if ( bSingleFileOutput )
+            {
+                SendMessageW( hWndEdit, AEM_ENDUNDOACTION, 0, 0 );
+            }
 
             scrollEditToPosition(hWndEdit, nStartPos, g_Options.FileOutputFRP.nHighlight, pFindContext);
         }
