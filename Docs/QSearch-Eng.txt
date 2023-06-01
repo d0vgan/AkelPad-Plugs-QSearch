@@ -589,6 +589,11 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.8.0 (June 2023)
+ * Glory to Ukraine! Glory to the heroes!
+ * improved: now File Output (N tabs) in SDI mode creates a new window
+ * improved: internal implementation of some of XMemStrFunc functions
+
 v.7.9 (May 2022)
  + added: 'use_editor_colors'
  * improved: only changed options are overwritten (it is useful when editing
@@ -912,7 +917,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - May 2022, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Jun 2023, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
