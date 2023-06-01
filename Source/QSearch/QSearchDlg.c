@@ -788,72 +788,76 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     else if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_MULT) &&
               (g_Plugin.nMDI == WMD_SDI) )
     {
-        HANDLE hOptions;
-        UINT_PTR nOldLen;
-        UINT_PTR nNewLen;
         BOOL bOptionsWritten;
         tDynamicBuffer oldCmdLineEnd;
         tDynamicBuffer newCmdLineEnd;
-        PLUGINOPTIONW poW;
 
+        bOptionsWritten = FALSE;
         tDynamicBuffer_Init(&oldCmdLineEnd);
         tDynamicBuffer_Init(&newCmdLineEnd);
-        bOptionsWritten = FALSE;
 
-        nOldLen = (UINT_PTR) SendMessageW(g_Plugin.hMainWnd, AKD_GETMAININFO, MI_CMDLINEEND, 0);
-        if ( tDynamicBuffer_Allocate(&oldCmdLineEnd, (nOldLen + 1)*sizeof(wchar_t)) )
+        if ( g_bHighlightPlugin )
         {
-            const wchar_t* const cszCmdFmt = L"/Call(\"Coder::Settings\", 1, \"%s\") /Call(\"Coder::HighLight\", 2, \"0\", \"#%02X%02X%02X\", %u, 0, %u, %c%s%c, %d) ";
+            UINT_PTR nOldLen;
+            UINT_PTR nNewLen;
 
-            nOldLen = (UINT_PTR) SendMessageW(g_Plugin.hMainWnd, AKD_GETMAININFO, MI_CMDLINEEND, (LPARAM) oldCmdLineEnd.ptr);
-            oldCmdLineEnd.nBytesStored = nOldLen*sizeof(wchar_t);
-            tDynamicBuffer_Append(&oldCmdLineEnd, L"\0", 1*sizeof(wchar_t)); // adding the trailing '\0'
-
-            nNewLen = nOldLen + lstrlenW(cszCmdFmt) + lstrlenW(szCoderAlias) + pFindContext->pFindTextW->dwTextLen + 2;
-
-            if ( tDynamicBuffer_Allocate(&newCmdLineEnd, nNewLen*sizeof(wchar_t)) )
+            nOldLen = (UINT_PTR) SendMessageW(g_Plugin.hMainWnd, AKD_GETMAININFO, MI_CMDLINEEND, 0);
+            if ( tDynamicBuffer_Allocate(&oldCmdLineEnd, (nOldLen + 1)*sizeof(wchar_t)) )
             {
-                unsigned int flags;
-                unsigned int id;
-                wchar_t q;
-                BYTE r, g, b;
+                const wchar_t* const cszCmdFmt = L"/Call(\"Coder::Settings\", 1, \"%s\") /Call(\"Coder::HighLight\", 2, \"0\", \"#%02X%02X%02X\", %u, 0, %u, %c%s%c, %d) ";
 
-                flags = 0;
-                if ( pFindContext->pFindTextW->dwFlags & AEFR_MATCHCASE )
-                    flags |= 1;
-                if ( pFindContext->pFindTextW->dwFlags & AEFR_REGEXP )
-                    flags |= 2;
-                if ( pFindContext->pFindTextW->dwFlags & AEFR_WHOLEWORD )
-                    flags |= 4;
+                nOldLen = (UINT_PTR) SendMessageW(g_Plugin.hMainWnd, AKD_GETMAININFO, MI_CMDLINEEND, (LPARAM) oldCmdLineEnd.ptr);
+                oldCmdLineEnd.nBytesStored = nOldLen*sizeof(wchar_t);
+                tDynamicBuffer_Append(&oldCmdLineEnd, L"\0", 1*sizeof(wchar_t)); // adding the trailing '\0'
 
-                q = L'\"';
-                if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'\"', 0) != -1 )
+                nNewLen = nOldLen + lstrlenW(cszCmdFmt) + lstrlenW(szCoderAlias) + pFindContext->pFindTextW->dwTextLen + 2;
+
+                if ( tDynamicBuffer_Allocate(&newCmdLineEnd, nNewLen*sizeof(wchar_t)) )
                 {
-                    if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'`', 0) == -1 )
-                        q = L'`';
-                    else if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'\'', 0) == -1 )
-                        q = L'\'';
-                }
+                    HANDLE hOptions;
+                    unsigned int flags;
+                    unsigned int id;
+                    wchar_t q;
+                    BYTE r, g, b;
+                    PLUGINOPTIONW poW;
 
-                id = g_Options.dwHighlightMarkID;
-                r = GetRValue(g_Options.colorHighlight);
-                g = GetGValue(g_Options.colorHighlight);
-                b = GetBValue(g_Options.colorHighlight);
+                    flags = 0;
+                    if ( pFindContext->pFindTextW->dwFlags & AEFR_MATCHCASE )
+                        flags |= 1;
+                    if ( pFindContext->pFindTextW->dwFlags & AEFR_REGEXP )
+                        flags |= 2;
+                    if ( pFindContext->pFindTextW->dwFlags & AEFR_WHOLEWORD )
+                        flags |= 4;
 
-                nNewLen = wsprintfW( (LPWSTR) newCmdLineEnd.ptr, cszCmdFmt,
-                    szCoderAlias, r, g, b, flags, id, q, pFindContext->pFindTextW->pText, q, pFindContext->pFindTextW->dwTextLen );
-                newCmdLineEnd.nBytesStored = nNewLen*sizeof(wchar_t);
-                tDynamicBuffer_Append(&newCmdLineEnd, oldCmdLineEnd.ptr, oldCmdLineEnd.nBytesStored);
+                    q = L'\"';
+                    if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'\"', 0) != -1 )
+                    {
+                        if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'`', 0) == -1 )
+                            q = L'`';
+                        else if ( x_wstr_findch(pFindContext->pFindTextW->pText, L'\'', 0) == -1 )
+                            q = L'\'';
+                    }
 
-                if ( hOptions = (HANDLE) SendMessageW(g_Plugin.hMainWnd, AKD_BEGINOPTIONS, POB_SAVE, 0) )
-                {
-                    poW.pOptionName = L"CmdLineEnd";
-                    poW.dwType = PO_STRING;
-                    poW.lpData = (BYTE *) newCmdLineEnd.ptr;
-                    poW.dwData = (DWORD) newCmdLineEnd.nBytesStored;
-                    SendMessageW( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
-                    SendMessageW( g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0 );
-                    bOptionsWritten = TRUE;
+                    id = g_Options.dwHighlightMarkID;
+                    r = GetRValue(g_Options.colorHighlight);
+                    g = GetGValue(g_Options.colorHighlight);
+                    b = GetBValue(g_Options.colorHighlight);
+
+                    nNewLen = wsprintfW( (LPWSTR) newCmdLineEnd.ptr, cszCmdFmt,
+                        szCoderAlias, r, g, b, flags, id, q, pFindContext->pFindTextW->pText, q, pFindContext->pFindTextW->dwTextLen );
+                    newCmdLineEnd.nBytesStored = nNewLen*sizeof(wchar_t);
+                    tDynamicBuffer_Append(&newCmdLineEnd, oldCmdLineEnd.ptr, oldCmdLineEnd.nBytesStored);
+
+                    if ( hOptions = (HANDLE) SendMessageW(g_Plugin.hMainWnd, AKD_BEGINOPTIONS, POB_SAVE, 0) )
+                    {
+                        poW.pOptionName = L"CmdLineEnd";
+                        poW.dwType = PO_STRING;
+                        poW.lpData = (BYTE *) newCmdLineEnd.ptr;
+                        poW.dwData = (DWORD) newCmdLineEnd.nBytesStored;
+                        SendMessageW( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
+                        SendMessageW( g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0 );
+                        bOptionsWritten = TRUE;
+                    }
                 }
             }
         }
@@ -861,8 +865,11 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         hMainWnd = (HWND) SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_CREATENEW, 0); // creates a new SDI window
         hWndEdit = (HWND) SendMessageW(hMainWnd, AKD_GETFRAMEINFO, FI_WNDEDIT, 0);
 
-        if ( bOptionsWritten )
+        if ( g_bHighlightPlugin && bOptionsWritten )
         {
+            HANDLE hOptions;
+            PLUGINOPTIONW poW;
+
             if ( hOptions = (HANDLE) SendMessageW(g_Plugin.hMainWnd, AKD_BEGINOPTIONS, POB_SAVE, 0) )
             {
                 poW.pOptionName = L"CmdLineEnd";
