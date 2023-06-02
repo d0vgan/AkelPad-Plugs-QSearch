@@ -240,6 +240,8 @@ static void CallLogOutput(void* ploParams)
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg)
     {
+        int i;
+
         pQSearchDlg->hDlg = NULL;
         pQSearchDlg->hFindEdit = NULL;
         pQSearchDlg->hFindListBox = NULL;
@@ -256,12 +258,129 @@ static void CallLogOutput(void* ploParams)
         pQSearchDlg->bMouseJustLeavedFindEdit = FALSE;
         pQSearchDlg->pDockData = NULL;
         pQSearchDlg->pSearchResultsFrame = NULL;
+        pQSearchDlg->nFrameCount = 0;
+        for ( i = 0; i < MAX_RESULTS_FRAMES; ++i )
+        {
+            pQSearchDlg->pSearchResultsFrames[i] = NULL;
+        }
         pQSearchDlg->szFindTextW[0] = 0;
         pQSearchDlg->uSearchOrigin = QS_SO_UNKNOWN;
         pQSearchDlg->uWmShowFlags = 0;
         pQSearchDlg->crTextColor = GetSysColor(COLOR_WINDOWTEXT);
         pQSearchDlg->crBkgndColor = GetSysColor(COLOR_WINDOW);
         pQSearchDlg->hBkgndBrush = NULL;
+    }
+
+    static BOOL isAnyMDIandFileOutput()
+    {
+        if ( g_Plugin.nMDI != WMD_SDI )
+        {
+            DWORD dwFindAllMode = (g_Options.dwFindAllMode & QS_FINDALL_MASK);
+            if ( (dwFindAllMode == QS_FINDALL_FILEOUTPUT_MULT) ||
+                 (dwFindAllMode == QS_FINDALL_FILEOUTPUT_SNGL) )
+            {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
+    static void removeFrameFromResults(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    {
+        int i, j;
+
+        i = 0;
+        j = 0;
+        while ( j < pQSearchDlg->nFrameCount )
+        {
+            if ( pQSearchDlg->pSearchResultsFrames[j] != pFrame )
+            {
+                if ( i != j )
+                {
+                    pQSearchDlg->pSearchResultsFrames[i] = pQSearchDlg->pSearchResultsFrames[j];
+                }
+                ++i;
+            }
+            ++j;
+        }
+
+        if ( i != j ) // pFrame has been removed
+        {
+            pQSearchDlg->nFrameCount = i;
+            pQSearchDlg->pSearchResultsFrames[i] = NULL;
+            if ( pQSearchDlg->pSearchResultsFrame == pFrame )
+            {
+                if ( i != 0 )
+                    pQSearchDlg->pSearchResultsFrame = pQSearchDlg->pSearchResultsFrames[i - 1];
+                else
+                    pQSearchDlg->pSearchResultsFrame = NULL;
+            }
+        }
+    }
+
+    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    {
+        if ( isAnyMDIandFileOutput() )
+        {
+            if ( pQSearchDlg->nFrameCount != 0 )
+            {
+                removeFrameFromResults(pQSearchDlg, pFrame); // to ensure that pFrame is unique
+            }
+
+            if ( pQSearchDlg->nFrameCount == MAX_RESULTS_FRAMES ) // full
+            {
+                int i;
+
+                for ( i = 0; i < MAX_RESULTS_FRAMES - 1; ++i )
+                {
+                    pQSearchDlg->pSearchResultsFrames[i] = pQSearchDlg->pSearchResultsFrames[i + 1];
+                }
+                pQSearchDlg->nFrameCount = MAX_RESULTS_FRAMES - 1;
+            }
+
+            pQSearchDlg->pSearchResultsFrames[pQSearchDlg->nFrameCount] = pFrame;
+            ++pQSearchDlg->nFrameCount;
+        }
+
+        pQSearchDlg->pSearchResultsFrame = pFrame;
+    }
+
+    void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    {
+        if ( isAnyMDIandFileOutput() || (pQSearchDlg->nFrameCount != 0) )
+        {
+            if ( pQSearchDlg->nFrameCount != 0 )
+            {
+                removeFrameFromResults(pQSearchDlg, pFrame);
+            }
+            else if ( pFrame == pQSearchDlg->pSearchResultsFrame )
+            {
+                pQSearchDlg->pSearchResultsFrame = NULL;
+            }
+        }
+        else if ( pFrame == pQSearchDlg->pSearchResultsFrame )
+        {
+            pQSearchDlg->pSearchResultsFrame = NULL;
+        }
+    }
+
+    BOOL QSearchDlgState_MatchResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    {
+        if ( pFrame == pQSearchDlg->pSearchResultsFrame )
+            return TRUE;
+
+        if ( isAnyMDIandFileOutput() || (pQSearchDlg->nFrameCount != 0) )
+        {
+            int i;
+
+            for ( i = 0; i < pQSearchDlg->nFrameCount; ++i )
+            {
+                if ( pQSearchDlg->pSearchResultsFrames[i] == pFrame )
+                    return TRUE;
+            }
+        }
+
+        return FALSE;
     }
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -898,7 +1017,8 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     {
         if ( g_QSearchDlg.pSearchResultsFrame == NULL )
         {
-            g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
+            FRAMEDATA* pFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
+            QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pFrame);
         }
 
         if ( bNewWindow && hWndEdit )

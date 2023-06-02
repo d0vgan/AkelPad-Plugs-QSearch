@@ -1347,7 +1347,7 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 const FRAMEDATA* pFrame;
 
                 pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_BYEDITWINDOW, (LPARAM) hWnd);
-                if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
+                if ( QSearchDlgState_MatchResultsFrame(&g_QSearchDlg, pFrame) )
                 {
                     if ( PatOpenLine(hWnd) )
                         return 0;
@@ -1512,10 +1512,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case AKDN_FRAME_DESTROY:
         {
             const FRAMEDATA* pFrame = (FRAMEDATA *) lParam;
-            if ( pFrame == g_QSearchDlg.pSearchResultsFrame )
-            {
-                g_QSearchDlg.pSearchResultsFrame = NULL;
-            }
+            QSearchDlgState_RemoveResultsFrame(&g_QSearchDlg, pFrame);
             break;
         }
         case AKDN_MAIN_ONFINISH:

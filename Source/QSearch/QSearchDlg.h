@@ -101,6 +101,7 @@
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     #define  MAX_TEXT_SIZE  250
+    #define  MAX_RESULTS_FRAMES 12
 
     typedef struct tQSearchDlgState {
         HWND             hDlg;
@@ -118,6 +119,8 @@
         BOOL             bMouseJustLeavedFindEdit;
         DOCK*            pDockData;
         const FRAMEDATA* pSearchResultsFrame;
+        int              nFrameCount;
+        const FRAMEDATA* pSearchResultsFrames[MAX_RESULTS_FRAMES];
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
         UINT             uSearchOrigin; // see QS_SO_*
         UINT             uWmShowFlags; // see QS_SF_*
@@ -127,6 +130,9 @@
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
+    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    BOOL QSearchDlgState_MatchResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
 
