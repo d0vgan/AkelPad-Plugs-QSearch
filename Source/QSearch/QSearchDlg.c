@@ -240,8 +240,6 @@ static void CallLogOutput(void* ploParams)
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg)
     {
-        int i;
-
         pQSearchDlg->hDlg = NULL;
         pQSearchDlg->hFindEdit = NULL;
         pQSearchDlg->hFindListBox = NULL;
@@ -259,10 +257,7 @@ static void CallLogOutput(void* ploParams)
         pQSearchDlg->pDockData = NULL;
         pQSearchDlg->pSearchResultsFrame = NULL;
         pQSearchDlg->nFrameCount = 0;
-        for ( i = 0; i < MAX_RESULTS_FRAMES; ++i )
-        {
-            pQSearchDlg->pSearchResultsFrames[i] = NULL;
-        }
+        x_zero_mem( (void*) pQSearchDlg->pSearchResultsFrames, MAX_RESULTS_FRAMES*sizeof(FRAMEDATA*) );
         pQSearchDlg->szFindTextW[0] = 0;
         pQSearchDlg->uSearchOrigin = QS_SO_UNKNOWN;
         pQSearchDlg->uWmShowFlags = 0;
