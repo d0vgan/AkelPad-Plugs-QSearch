@@ -897,6 +897,9 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     else if ( bSingleFileOutput && (g_QSearchDlg.pSearchResultsFrame != NULL) &&
               SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
     {
+        if ( g_Plugin.nMDI != WMD_SDI )
+            qs_bEditCanBeNonActive = TRUE;
+
         SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame);
         bOutputResult = TRUE;
     }
@@ -1003,10 +1006,16 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         bOutputResult = TRUE;
         bNewWindow = TRUE;
     }
-    else if ( SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
+    else 
     {
-        g_QSearchDlg.pSearchResultsFrame = NULL;
-        bOutputResult = TRUE;
+        if ( g_Plugin.nMDI != WMD_SDI )
+            qs_bEditCanBeNonActive = TRUE;
+
+        if ( SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
+        {
+            g_QSearchDlg.pSearchResultsFrame = NULL;
+            bOutputResult = TRUE;
+        }
     }
 
     if ( bOutputResult )
