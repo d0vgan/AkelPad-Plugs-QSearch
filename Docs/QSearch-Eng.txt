@@ -592,6 +592,8 @@ History:
 v.8.0 (June 2023)
  * Glory to Ukraine! Glory to the heroes!
  * improved: now File Output (N tabs) in SDI mode creates a new window
+ * improved: now File Output (1 tab) in SDI mode handles double-clicks on the
+   search results
  * improved: now File Output (N tabs) in MDI/PMDI mode handles double-clicks
    in the last 16 search results tabs
  * improved: internal implementation of some of XMemStrFunc functions
