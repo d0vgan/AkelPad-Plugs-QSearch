@@ -891,6 +891,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
     if ( bSingleFileOutput && (g_Plugin.nMDI == WMD_SDI) )
     {
+        g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW(hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
         bOutputResult = TRUE;
     }
     else if ( bSingleFileOutput && (g_QSearchDlg.pSearchResultsFrame != NULL) &&

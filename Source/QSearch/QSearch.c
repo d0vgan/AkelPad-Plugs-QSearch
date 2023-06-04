@@ -1493,6 +1493,13 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
                 g_bFrameActivated = TRUE;
             }
+            else if ( uMsg == AKDN_OPENDOCUMENT_FINISH )
+            {
+                if ( g_Plugin.nMDI == WMD_SDI )
+                {
+                    g_QSearchDlg.pSearchResultsFrame = NULL;
+                }
+            }
             if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] )
             {
                 if ( g_QSearchDlg.hDlg && IsWindowVisible(g_QSearchDlg.hDlg) )
