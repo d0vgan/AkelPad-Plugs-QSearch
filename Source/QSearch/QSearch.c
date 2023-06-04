@@ -1387,6 +1387,12 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         }
                     }
                     break;
+                case IDM_FILE_NEW:
+                    if ( g_Plugin.nMDI == WMD_SDI )
+                    {
+                        g_QSearchDlg.pSearchResultsFrame = NULL;
+                    }
+                    break;
                 case IDM_EDIT_FINDNEXTDOWN:
                 case IDM_EDIT_FINDNEXTUP:
                     if ( g_Options.dwFlags[OPTF_CATCH_MAIN_F3] )
