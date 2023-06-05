@@ -597,6 +597,8 @@ v.8.0 (June 2023)
  * improved: now File Output (N tabs) in MDI/PMDI mode handles double-clicks
    in the last 16 search results tabs
  * improved: internal implementation of some of XMemStrFunc functions
+ - fixed: File Output results could be truncated in case of searching in long
+   word-wrapped lines
 
 v.7.9 (May 2022)
  + added: 'use_editor_colors'

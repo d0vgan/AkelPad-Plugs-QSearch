@@ -1353,18 +1353,28 @@ typedef struct sGetFindResultPolicy {
 
 typedef void (*tFindResultCallback)(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pTempBuf, tDynamicBuffer* pTempBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
+static inline int getUnwrappedLine(BOOL bWordWrap, HWND hWndEdit, int nLine)
+{
+    return bWordWrap ? (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, nLine, 0) : nLine;
+}
+
 static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pTempBuf, tDynamicBuffer* pTempBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     AETEXTRANGEW tr;
     HWND         hWndEdit;
     UINT_PTR     nBytesToAllocate;
     BOOL         bAddLineCR;
+    BOOL         bWordWrap;
     int          nLinesBeforeAfter[2];
 
     if ( !pfrPolicy->pfnStoreResultCallback )
         return; // no sense to retrieve the find result
 
     hWndEdit = pFindContext->pFrame->ei.hWndEdit;
+    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
+        bWordWrap = TRUE;
+    else
+        bWordWrap = FALSE;
 
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
@@ -1455,12 +1465,15 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
                 if ( pfrPolicy->nBefore >= 0 )
                 {
-                    int nBefore = pfrPolicy->nBefore;
+                    int nBefore, nMinLine;
+
+                    nBefore = pfrPolicy->nBefore;
                     for ( ; ; )
                     {
                         AEC_WrapLineBegin(&tr.cr.ciMin);
-                        if ( nBefore == 0 || tr.cr.ciMin.nLine == 0 ||
-                             (pFindContext->nLastLine != -1 && tr.cr.ciMin.nLine <= pFindContext->nLastLine + 1) )
+                        nMinLine = getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMin.nLine);
+                        if ( nBefore == 0 || nMinLine == 0 ||
+                             (pFindContext->nLastLine != -1 && nMinLine <= pFindContext->nLastLine + 1) )
                         {
                             break;
                         }
@@ -1471,7 +1484,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     nLinesBeforeAfter[0] = pfrPolicy->nBefore - nBefore;
                 }
 
-                nLines = pFindContext->nLastLine - tr.cr.ciMin.nLine;
+                nLines = pFindContext->nLastLine - getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMin.nLine);
                 if ( nLines > 0 || ((nLines == 0 || nLines == -1) && pFindContext->nLastLine != -1) )
                 {
                     if ( bAddLineCR )
@@ -1486,7 +1499,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
                     if ( pfrPolicy->nAfter > 0 )
                     {
-                        if ( pFindContext->nLastOccurrenceLine < pcrFound->ciMin.nLine )
+                        if ( pFindContext->nLastOccurrenceLine < getUnwrappedLine(bWordWrap, hWndEdit, pcrFound->ciMin.nLine) )
                             ++nLines;
                     }
 
@@ -1516,12 +1529,12 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     nLinesBeforeAfter[1] = pfrPolicy->nAfter - nAfter;
                 }
 
-                pFindContext->nLastLine = tr.cr.ciMax.nLine;
+                pFindContext->nLastLine = getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMax.nLine);
             }
         }
     }
 
-    pFindContext->nLastOccurrenceLine = pcrFound->ciMin.nLine;
+    pFindContext->nLastOccurrenceLine = getUnwrappedLine(bWordWrap, hWndEdit, pcrFound->ciMin.nLine);
 
     tr.bColumnSel = FALSE;
     tr.pBuffer = NULL;
