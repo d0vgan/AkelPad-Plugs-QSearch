@@ -33,6 +33,11 @@
     typedef LONG LONG_PTR;
 #endif
 
+// Looks like "inline" C funcs are supported from VC 2015 (_MSC_VER = 1900)
+#if _MSC_VER < 1900
+#define inline __inline
+#endif
+
 #ifndef FR_WHOLEWORD
     #define FR_WHOLEWORD      0x00000002
 #endif
