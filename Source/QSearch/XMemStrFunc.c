@@ -406,7 +406,7 @@ UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR
         {
             unsigned char* p = (unsigned char *) newBuf.ptr;
             // copy the previous data
-            if ( pBuf->nBytesStored != 0 )
+            if ( pBuf->ptr && pBuf->nBytesStored != 0 )
             {
                 x_mem_cpy( p, pBuf->ptr, pBuf->nBytesStored );
                 p += pBuf->nBytesStored;
