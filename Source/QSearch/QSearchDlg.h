@@ -62,6 +62,7 @@
 
 #define  QS_SNF_SETINFOEMPTY     0x0001
 #define  QS_SNF_FORCEFINDFIRST   0x0002
+#define  QS_SNF_IGNOREEOF        0x0004
 
 #define  QS_PSF_PICKEDUP     0x01
 #define  QS_PSF_TEXTCHANGED  0x02

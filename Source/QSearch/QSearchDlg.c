@@ -11,6 +11,7 @@
 #define  QSEARCH_NEXT           0x000002
 #define  QSEARCH_FINDALL        0x000010
 #define  QSEARCH_FINDALLFILES   0x000020
+#define  QSEARCH_COUNTALL       0x000040
 #define  QSEARCH_SEL            0x000100
 #define  QSEARCH_SEL_FINDUP     0x000200
 #define  QSEARCH_NOFINDUP       0x001000
@@ -20,14 +21,24 @@
 #define  QSEARCH_USEDELAY       0x010000
 #define  QSEARCH_NOSETSEL_FIRST 0x100000
 
+#define  QSEARCH_EOF_NONE    0
 #define  QSEARCH_EOF_DOWN    0x0001
 #define  QSEARCH_EOF_UP      0x0002
+#define  QSEARCH_EOF_MASK    0x000F
+#define  QSEARCH_EOF_IGNORE  0x0100
 
 #define  VK_QS_FINDBEGIN     VK_MENU     // Alt
 #define  VK_QS_FINDUP        VK_SHIFT    // Shift
 #define  VK_QS_PICKUPTEXT    VK_CONTROL  // Ctrl
 
 #define  VK_QS_WW_SRCH_MODE  VK_CONTROL  // Ctrl
+
+
+static int nEofLen = 2;
+static const wchar_t cszEofDownW[] = L">>";
+static const wchar_t cszEofUpW[] = L"<<";
+static const char cszEofDownA[] = ">>";
+static const char cszEofUpA[] = "<<";
 
 
 // extern vars
@@ -391,7 +402,7 @@ static BOOL    qs_bEditCanBeNonActive = TRUE;
 static BOOL    qs_bEditSelJustChanged = FALSE;
 static BOOL    qs_bEditNotFound = FALSE;
 static BOOL    qs_bEditNotRegExp = FALSE;
-static BOOL    qs_bEditIsEOF = FALSE;
+static INT     qs_nEditIsEOF = 0;
 static int     qs_nEditEOF = 0;
 static BOOL    qs_bEditTextChanged = TRUE;
 static BOOL    qs_bHotKeyPressedOnShow = FALSE;
@@ -430,21 +441,144 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
 {
     if ( g_QSearchDlg.hStInfo )
     {
-        const wchar_t* cszTextFormat;
+        const wchar_t* cszTextFormatW;
         int nLen;
-        wchar_t szText[128];
+        INT nIsEOF;
+        wchar_t szInfoTextW[128];
 
-        cszTextFormat = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
-        nLen = wsprintfW(szText, cszTextFormat, nOccurrences);
+        nIsEOF = 0;
+        szInfoTextW[0] = 0;
+        nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 127);
+        if ( szInfoTextW[0] != 0 )
+        {
+            if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofDownW) == 0 )
+                nIsEOF = QSEARCH_EOF_DOWN;
+            else if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofUpW) == 0 )
+                nIsEOF = QSEARCH_EOF_UP;
+        }
+
+        cszTextFormatW = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
+        nLen = wsprintfW(szInfoTextW, cszTextFormatW, nOccurrences);
         if ( nLen > 0 )
         {
             --nLen;
-            szText[nLen] = 0; // without the trailing '.'
+            szInfoTextW[nLen] = 0; // without the trailing '.'
         }
-        SetWindowTextW(g_QSearchDlg.hStInfo, szText);
+
+        if ( nIsEOF != 0 )
+        {
+            lstrcpyW(szInfoTextW + nLen, L" ");
+            ++nLen;
+            if ( nIsEOF == QSEARCH_EOF_DOWN )
+                lstrcpyW(szInfoTextW + nLen, cszEofDownW);
+            else
+                lstrcpyW(szInfoTextW + nLen, cszEofUpW);
+            nLen += nEofLen;
+        }
+
+        SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
     }
 }
 
+static int removeEofFromInfoTextA(char szInfoTextA[128], int nLen)
+{
+    if ( nLen >= nEofLen )
+    {
+        if ( lstrcmpA(szInfoTextA + nLen - nEofLen, cszEofDownA) == 0 ||
+             lstrcmpA(szInfoTextA + nLen - nEofLen, cszEofUpA) == 0 )
+        {
+            nLen -= nEofLen;
+            if ( nLen != 0 )
+                --nLen;
+            szInfoTextA[nLen] = 0;
+        }
+    }
+
+    return nLen;
+}
+
+static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
+{
+    if ( nLen >= nEofLen )
+    {
+        if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofDownW) == 0 ||
+             lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofUpW) == 0 )
+        {
+            // removing the old cszEof part
+            nLen -= nEofLen;
+            if ( nLen != 0 )
+                --nLen;
+            szInfoTextW[nLen] = 0;
+        }
+    }
+
+    return nLen;
+}
+
+static void qsSetInfoEOF(INT nIsEOF)
+{
+    if ( g_QSearchDlg.hStInfo )
+    {
+        if ( g_Plugin.bOldWindows )
+        {
+            int nLen;
+            char szInfoTextA[128];
+            char szInfoTextA_0[128];
+
+            szInfoTextA[0] = 0;
+            nLen = GetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA, 126 - nEofLen);
+            lstrcpyA(szInfoTextA_0, szInfoTextA);
+
+            nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
+
+            if ( nIsEOF != 0 )
+            {
+                // adding the new cszEof part
+                if ( szInfoTextA[0] != 0 )
+                {
+                    lstrcpyA(szInfoTextA + nLen, " ");
+                    ++nLen;
+                }
+                lstrcpyA(szInfoTextA + nLen, nIsEOF == QSEARCH_EOF_DOWN ? cszEofDownA : cszEofUpA);
+                nLen += nEofLen;
+            }
+
+            if ( lstrcmpA(szInfoTextA, szInfoTextA_0) != 0 )
+            {
+                SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
+            }
+        }
+        else
+        {
+            int nLen;
+            wchar_t szInfoTextW[128];
+            wchar_t szInfoTextW_0[128];
+
+            szInfoTextW[0] = 0;
+            nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 126 - nEofLen);
+            lstrcpyW(szInfoTextW_0, szInfoTextW);
+
+            nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
+
+            if ( nIsEOF != 0 )
+            {
+                // adding the new cszEof part
+                if ( szInfoTextW[0] != 0 )
+                {
+                    lstrcpyW(szInfoTextW + nLen, L" ");
+                    ++nLen;
+                }
+                lstrcpyW(szInfoTextW + nLen, nIsEOF == QSEARCH_EOF_DOWN ? cszEofDownW : cszEofUpW);
+                nLen += nEofLen;
+            }
+
+            if ( lstrcmpW(szInfoTextW, szInfoTextW_0) != 0 )
+            {
+                SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
+            }
+        }
+    }
+}
 
 // Helpers for find all...
 // There is a single reason for so many helpers.
@@ -1006,7 +1140,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         bOutputResult = TRUE;
         bNewWindow = TRUE;
     }
-    else 
+    else
     {
         if ( g_Plugin.nMDI != WMD_SDI )
             qs_bEditCanBeNonActive = TRUE;
@@ -1579,7 +1713,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit);
 void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBrush1, HBRUSH hBrush2, HBRUSH hBrush3);
 void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], tQSFindAll* pFindAll /* = NULL */);
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[]);
-void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF);
+void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEOF);
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[]);
 HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox);
 
@@ -2295,7 +2429,7 @@ static void OnSrchModeChanged()
     qsdlgShowHideWholeWordCheckBox(g_QSearchDlg.hDlg, g_Options.dwFlags);
     qs_bForceFindFirst = TRUE;
     qs_nEditEOF = 0;
-    qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE );
+    qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, FALSE, FALSE, 0 );
 
     if ( isCheckBoxChecked(g_QSearchDlg.hDlg, IDC_CH_HIGHLIGHTALL) )
     {
@@ -2457,7 +2591,7 @@ UINT qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll
 
         if ( qs_bEditTextChanged )
         {
-            qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
+            qsearchDoSetNotFound(hEdit, FALSE, FALSE, 0);
             setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
 
             SendMessage(hEdit, EM_SETSEL, 0, -1);
@@ -3309,7 +3443,7 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
     {
         qs_bForceFindFirst = TRUE;
         qs_bEditTextChanged = TRUE;
-        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, 0);
 
         if ( bHighlightAllChecked )
         {
@@ -3328,7 +3462,7 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
     else
     {
         qs_bEditTextChanged = TRUE;
-        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, 0);
     }
 }
 
@@ -3383,7 +3517,7 @@ static void fillToolInfoW(
 static HWND GetDlgItemAndRect(HWND hDlg, int nItemId, RECT* pRect)
 {
     HWND hDlgItm;
-    
+
     hDlgItm = GetDlgItem(hDlg, nItemId);
     if ( hDlgItm )
     {
@@ -3619,7 +3753,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         qs_bEditTextChanged = TRUE;
                         qs_bForceFindFirst = TRUE;
                         g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH(g_Options.dwFlags);
-                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, 0);
                         qsSetInfoEmpty();
                         break;
                     case CBN_DROPDOWN:
@@ -3660,7 +3794,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                                     g_Options.dwFlags[id - IDM_START] -= 0x01;
 
                                     if ( id == IDM_START + OPTF_SRCH_STOP_EOF )
-                                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE);
+                                        qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, 0);
                                 }
                             }
                             else
@@ -3684,7 +3818,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         }*/
                         qsdlgShowHideWholeWordCheckBox(hDlg, g_Options.dwFlags);
                         qs_nEditEOF = 0;
-                        qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, FALSE, FALSE, FALSE );
+                        qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, FALSE, FALSE, 0 );
                     }
                     else if ( id == IDM_SRCHUSESPECIALCHARS )
                     {
@@ -3916,7 +4050,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 {
                     if ( !qs_bEditNotFound )
                     {
-                        if ( (!qs_bEditIsEOF) || (g_Options.colorEOF == RGB(0xFF,0xFF,0xFF)) )
+                        if ( (!qs_nEditIsEOF) || (g_Options.colorEOF == RGB(0xFF,0xFF,0xFF)) )
                         {
                             // normal active
                             if ( g_QSearchDlg.hBkgndBrush )
@@ -4174,6 +4308,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 else
                 {
                     // CountOnly
+                    dwSearch |= QSEARCH_COUNTALL;
                     qsfa.pfnFindResultCallback = NULL;
                     qsfa.ShowFindResults.pfnInit = qsShowFindResults_CountOnly_Init;
                     qsfa.ShowFindResults.pfnAddOccurrence = qsShowFindResults_CountOnly_AddOccurrence;
@@ -4279,9 +4414,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         {
             UINT uFlags;
 
-            qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, (BOOL) wParam, FALSE, FALSE );
-
             uFlags = (UINT) lParam;
+            qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, (BOOL) wParam, FALSE, (uFlags & QS_SNF_IGNOREEOF) ? QSEARCH_EOF_IGNORE : 0 );
+
             if ( uFlags & QS_SNF_SETINFOEMPTY )
             {
                 qsSetInfoEmpty();
@@ -4406,7 +4541,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             qs_bEditSelJustChanged = FALSE;
             qs_bEditNotFound = FALSE;
             qs_bEditNotRegExp = FALSE;
-            qs_bEditIsEOF = FALSE;
+            qs_nEditIsEOF = 0;
             qs_nEditEOF = 0;
             qs_bEditTextChanged = TRUE;
             qs_bHotKeyPressedOnShow = FALSE;
@@ -4848,7 +4983,7 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
     DeleteCriticalSection(&csFindAllTimerId);
 }
 
-void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF)
+void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEOF)
 {
     if ( bNotFound )
     {
@@ -4858,7 +4993,11 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, BOOL bEOF
 
     qs_bEditNotFound = bNotFound;
     qs_bEditNotRegExp = bNotRegExp;
-    qs_bEditIsEOF = bEOF;
+    if ( !(nIsEOF & QSEARCH_EOF_IGNORE) )
+    {
+        qs_nEditIsEOF = nIsEOF;
+        qsSetInfoEOF(nIsEOF);
+    }
     InvalidateRect(hEdit, NULL, TRUE);
     UpdateWindow(hEdit);
 }
@@ -4867,7 +5006,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
 {
     BOOL bChangeSelection = !IsWindowVisible(hDlg);
 
-    qsearchDoSetNotFound( qsearchGetFindEdit(hDlg, NULL), FALSE, FALSE, FALSE );
+    qsearchDoSetNotFound( qsearchGetFindEdit(hDlg, NULL), FALSE, FALSE, 0 );
     qsSetInfoEmpty();
 
     if ( bShow )
@@ -5024,7 +5163,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
         // clear the "not found" flag
         qs_bEditNotFound = FALSE;
         qs_bEditNotRegExp = FALSE;
-        qs_bEditIsEOF = FALSE;
+        qs_nEditIsEOF = 0;
 
         if ( g_Plugin.bOldWindows )
         {
@@ -5333,7 +5472,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
     HWND     hDlgItm;
     BOOL     bNotFound = FALSE;
     BOOL     bNotRegExp = FALSE;
-    BOOL     bEOF = FALSE;
+    INT      nIsEOF = 0;
+    int      srchEOF = 0;
     BOOL     bNeedsFindAllCountOnly = FALSE;
     DWORD    dwSearchFlags = FR_DOWN;
 
@@ -5354,7 +5494,6 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
             if ( !pFindAll )
             {
-                int srchEOF;
                 if ( (dwParams & QSEARCH_FINDUP) || (GetKeyState(VK_QS_FINDUP) & 0x80) )
                     srchEOF = QSEARCH_EOF_UP;
                 else
@@ -5392,6 +5531,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                     if ( (nLen < 3) || (lstrcmpA(szInfoTextA + nLen - 3, "...") != 0) )
                     {
+                        nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
                         lstrcatA(szInfoTextA, "...");
                         SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
                     }
@@ -5403,7 +5543,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
         if ( 0 == ((LPCSTR) g_QSearchDlg.szFindTextW)[0] )
         {
-            qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
+            qsearchDoSetNotFound(hEdit, FALSE, FALSE, 0);
             return;
         }
     }
@@ -5433,6 +5573,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                     if ( (nLen < 3) || (lstrcmpW(szInfoTextW + nLen - 3, L"...") != 0) )
                     {
+                        nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
                         lstrcatW(szInfoTextW, L"...");
                         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
                     }
@@ -5444,7 +5585,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
         if ( 0 == ((LPCWSTR) g_QSearchDlg.szFindTextW)[0] )
         {
-            qsearchDoSetNotFound(hEdit, FALSE, FALSE, FALSE);
+            qsearchDoSetNotFound(hEdit, FALSE, FALSE, 0);
             return;
         }
     }
@@ -5533,10 +5674,11 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
         }
     }
 
+    srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
+
     if ( g_Plugin.bOldWindows )
     {
         TEXTFINDA tfA;
-        int       srchEOF;
         BOOL      bSearchEx = FALSE;
         INT_X     iFindResult = -1;
         char      szFindTextA[MAX_TEXT_SIZE];
@@ -5554,7 +5696,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             tfA.dwFlags = dwSearchFlags;
             tfA.pFindIt = szFindTextA;
             tfA.nFindItLen = -1;
-            srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
+
             if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
             {
                 if ( !bSearchEx )
@@ -5576,13 +5718,13 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                     // RegExp syntax error
                     bNotRegExp = TRUE;
                     bNotFound = TRUE;
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = 0;
                 }
                 else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
                 {
                     bNotFound = STOP_EOF_WITHOUT_MSG;
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = srchEOF;
                 }
                 else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) &&
@@ -5620,7 +5762,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 if ( bContinueSearch )
                 {
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
 
                     if ( (dwSearchFlags & FR_UP) == FR_UP )
                     {
@@ -5699,7 +5841,6 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
     else // !g_Plugin.bOldWindows
     {
         TEXTFINDW tfW;
-        int       srchEOF;
         BOOL      bSearchEx = FALSE;
         INT_X     iFindResult = -1;
         wchar_t   szFindTextW[MAX_TEXT_SIZE];
@@ -5717,7 +5858,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
             tfW.dwFlags = dwSearchFlags;
             tfW.pFindIt = szFindTextW;
             tfW.nFindItLen = -1;
-            srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
+
             if ( ((qs_nEditEOF & srchEOF) == 0) || !IsWindowVisible(g_QSearchDlg.hDlg) )
             {
                 if ( !bSearchEx )
@@ -5739,13 +5880,13 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                     // RegExp syntax error
                     bNotRegExp = TRUE;
                     bNotFound = TRUE;
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = 0;
                 }
                 else if ( dwOptFlags[OPTF_SRCH_STOP_EOF] == STOP_EOF_WITHOUT_MSG )
                 {
                     bNotFound = STOP_EOF_WITHOUT_MSG;
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = srchEOF;
                 }
                 else if ( (dwOptFlags[OPTF_SRCH_STOP_EOF] & 0x01) &&
@@ -5783,7 +5924,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                 if ( bContinueSearch )
                 {
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
 
                     if ( (dwSearchFlags & FR_UP) == FR_UP )
                     {
@@ -6060,12 +6201,12 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 if ( (dwSearchFlags & FRF_REGEXP) && (aeftW.nCompileErrorOffset > 0) )
                 {
                     bNotRegExp = TRUE;
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = 0;
                 }
                 else
                 {
-                    bEOF = TRUE;
+                    nIsEOF = srchEOF;
                     qs_nEditEOF = QSEARCH_EOF_DOWN | QSEARCH_EOF_UP;
                 }
             }
@@ -6108,7 +6249,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
     // now the Edit control can be deactivated
     qs_bEditCanBeNonActive = TRUE;
-    qsearchDoSetNotFound(hEdit, bNotFound, bNotRegExp, bEOF);
+    qsearchDoSetNotFound(hEdit, bNotFound, bNotRegExp, (dwParams & QSEARCH_COUNTALL) ? (nIsEOF | QSEARCH_EOF_IGNORE) : nIsEOF);
 
     g_QSearchDlg.bIsQSearchingRightNow = FALSE;
 
