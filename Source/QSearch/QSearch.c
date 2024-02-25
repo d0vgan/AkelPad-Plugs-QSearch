@@ -82,6 +82,11 @@ void CloseLog(void)
 #define  MIN_FIND_HISTORY_ITEMS      0
 #define  MAX_FIND_HISTORY_ITEMS      100
 
+static const wchar_t DEFAULT_EOF_CROSSED_DOWN_W[] = L">>";
+static const wchar_t DEFAULT_EOF_CROSSED_UP_W[] = L"<<";
+static const char DEFAULT_EOF_CROSSED_DOWN_A[] = ">>";
+static const char DEFAULT_EOF_CROSSED_UP_A[] = "<<";
+
 #define LOGOUTPUT_FRP_MODE       QSFRM_CHARINLINE
 #define LOGOUTPUT_FRP_BEFORE     100
 #define LOGOUTPUT_FRP_AFTER      100
@@ -174,6 +179,10 @@ void CloseLog(void)
         pOptions->dwEditMinWidth = WRONG_DWORD_VALUE;
         pOptions->dwEditMaxWidth = WRONG_DWORD_VALUE;
         pOptions->dwUseEditorColors = WRONG_DWORD_VALUE;
+        pOptions->nLenEofCrossedDown = WRONG_INT_VALUE;
+        pOptions->nLenEofCrossedUp = WRONG_INT_VALUE;
+        x_zero_mem(pOptions->szEofCrossedDown, sizeof(pOptions->szEofCrossedDown));
+        x_zero_mem(pOptions->szEofCrossedUp, sizeof(pOptions->szEofCrossedUp));
         initializeFRP(&pOptions->LogOutputFRP);
         initializeFRP(&pOptions->FileOutputFRP);
     }
@@ -249,7 +258,9 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  "fileoutput_frp_highlight",
     /* OPT_EDIT_MINWIDTH            47 */  "edit_minwidth",
     /* OPT_EDIT_MAXWIDTH            48 */  "edit_maxwidth",
-    /* OPT_USE_EDITOR_COLORS        49 */  "use_editor_colors"
+    /* OPT_USE_EDITOR_COLORS        49 */  "use_editor_colors",
+    /* OPT_EOF_CROSSED_DOWN         50 */  "eof_crossed_down",
+    /* OPT_EOF_CROSSED_UP           51 */  "eof_crossed_up"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -302,7 +313,9 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_FILEOUTPUT_FRP_HIGHLIGHT 46 */  L"fileoutput_frp_highlight",
     /* OPT_EDIT_MINWIDTH            47 */  L"edit_minwidth",
     /* OPT_EDIT_MAXWIDTH            48 */  L"edit_maxwidth",
-    /* OPT_USE_EDITOR_COLORS        49 */  L"use_editor_colors"
+    /* OPT_USE_EDITOR_COLORS        49 */  L"use_editor_colors",
+    /* OPT_EOF_CROSSED_DOWN         50 */  L"eof_crossed_down",
+    /* OPT_EOF_CROSSED_UP           51 */  L"eof_crossed_up"
 };
 
 
@@ -323,10 +336,14 @@ void  ReadOptions(void);
 void  SaveOptions(void);
 void  readBinaryA(HANDLE, const char*, void*, DWORD);
 void  readBinaryW(HANDLE, const wchar_t*, void*, DWORD);
+int   readStringA(HANDLE, const char*, char*, DWORD);
+int   readStringW(HANDLE, const wchar_t*, wchar_t*, DWORD);
 DWORD readDwordA(HANDLE, const char*, DWORD);
 DWORD readDwordW(HANDLE, const wchar_t*, DWORD);
 void  writeBinaryA(HANDLE, const char*, const void*, DWORD);
 void  writeBinaryW(HANDLE, const wchar_t*, const void*, DWORD);
+void  writeStringA(HANDLE, const char*, const char*);
+void  writeStringW(HANDLE, const wchar_t*, const wchar_t*);
 void  writeDwordA(HANDLE, const char*, DWORD);
 void  writeDwordW(HANDLE, const wchar_t*, DWORD);
 LRESULT CALLBACK NewEditProc(HWND, UINT, WPARAM, LPARAM);
@@ -1769,6 +1786,18 @@ void ReadOptions(void)
             g_Options.dwUseEditorColors = readDwordA( hOptions,
               CSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
 
+            if ( readStringA(hOptions, CSZ_OPTIONS[OPT_EOF_CROSSED_DOWN],
+                  (char *) g_Options.szEofCrossedDown, sizeof(g_Options.szEofCrossedDown)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenEofCrossedDown = lstrlenA( (const char *) g_Options.szEofCrossedDown );
+            }
+
+            if ( readStringA(hOptions, CSZ_OPTIONS[OPT_EOF_CROSSED_UP],
+                  (char *) g_Options.szEofCrossedUp, sizeof(g_Options.szEofCrossedUp)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenEofCrossedUp = lstrlenA( (const char *) g_Options.szEofCrossedUp );
+            }
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -1886,6 +1915,18 @@ void ReadOptions(void)
 
             g_Options.dwUseEditorColors = readDwordW( hOptions,
               CWSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
+
+            if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_EOF_CROSSED_DOWN],
+                  g_Options.szEofCrossedDown, sizeof(g_Options.szEofCrossedDown)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenEofCrossedDown = lstrlenW(g_Options.szEofCrossedDown);
+            }
+
+            if ( readStringW( hOptions, CWSZ_OPTIONS[OPT_EOF_CROSSED_UP],
+                  g_Options.szEofCrossedUp, sizeof(g_Options.szEofCrossedUp)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenEofCrossedUp = lstrlenW(g_Options.szEofCrossedUp);
+            }
 
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
@@ -2052,6 +2093,34 @@ void ReadOptions(void)
 
     if ( g_Options.dwUseEditorColors == WRONG_DWORD_VALUE )
         g_Options.dwUseEditorColors = DEFAULT_USE_EDITOR_COLORS;
+
+    if ( g_Options.nLenEofCrossedDown == WRONG_INT_VALUE )
+    {
+        if ( g_Plugin.bOldWindows )
+        {
+            lstrcpyA( (char *) g_Options.szEofCrossedDown, DEFAULT_EOF_CROSSED_DOWN_A );
+            g_Options.nLenEofCrossedDown = lstrlenA( (const char *) DEFAULT_EOF_CROSSED_DOWN_A );
+        }
+        else
+        {
+            lstrcpyW(g_Options.szEofCrossedDown, DEFAULT_EOF_CROSSED_DOWN_W);
+            g_Options.nLenEofCrossedDown = lstrlenW(DEFAULT_EOF_CROSSED_DOWN_W);
+        }
+    }
+
+    if ( g_Options.nLenEofCrossedUp == WRONG_INT_VALUE )
+    {
+        if ( g_Plugin.bOldWindows )
+        {
+            lstrcpyA( (char *) g_Options.szEofCrossedUp, DEFAULT_EOF_CROSSED_UP_A );
+            g_Options.nLenEofCrossedUp = lstrlenA( (const char *) DEFAULT_EOF_CROSSED_UP_A );
+        }
+        else
+        {
+            lstrcpyW(g_Options.szEofCrossedUp, DEFAULT_EOF_CROSSED_UP_W);
+            g_Options.nLenEofCrossedUp = lstrlenW(DEFAULT_EOF_CROSSED_UP_W);
+        }
+    }
 }
 
 void SaveOptions(void)
@@ -2315,6 +2384,18 @@ void SaveOptions(void)
                       g_Options.dwUseEditorColors );
                 }
 
+                if ( lstrcmpA((const char *) g_Options0.szEofCrossedDown, (const char *) g_Options.szEofCrossedDown) != 0 )
+                {
+                    writeStringA( hOptions, CSZ_OPTIONS[OPT_EOF_CROSSED_DOWN],
+                      (const char *) g_Options.szEofCrossedDown );
+                }
+
+                if ( lstrcmpA((const char *) g_Options0.szEofCrossedUp, (const char *) g_Options.szEofCrossedUp) != 0 )
+                {
+                    writeStringA( hOptions, CSZ_OPTIONS[OPT_EOF_CROSSED_UP],
+                      (const char *) g_Options.szEofCrossedUp );
+                }
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -2547,6 +2628,18 @@ void SaveOptions(void)
                       g_Options.dwUseEditorColors );
                 }
 
+                if ( lstrcmpW(g_Options0.szEofCrossedDown, g_Options.szEofCrossedDown) != 0 )
+                {
+                    writeStringW( hOptions, CWSZ_OPTIONS[OPT_EOF_CROSSED_DOWN],
+                      g_Options.szEofCrossedDown );
+                }
+
+                if ( lstrcmpW(g_Options0.szEofCrossedUp, g_Options.szEofCrossedUp) != 0 )
+                {
+                    writeStringW( hOptions, CWSZ_OPTIONS[OPT_EOF_CROSSED_UP],
+                      g_Options.szEofCrossedUp );
+                }
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -2586,7 +2679,7 @@ void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
-void readStringA(HANDLE hOptions, const char* szOptionNameA,
+int readStringA(HANDLE hOptions, const char* szOptionNameA,
                  char* pStr, DWORD dwStrMaxSize)
 {
     PLUGINOPTIONA poA;
@@ -2595,10 +2688,10 @@ void readStringA(HANDLE hOptions, const char* szOptionNameA,
     poA.dwType = PO_STRING;
     poA.lpData = (BYTE *) pStr;
     poA.dwData = dwStrMaxSize * sizeof(char);
-    SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
+    return (int) SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
 
-void readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
+int readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
                  wchar_t* pStr, DWORD dwStrMaxSize)
 {
     PLUGINOPTIONW poW;
@@ -2607,7 +2700,7 @@ void readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
     poW.dwType = PO_STRING;
     poW.lpData = (BYTE *) pStr;
     poW.dwData = dwStrMaxSize * sizeof(wchar_t);
-    SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
+    return (int) SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
 DWORD readDwordA(HANDLE hOptions, const char* szOptionNameA, DWORD dwDefaultVal)

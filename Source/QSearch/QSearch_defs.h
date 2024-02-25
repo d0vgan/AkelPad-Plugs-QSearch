@@ -55,8 +55,10 @@
 #define  OPT_EDIT_MINWIDTH            47
 #define  OPT_EDIT_MAXWIDTH            48
 #define  OPT_USE_EDITOR_COLORS        49
+#define  OPT_EOF_CROSSED_DOWN         50
+#define  OPT_EOF_CROSSED_UP           51
 
-#define  OPT_TOTALCOUNT               50
+#define  OPT_TOTALCOUNT               52
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

@@ -34,13 +34,6 @@
 #define  VK_QS_WW_SRCH_MODE  VK_CONTROL  // Ctrl
 
 
-static int nEofLen = 2;
-static const wchar_t cszEofDownW[] = L">>";
-static const wchar_t cszEofUpW[] = L"<<";
-static const char cszEofDownA[] = ">>";
-static const char cszEofUpA[] = "<<";
-
-
 // extern vars
 extern PluginState     g_Plugin;
 extern QSearchDlgState g_QSearchDlg;
@@ -448,13 +441,19 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
 
         nIsEOF = 0;
         szInfoTextW[0] = 0;
-        nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 127);
+        nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 128 - 1);
         if ( szInfoTextW[0] != 0 )
         {
-            if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofDownW) == 0 )
+            if ( g_Options.nLenEofCrossedDown != 0 &&
+                 lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedDown, g_Options.szEofCrossedDown) == 0 )
+            {
                 nIsEOF = QSEARCH_EOF_DOWN;
-            else if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofUpW) == 0 )
+            }
+            else if ( g_Options.nLenEofCrossedUp != 0 &&
+                      lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedUp, g_Options.szEofCrossedUp) == 0 )
+            {
                 nIsEOF = QSEARCH_EOF_UP;
+            }
         }
 
         cszTextFormatW = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
@@ -470,10 +469,15 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
             lstrcpyW(szInfoTextW + nLen, L" ");
             ++nLen;
             if ( nIsEOF == QSEARCH_EOF_DOWN )
-                lstrcpyW(szInfoTextW + nLen, cszEofDownW);
+            {
+                lstrcpyW(szInfoTextW + nLen, g_Options.szEofCrossedDown);
+                nLen += g_Options.nLenEofCrossedDown;
+            }
             else
-                lstrcpyW(szInfoTextW + nLen, cszEofUpW);
-            nLen += nEofLen;
+            {
+                lstrcpyW(szInfoTextW + nLen, g_Options.szEofCrossedUp);
+                nLen += g_Options.nLenEofCrossedUp;
+            }
         }
 
         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
@@ -482,16 +486,25 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
 
 static int removeEofFromInfoTextA(char szInfoTextA[128], int nLen)
 {
-    if ( nLen >= nEofLen )
+    int nEofLen = 0;
+
+    if ( g_Options.nLenEofCrossedDown != 0 && nLen >= g_Options.nLenEofCrossedDown &&
+         lstrcmpA(szInfoTextA + nLen - g_Options.nLenEofCrossedDown, (const char *) g_Options.szEofCrossedDown) == 0 )
     {
-        if ( lstrcmpA(szInfoTextA + nLen - nEofLen, cszEofDownA) == 0 ||
-             lstrcmpA(szInfoTextA + nLen - nEofLen, cszEofUpA) == 0 )
-        {
-            nLen -= nEofLen;
-            if ( nLen != 0 )
-                --nLen;
-            szInfoTextA[nLen] = 0;
-        }
+        nEofLen = g_Options.nLenEofCrossedDown;
+    }
+    else if ( g_Options.nLenEofCrossedUp != 0 && nLen >= g_Options.nLenEofCrossedUp &&
+              lstrcmpA(szInfoTextA + nLen - g_Options.nLenEofCrossedUp, (const char *) g_Options.szEofCrossedUp) == 0 )
+    {
+        nEofLen = g_Options.nLenEofCrossedUp;
+    }
+
+    if ( nEofLen != 0 )
+    {
+        nLen -= nEofLen;
+        if ( nLen != 0 )
+            --nLen;
+        szInfoTextA[nLen] = 0;
     }
 
     return nLen;
@@ -499,17 +512,25 @@ static int removeEofFromInfoTextA(char szInfoTextA[128], int nLen)
 
 static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
 {
-    if ( nLen >= nEofLen )
+    int nEofLen = 0;
+
+    if ( g_Options.nLenEofCrossedDown != 0 && nLen >= g_Options.nLenEofCrossedDown &&
+         lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedDown, g_Options.szEofCrossedDown) == 0 )
     {
-        if ( lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofDownW) == 0 ||
-             lstrcmpW(szInfoTextW + nLen - nEofLen, cszEofUpW) == 0 )
-        {
-            // removing the old cszEof part
-            nLen -= nEofLen;
-            if ( nLen != 0 )
-                --nLen;
-            szInfoTextW[nLen] = 0;
-        }
+        nEofLen = g_Options.nLenEofCrossedDown;
+    }
+    else if ( g_Options.nLenEofCrossedUp != 0 && nLen >= g_Options.nLenEofCrossedUp &&
+              lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedUp, g_Options.szEofCrossedUp) == 0 )
+    {
+        nEofLen = g_Options.nLenEofCrossedUp;
+    }
+
+    if ( nEofLen != 0 )
+    {
+        nLen -= nEofLen;
+        if ( nLen != 0 )
+            --nLen;
+        szInfoTextW[nLen] = 0;
     }
 
     return nLen;
@@ -517,65 +538,72 @@ static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
 
 static void qsSetInfoEOF(INT nIsEOF)
 {
-    if ( g_QSearchDlg.hStInfo )
+    int nLen;
+    int nEofLen;
+
+    if ( !g_QSearchDlg.hStInfo )
+        return;
+
+    if ( g_Plugin.bOldWindows )
     {
-        if ( g_Plugin.bOldWindows )
+        char szInfoTextA[128];
+        char szInfoTextA_0[128];
+
+        szInfoTextA[0] = 0;
+        nLen = GetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA, 128 - 20);
+        lstrcpyA(szInfoTextA_0, szInfoTextA);
+
+        nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
+
+        if ( nIsEOF != 0 )
         {
-            int nLen;
-            char szInfoTextA[128];
-            char szInfoTextA_0[128];
-
-            szInfoTextA[0] = 0;
-            nLen = GetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA, 126 - nEofLen);
-            lstrcpyA(szInfoTextA_0, szInfoTextA);
-
-            nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
-
-            if ( nIsEOF != 0 )
+            nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
+            if ( nEofLen != 0 )
             {
-                // adding the new cszEof part
                 if ( szInfoTextA[0] != 0 )
                 {
                     lstrcpyA(szInfoTextA + nLen, " ");
                     ++nLen;
                 }
-                lstrcpyA(szInfoTextA + nLen, nIsEOF == QSEARCH_EOF_DOWN ? cszEofDownA : cszEofUpA);
+                lstrcpyA( szInfoTextA + nLen, (const char *) (nIsEOF == QSEARCH_EOF_DOWN ? g_Options.szEofCrossedDown : g_Options.szEofCrossedUp) );
                 nLen += nEofLen;
             }
-
-            if ( lstrcmpA(szInfoTextA, szInfoTextA_0) != 0 )
-            {
-                SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
-            }
         }
-        else
+
+        if ( lstrcmpA(szInfoTextA, szInfoTextA_0) != 0 )
         {
-            int nLen;
-            wchar_t szInfoTextW[128];
-            wchar_t szInfoTextW_0[128];
+            SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
+        }
+    }
+    else
+    {
+        wchar_t szInfoTextW[128];
+        wchar_t szInfoTextW_0[128];
 
-            szInfoTextW[0] = 0;
-            nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 126 - nEofLen);
-            lstrcpyW(szInfoTextW_0, szInfoTextW);
+        szInfoTextW[0] = 0;
+        nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 128 - 20);
+        lstrcpyW(szInfoTextW_0, szInfoTextW);
 
-            nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
+        nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
 
-            if ( nIsEOF != 0 )
+        if ( nIsEOF != 0 )
+        {
+            nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
+            if ( nEofLen != 0 )
             {
-                // adding the new cszEof part
                 if ( szInfoTextW[0] != 0 )
                 {
                     lstrcpyW(szInfoTextW + nLen, L" ");
                     ++nLen;
                 }
-                lstrcpyW(szInfoTextW + nLen, nIsEOF == QSEARCH_EOF_DOWN ? cszEofDownW : cszEofUpW);
+                lstrcpyW(szInfoTextW + nLen, nIsEOF == QSEARCH_EOF_DOWN ? g_Options.szEofCrossedDown : g_Options.szEofCrossedUp);
                 nLen += nEofLen;
             }
+        }
 
-            if ( lstrcmpW(szInfoTextW, szInfoTextW_0) != 0 )
-            {
-                SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
-            }
+        if ( lstrcmpW(szInfoTextW, szInfoTextW_0) != 0 )
+        {
+            SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
         }
     }
 }
