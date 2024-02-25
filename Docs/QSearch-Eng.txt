@@ -585,10 +585,27 @@ Additional options (QSearch panel's popup menu or file
        color_eof=E4FFE400
        color_highlight=C0FFC000
 
+51) eof_crossed_down = >>
+     QSearch'es panel shows the given text (symbols) when the end of the
+     document (EOF) has been crossed while searching forward (down).
+     If an empty string is specified, QSearch'es panel does not show any
+     reaction to crossing the EOF in forward (down) direction.
+
+52) eof_crossed_up = <<
+     QSearch'es panel shows the given text (symbols) when the end of the
+     document (EOF) has been crossed while searching backward (up).
+     If an empty string is specified, QSearch'es panel does not show any
+     reaction to crossing the EOF in backward (up) direction.
+
 
 --------
 History:
 --------
+v.8.1
+ * Glory to Ukraine! Glory to the heroes!
+ + added: showing ">>" or "<<" when crossing the end of the document (EOF)
+ + added: new options "eof_crossed_down" and "eof_crossed_up"
+
 v.8.0 (June 2023)
  * Glory to Ukraine! Glory to the heroes!
  * improved: now File Output (N tabs) in SDI mode creates a new window
