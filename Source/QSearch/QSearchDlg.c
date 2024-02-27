@@ -586,7 +586,7 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
 
         nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
 
-        if ( nIsEOF != 0 && !bNotFound)
+        if ( nIsEOF != 0 && !bNotFound )
         {
             nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
             if ( nEofLen != 0 )
@@ -5024,7 +5024,7 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
     if ( !(nIsEOF & QSEARCH_EOF_IGNORE) )
     {
         qs_nEditIsEOF = nIsEOF;
-        qsSetInfoEOF(nIsEOF, bNotFound);
+        qsSetInfoEOF(nIsEOF, bNotFound || bNotRegExp);
     }
     InvalidateRect(hEdit, NULL, TRUE);
     UpdateWindow(hEdit);
