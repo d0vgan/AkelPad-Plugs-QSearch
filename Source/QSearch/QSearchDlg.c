@@ -536,7 +536,7 @@ static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
     return nLen;
 }
 
-static void qsSetInfoEOF(INT nIsEOF)
+static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
 {
     int nLen;
     int nEofLen;
@@ -555,7 +555,7 @@ static void qsSetInfoEOF(INT nIsEOF)
 
         nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
 
-        if ( nIsEOF != 0 )
+        if ( nIsEOF != 0 && !bNotFound )
         {
             nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
             if ( nEofLen != 0 )
@@ -586,7 +586,7 @@ static void qsSetInfoEOF(INT nIsEOF)
 
         nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
 
-        if ( nIsEOF != 0 )
+        if ( nIsEOF != 0 && !bNotFound)
         {
             nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
             if ( nEofLen != 0 )
@@ -5024,7 +5024,7 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
     if ( !(nIsEOF & QSEARCH_EOF_IGNORE) )
     {
         qs_nEditIsEOF = nIsEOF;
-        qsSetInfoEOF(nIsEOF);
+        qsSetInfoEOF(nIsEOF, bNotFound);
     }
     InvalidateRect(hEdit, NULL, TRUE);
     UpdateWindow(hEdit);
