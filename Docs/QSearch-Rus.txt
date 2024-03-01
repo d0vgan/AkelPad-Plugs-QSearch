@@ -626,7 +626,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 --------
 История:
 --------
-v.8.1
+v.8.1 (Март 2024)
  * Слава Україні! Героям слава!
  + добавлено: показ ">>" или "<<" при пересечении границы документа (EOF)
  + добавлено: новые настройки "eof_crossed_down" и "eof_crossed_up"
@@ -969,7 +969,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Jun 2023, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Mar 2024, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Этот плагин является бесплатным (бесплатным как для частного, так и для

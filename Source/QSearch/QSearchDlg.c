@@ -825,7 +825,7 @@ static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, DWORD dwFrpHighlig
     int nFirstVisibleLine;
     AECHARINDEX ci;
 
-    SendMessage( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nPos, (LPARAM) &ci );
+    SendMessageW( hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nPos, (LPARAM) &ci );
     SendMessageW( hWndEdit, AEM_EXSETSEL, (WPARAM) &ci, (LPARAM) &ci );
     nFirstVisibleLine = (int) SendMessageW( hWndEdit, AEM_GETLINENUMBER, AEGL_FIRSTFULLVISIBLELINE, 0 );
     if ( ci.nLine > nFirstVisibleLine )
