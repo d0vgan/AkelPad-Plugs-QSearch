@@ -73,10 +73,14 @@
         DWORD    dwEditMinWidth;
         DWORD    dwEditMaxWidth;
         DWORD    dwUseEditorColors;
-        int      nLenEofCrossedDown;
-        int      nLenEofCrossedUp;
-        wchar_t  szEofCrossedDown[16];
-        wchar_t  szEofCrossedUp[16];
+        int      nLenStatusEofCrossedDown;
+        int      nLenStatusEofCrossedUp;
+        int      nLenStatusNotFound;
+        int      nLenStatusNotRegExp;
+        wchar_t  szStatusEofCrossedDown[16];
+        wchar_t  szStatusEofCrossedUp[16];
+        wchar_t  szStatusNotFound[16];
+        wchar_t  szStatusNotRegExp[16];
         FindResultsOutputPolicy LogOutputFRP;
         FindResultsOutputPolicy FileOutputFRP;
     } QSearchOpt;

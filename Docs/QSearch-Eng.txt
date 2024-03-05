@@ -585,17 +585,29 @@ Additional options (QSearch panel's popup menu or file
        color_eof=E4FFE400
        color_highlight=C0FFC000
 
-51) eof_crossed_down = >>
+51) status_eof_crossed_down = >>
      QSearch'es panel shows the given text (symbols) when the end of the
      document (EOF) has been crossed while searching forward (down).
      If an empty string is specified, QSearch'es panel does not show any
      reaction to crossing the EOF in forward (down) direction.
 
-52) eof_crossed_up = <<
+52) status_eof_crossed_up = <<
      QSearch'es panel shows the given text (symbols) when the end of the
      document (EOF) has been crossed while searching backward (up).
      If an empty string is specified, QSearch'es panel does not show any
      reaction to crossing the EOF in backward (up) direction.
+
+53) status_notfound = --
+     QSearch'es panel shows the given text (symbols) when the searched text
+     is not found.
+     If an empty string is specified, QSearch'es panel does not show any
+     reaction to "not found" text.
+
+54) status_notregexp =
+     QSearch'es panel shows the given text (symbols) when the searched text
+     is not a valid regular expression.
+     If an empty string is specified, QSearch'es panel does not show any
+     reaction to an invalid regular expression.
 
 
 --------
@@ -604,7 +616,8 @@ History:
 v.8.1 (March 2024)
  * Glory to Ukraine! Glory to the heroes!
  + added: showing ">>" or "<<" when crossing the end of the document (EOF)
- + added: new options "eof_crossed_down" and "eof_crossed_up"
+ + added: new options "status_eof_crossed_down" and "status_eof_crossed_up"
+ + added: new options "status_notfound" and "status_notregexp"
 
 v.8.0 (June 2023)
  * Glory to Ukraine! Glory to the heroes!

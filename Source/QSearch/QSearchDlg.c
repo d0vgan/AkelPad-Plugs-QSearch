@@ -430,6 +430,46 @@ static void qsSetInfoEmpty()
     }
 }
 
+static BOOL endsWithSubStrA(const char* szStrA, int nLen, const char* szSubA, int nSubLen)
+{
+    return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpA(szStrA + nLen - nSubLen, szSubA) == 0 );
+}
+
+static BOOL endsWithSubStrW(const wchar_t* szStrW, int nLen, const wchar_t* szSubW, int nSubLen)
+{
+    return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpW(szStrW + nLen - nSubLen, szSubW) == 0 );
+}
+
+static int appendToInfoTextA(char szInfoTextA[], int nInfoLen, const char* szTextAppendA, int nLenAppend)
+{
+    if ( nLenAppend != 0 )
+    {
+        if ( szInfoTextA[0] != 0 )
+        {
+            lstrcpyA(szInfoTextA + nInfoLen, " ");
+            ++nInfoLen;
+        }
+        lstrcpyA(szInfoTextA + nInfoLen, szTextAppendA);
+        nInfoLen += nLenAppend;
+    }
+    return nInfoLen;
+}
+
+static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t* szTextAppendW, int nLenAppend)
+{
+    if ( nLenAppend != 0 )
+    {
+        if ( szInfoTextW[0] != 0 )
+        {
+            lstrcpyW(szInfoTextW + nInfoLen, L" ");
+            ++nInfoLen;
+        }
+        lstrcpyW(szInfoTextW + nInfoLen, szTextAppendW);
+        nInfoLen += nLenAppend;
+    }
+    return nInfoLen;
+}
+
 static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
 {
     if ( g_QSearchDlg.hStInfo )
@@ -444,16 +484,10 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
         nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 128 - 1);
         if ( szInfoTextW[0] != 0 )
         {
-            if ( g_Options.nLenEofCrossedDown != 0 &&
-                 lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedDown, g_Options.szEofCrossedDown) == 0 )
-            {
+            if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedDown, g_Options.nLenStatusEofCrossedDown) )
                 nIsEOF = QSEARCH_EOF_DOWN;
-            }
-            else if ( g_Options.nLenEofCrossedUp != 0 &&
-                      lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedUp, g_Options.szEofCrossedUp) == 0 )
-            {
+            else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedUp, g_Options.nLenStatusEofCrossedUp) )
                 nIsEOF = QSEARCH_EOF_UP;
-            }
         }
 
         cszTextFormatW = qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND);
@@ -470,13 +504,13 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
             ++nLen;
             if ( nIsEOF == QSEARCH_EOF_DOWN )
             {
-                lstrcpyW(szInfoTextW + nLen, g_Options.szEofCrossedDown);
-                nLen += g_Options.nLenEofCrossedDown;
+                lstrcpyW(szInfoTextW + nLen, g_Options.szStatusEofCrossedDown);
+                nLen += g_Options.nLenStatusEofCrossedDown;
             }
             else
             {
-                lstrcpyW(szInfoTextW + nLen, g_Options.szEofCrossedUp);
-                nLen += g_Options.nLenEofCrossedUp;
+                lstrcpyW(szInfoTextW + nLen, g_Options.szStatusEofCrossedUp);
+                nLen += g_Options.nLenStatusEofCrossedUp;
             }
         }
 
@@ -484,20 +518,18 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
     }
 }
 
-static int removeEofFromInfoTextA(char szInfoTextA[128], int nLen)
+static int removeEofFromInfoTextA(char szInfoTextA[], int nLen)
 {
     int nEofLen = 0;
 
-    if ( g_Options.nLenEofCrossedDown != 0 && nLen >= g_Options.nLenEofCrossedDown &&
-         lstrcmpA(szInfoTextA + nLen - g_Options.nLenEofCrossedDown, (const char *) g_Options.szEofCrossedDown) == 0 )
-    {
-        nEofLen = g_Options.nLenEofCrossedDown;
-    }
-    else if ( g_Options.nLenEofCrossedUp != 0 && nLen >= g_Options.nLenEofCrossedUp &&
-              lstrcmpA(szInfoTextA + nLen - g_Options.nLenEofCrossedUp, (const char *) g_Options.szEofCrossedUp) == 0 )
-    {
-        nEofLen = g_Options.nLenEofCrossedUp;
-    }
+    if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotFound, g_Options.nLenStatusNotFound) )
+        nEofLen = g_Options.nLenStatusNotFound;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotRegExp, g_Options.nLenStatusNotRegExp) )
+        nEofLen = g_Options.nLenStatusNotRegExp;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedDown, g_Options.nLenStatusEofCrossedDown) )
+        nEofLen = g_Options.nLenStatusEofCrossedDown;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedUp, g_Options.nLenStatusEofCrossedUp) )
+        nEofLen = g_Options.nLenStatusEofCrossedUp;
 
     if ( nEofLen != 0 )
     {
@@ -510,20 +542,18 @@ static int removeEofFromInfoTextA(char szInfoTextA[128], int nLen)
     return nLen;
 }
 
-static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
+static int removeEofFromInfoTextW(wchar_t szInfoTextW[], int nLen)
 {
     int nEofLen = 0;
 
-    if ( g_Options.nLenEofCrossedDown != 0 && nLen >= g_Options.nLenEofCrossedDown &&
-         lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedDown, g_Options.szEofCrossedDown) == 0 )
-    {
-        nEofLen = g_Options.nLenEofCrossedDown;
-    }
-    else if ( g_Options.nLenEofCrossedUp != 0 && nLen >= g_Options.nLenEofCrossedUp &&
-              lstrcmpW(szInfoTextW + nLen - g_Options.nLenEofCrossedUp, g_Options.szEofCrossedUp) == 0 )
-    {
-        nEofLen = g_Options.nLenEofCrossedUp;
-    }
+    if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotFound, g_Options.nLenStatusNotFound) )
+        nEofLen = g_Options.nLenStatusNotFound;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotRegExp, g_Options.nLenStatusNotRegExp) )
+        nEofLen = g_Options.nLenStatusNotRegExp;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedDown, g_Options.nLenStatusEofCrossedDown) )
+        nEofLen = g_Options.nLenStatusEofCrossedDown;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedUp, g_Options.nLenStatusEofCrossedUp) )
+        nEofLen = g_Options.nLenStatusEofCrossedUp;
 
     if ( nEofLen != 0 )
     {
@@ -536,11 +566,8 @@ static int removeEofFromInfoTextW(wchar_t szInfoTextW[128], int nLen)
     return nLen;
 }
 
-static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
+static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
 {
-    int nLen;
-    int nEofLen;
-
     if ( !g_QSearchDlg.hStInfo )
         return;
 
@@ -548,6 +575,7 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
     {
         char szInfoTextA[128];
         char szInfoTextA_0[128];
+        int nLen;
 
         szInfoTextA[0] = 0;
         nLen = GetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA, 128 - 20);
@@ -555,19 +583,30 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
 
         nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
 
-        if ( nIsEOF != 0 && !bNotFound )
+        if ( bNotRegExp )
         {
-            nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
-            if ( nEofLen != 0 )
+            nLen = appendToInfoTextA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotRegExp, g_Options.nLenStatusNotRegExp);
+        }
+        else if ( bNotFound )
+        {
+            nLen = appendToInfoTextA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotFound, g_Options.nLenStatusNotFound);
+        }
+        else if ( nIsEOF != 0 )
+        {
+            const char* cszStatusEofA;
+            int nEofLen;
+
+            if ( nIsEOF == QSEARCH_EOF_DOWN )
             {
-                if ( szInfoTextA[0] != 0 )
-                {
-                    lstrcpyA(szInfoTextA + nLen, " ");
-                    ++nLen;
-                }
-                lstrcpyA( szInfoTextA + nLen, (const char *) (nIsEOF == QSEARCH_EOF_DOWN ? g_Options.szEofCrossedDown : g_Options.szEofCrossedUp) );
-                nLen += nEofLen;
+                cszStatusEofA = (const char *) g_Options.szStatusEofCrossedDown;
+                nEofLen = g_Options.nLenStatusEofCrossedDown;
             }
+            else
+            {
+                cszStatusEofA = (const char *) g_Options.szStatusEofCrossedUp;
+                nEofLen = g_Options.nLenStatusEofCrossedUp;
+            }
+            nLen = appendToInfoTextA(szInfoTextA, nLen, cszStatusEofA, nEofLen);
         }
 
         if ( lstrcmpA(szInfoTextA, szInfoTextA_0) != 0 )
@@ -579,6 +618,7 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
     {
         wchar_t szInfoTextW[128];
         wchar_t szInfoTextW_0[128];
+        int nLen;
 
         szInfoTextW[0] = 0;
         nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 128 - 20);
@@ -586,19 +626,30 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound)
 
         nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
 
-        if ( nIsEOF != 0 && !bNotFound )
+        if ( bNotRegExp )
         {
-            nEofLen = (nIsEOF == QSEARCH_EOF_DOWN) ? g_Options.nLenEofCrossedDown : g_Options.nLenEofCrossedUp;
-            if ( nEofLen != 0 )
+            nLen = appendToInfoTextW(szInfoTextW, nLen, g_Options.szStatusNotRegExp, g_Options.nLenStatusNotRegExp);
+        }
+        else if ( bNotFound )
+        {
+            nLen = appendToInfoTextW(szInfoTextW, nLen, g_Options.szStatusNotFound, g_Options.nLenStatusNotFound);
+        }
+        else if ( nIsEOF != 0 )
+        {
+            const wchar_t* cszStatusEofW;
+            int nEofLen;
+
+            if ( nIsEOF == QSEARCH_EOF_DOWN )
             {
-                if ( szInfoTextW[0] != 0 )
-                {
-                    lstrcpyW(szInfoTextW + nLen, L" ");
-                    ++nLen;
-                }
-                lstrcpyW(szInfoTextW + nLen, nIsEOF == QSEARCH_EOF_DOWN ? g_Options.szEofCrossedDown : g_Options.szEofCrossedUp);
-                nLen += nEofLen;
+                cszStatusEofW = g_Options.szStatusEofCrossedDown;
+                nEofLen = g_Options.nLenStatusEofCrossedDown;
             }
+            else
+            {
+                cszStatusEofW = g_Options.szStatusEofCrossedUp;
+                nEofLen = g_Options.nLenStatusEofCrossedUp;
+            }
+            nLen = appendToInfoTextW(szInfoTextW, nLen, cszStatusEofW, nEofLen);
         }
 
         if ( lstrcmpW(szInfoTextW, szInfoTextW_0) != 0 )
@@ -5024,7 +5075,7 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
     if ( !(nIsEOF & QSEARCH_EOF_IGNORE) )
     {
         qs_nEditIsEOF = nIsEOF;
-        qsSetInfoEOF(nIsEOF, bNotFound || bNotRegExp);
+        qsSetInfoEOF(nIsEOF, bNotFound, bNotRegExp);
     }
     InvalidateRect(hEdit, NULL, TRUE);
     UpdateWindow(hEdit);
