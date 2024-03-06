@@ -348,8 +348,8 @@ void tDynamicBuffer_Free(tDynamicBuffer* pBuf)
     if ( pBuf->ptr )
     {
         SysMemFree( pBuf->ptr );
-        x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
     }
+    x_zero_mem( pBuf, sizeof(tDynamicBuffer) );
 }
 
 BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
