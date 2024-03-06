@@ -518,7 +518,7 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
     }
 }
 
-static int removeEofFromInfoTextA(char szInfoTextA[], int nLen)
+static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
 {
     int nEofLen = 0;
 
@@ -542,7 +542,7 @@ static int removeEofFromInfoTextA(char szInfoTextA[], int nLen)
     return nLen;
 }
 
-static int removeEofFromInfoTextW(wchar_t szInfoTextW[], int nLen)
+static int removeEofOrNotFoundFromInfoTextW(wchar_t szInfoTextW[], int nLen)
 {
     int nEofLen = 0;
 
@@ -566,7 +566,7 @@ static int removeEofFromInfoTextW(wchar_t szInfoTextW[], int nLen)
     return nLen;
 }
 
-static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
+static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
 {
     if ( !g_QSearchDlg.hStInfo )
         return;
@@ -581,7 +581,7 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
         nLen = GetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA, 128 - 20);
         lstrcpyA(szInfoTextA_0, szInfoTextA);
 
-        nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
+        nLen = removeEofOrNotFoundFromInfoTextA(szInfoTextA, nLen);
 
         if ( bNotRegExp )
         {
@@ -624,7 +624,7 @@ static void qsSetInfoEOF(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
         nLen = GetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW, 128 - 20);
         lstrcpyW(szInfoTextW_0, szInfoTextW);
 
-        nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
+        nLen = removeEofOrNotFoundFromInfoTextW(szInfoTextW, nLen);
 
         if ( bNotRegExp )
         {
@@ -5075,7 +5075,11 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
     if ( !(nIsEOF & QSEARCH_EOF_IGNORE) )
     {
         qs_nEditIsEOF = nIsEOF;
-        qsSetInfoEOF(nIsEOF, bNotFound, bNotRegExp);
+        qsSetInfoEofOrNotFound(nIsEOF, bNotFound, bNotRegExp);
+    }
+    else if ( bNotFound || bNotRegExp )
+    {
+        qsSetInfoEofOrNotFound(0, bNotFound, bNotRegExp);
     }
     InvalidateRect(hEdit, NULL, TRUE);
     UpdateWindow(hEdit);
@@ -5610,7 +5614,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                     if ( (nLen < 3) || (lstrcmpA(szInfoTextA + nLen - 3, "...") != 0) )
                     {
-                        nLen = removeEofFromInfoTextA(szInfoTextA, nLen);
+                        nLen = removeEofOrNotFoundFromInfoTextA(szInfoTextA, nLen);
                         lstrcatA(szInfoTextA, "...");
                         SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
                     }
@@ -5652,7 +5656,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                     if ( (nLen < 3) || (lstrcmpW(szInfoTextW + nLen - 3, L"...") != 0) )
                     {
-                        nLen = removeEofFromInfoTextW(szInfoTextW, nLen);
+                        nLen = removeEofOrNotFoundFromInfoTextW(szInfoTextW, nLen);
                         lstrcatW(szInfoTextW, L"...");
                         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
                     }
