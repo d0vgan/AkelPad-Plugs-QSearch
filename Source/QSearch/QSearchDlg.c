@@ -4019,6 +4019,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
                     if ( hWndEdit )
                     {
+                        SetFocus(hWndEdit);
                         if ( g_Plugin.bOldWindows )
                             PostMessageA(hWndEdit, WM_KEYDOWN, wParam, lParam);
                         else
