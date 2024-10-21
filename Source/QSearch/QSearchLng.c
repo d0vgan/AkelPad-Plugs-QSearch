@@ -1092,6 +1092,19 @@ const wchar_t* qsearchGetStringW(unsigned int uStringID)
             return szFindAllOccurrencesFoundInFilesW[uInternalLng];
         }
 
+        case QS_STRID_FINDALL_OCCURRENCEOF:
+        {
+            static const wchar_t* szFindAllOccurrenceOfW[INLNG_COUNT] = {
+                /* eng */
+                L"%u of ",
+                /* rus */
+                L"%u \x0438\x0437 ",
+                /* ukr */
+                L"%u \x0456\x0437 "
+            };
+            return szFindAllOccurrenceOfW[uInternalLng];
+        }
+
         case QS_STRID_FINDALL_OUTPUT_CTX_LINES:
         {
             static const wchar_t* szFindAllOutputCtxLinesW[INLNG_COUNT] = {

@@ -13,6 +13,7 @@
 #include "resource.h"
 #include "AkelDllHeader.h"
 #include "QSearchFindEx.h"
+#include "XMemStrFunc.h"
 
 
 // may be needed for VC++ 6.0
@@ -133,6 +134,7 @@
         COLORREF         crTextColor;
         COLORREF         crBkgndColor;
         HBRUSH           hBkgndBrush;
+        tDynamicBuffer   matchesBuf;
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
