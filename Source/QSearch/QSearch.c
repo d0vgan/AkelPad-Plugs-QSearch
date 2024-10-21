@@ -1535,6 +1535,11 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                     g_QSearchDlg.pSearchResultsFrame = NULL;
                 }
+                if ( g_QSearchDlg.hDlg )
+                {
+                    g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
+                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                }
             }
             if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] )
             {
