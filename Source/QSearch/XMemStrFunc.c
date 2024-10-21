@@ -441,3 +441,21 @@ void tDynamicBuffer_Clear(tDynamicBuffer* pBuf)
 {
     pBuf->nBytesStored = 0;
 }
+
+void tDynamicBuffer_Swap(tDynamicBuffer* pBuf1, tDynamicBuffer* pBuf2)
+{
+    void* ptr;
+    UINT_PTR n;
+
+    ptr = pBuf1->ptr;
+    pBuf1->ptr = pBuf2->ptr;
+    pBuf2->ptr = ptr;
+
+    n = pBuf1->nBytesAllocated;
+    pBuf1->nBytesAllocated = pBuf2->nBytesAllocated;
+    pBuf2->nBytesAllocated = n;
+
+    n = pBuf1->nBytesStored;
+    pBuf1->nBytesStored = pBuf2->nBytesStored;
+    pBuf2->nBytesStored = n;
+}

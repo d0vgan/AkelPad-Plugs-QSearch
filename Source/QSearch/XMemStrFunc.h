@@ -47,6 +47,7 @@ void tDynamicBuffer_Free(tDynamicBuffer* pBuf); // frees the memory
 BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate);
 UINT_PTR tDynamicBuffer_Append(tDynamicBuffer* pBuf, const void* pData, UINT_PTR nBytes);
 void tDynamicBuffer_Clear(tDynamicBuffer* pBuf); // sets nBytesStored=0
+void tDynamicBuffer_Swap(tDynamicBuffer* pBuf1, tDynamicBuffer* pBuf2);
 
 //---------------------------------------------------------------------------
 #endif
