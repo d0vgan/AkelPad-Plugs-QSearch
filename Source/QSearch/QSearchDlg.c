@@ -474,7 +474,7 @@ static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t*
 }
 
 // returns either a 0-based index or -1
-static int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val)
+static int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch)
 {
     int nMin;
     int nMax;
@@ -484,15 +484,36 @@ static int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PT
     nMin = 0;
     nMax = nItems - 1;
 
+    *pbExactMatch = FALSE;
+
+    if ( pArr[nMax] < val )
+    {
+        return nMax;
+    }
+
     for ( ; ; )
     {
         nDiff = nMax - nMin;
         if ( nDiff == 0 || nDiff == 1 )
         {
             if ( pArr[nMin] == val )
+            {
+                *pbExactMatch = TRUE;
                 return nMin;
+            }
             if ( nDiff == 1 && pArr[nMax] == val )
+            {
+                *pbExactMatch = TRUE;
                 return nMax;
+            }
+            if ( nDiff == 1 && pArr[nMax] < val )
+            {
+                return nMax;
+            }
+            if ( pArr[nMin] < val )
+            {
+                return nMin;
+            }
             return -1;
         }
 
@@ -506,7 +527,7 @@ static int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PT
     }
 }
 
-static int findPosInOccurrences(HWND hWndEdit)
+static int findPosInOccurrences(HWND hWndEdit, BOOL* pbExactMatch)
 {
     CHARRANGE_X cr = { 0, 0 };
 
@@ -516,7 +537,8 @@ static int findPosInOccurrences(HWND hWndEdit)
     return find_in_sorted_array(
         (INT_PTR *) g_QSearchDlg.matchesBuf.ptr,
         (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)),
-        cr.cpMin 
+        cr.cpMin,
+        pbExactMatch
     );
 }
 
@@ -544,9 +566,17 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
              (nOccurrences != 0) && 
              (nOccurrences == g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)) )
         {
-            int nMatch = findPosInOccurrences( GetWndEdit(g_Plugin.hMainWnd) );
+            int nMatch;
+            BOOL bExactMatch;
+
+            nMatch = findPosInOccurrences( GetWndEdit(g_Plugin.hMainWnd), &bExactMatch );
             if ( nMatch != -1 )
-                nLen = wsprintfW(szInfoTextW, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCEOF), nMatch + 1);
+            {
+                if ( bExactMatch )
+                    nLen = wsprintfW(szInfoTextW, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCEOF), nMatch + 1);
+                else
+                    nLen = wsprintfW(szInfoTextW, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCEOF_NOTEXACT), nMatch + 1);
+            }
         }
         nLen += wsprintfW(szInfoTextW + nLen, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND), nOccurrences);
         if ( nLen > 0 )
