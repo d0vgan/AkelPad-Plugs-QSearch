@@ -268,6 +268,7 @@ static void CallLogOutput(void* ploParams)
         pQSearchDlg->crTextColor = GetSysColor(COLOR_WINDOWTEXT);
         pQSearchDlg->crBkgndColor = GetSysColor(COLOR_WINDOW);
         pQSearchDlg->hBkgndBrush = NULL;
+        pQSearchDlg->hCurrentMatchEditWnd = NULL;
         tDynamicBuffer_Init(&pQSearchDlg->matchesBuf);
     }
 
@@ -431,6 +432,7 @@ static void qsSetInfoEmpty()
     }
 
     tDynamicBuffer_Clear(&g_QSearchDlg.matchesBuf);
+    g_QSearchDlg.hCurrentMatchEditWnd = NULL;
 }
 
 static BOOL endsWithSubStrA(const char* szStrA, int nLen, const char* szSubA, int nSubLen)
@@ -542,7 +544,7 @@ static int findPosInOccurrences(HWND hWndEdit, BOOL* pbExactMatch)
     );
 }
 
-static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
+void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
 {
     if ( g_QSearchDlg.hStInfo )
     {
@@ -562,20 +564,26 @@ static void qsSetInfoOccurrencesFound(unsigned int nOccurrences)
         }
 
         nLen = 0;
-        if ( ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
+        if ( ((nFlags & QS_SIOF_REMOVECURRENTMATCH) == 0) &&
+             ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
              (nOccurrences != 0) && 
              (nOccurrences == g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)) )
         {
             int nMatch;
             BOOL bExactMatch;
 
-            nMatch = findPosInOccurrences( GetWndEdit(g_Plugin.hMainWnd), &bExactMatch );
+            g_QSearchDlg.hCurrentMatchEditWnd = GetWndEdit(g_Plugin.hMainWnd);
+            nMatch = findPosInOccurrences(g_QSearchDlg.hCurrentMatchEditWnd, &bExactMatch);
             if ( nMatch != -1 )
             {
                 if ( bExactMatch )
                     nLen = wsprintfW(szInfoTextW, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCEOF), nMatch + 1);
                 else
                     nLen = wsprintfW(szInfoTextW, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCEOF_NOTEXACT), nMatch + 1);
+            }
+            else
+            {
+                g_QSearchDlg.hCurrentMatchEditWnd = NULL;
             }
         }
         nLen += wsprintfW(szInfoTextW + nLen, qsearchGetStringW(QS_STRID_FINDALL_OCCURRENCESFOUND), nOccurrences);
@@ -795,7 +803,7 @@ static void qsShowFindResults_CountOnly_AddOccurrence(tFindAllContext* pFindCont
 
 static void qsShowFindResults_CountOnly_Done(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
 {
-    qsSetInfoOccurrencesFound(pFindContext->nOccurrences);
+    qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
 }
 
 static void qsShowFindResults_CountOnly_AllFiles_Init(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
@@ -1096,7 +1104,7 @@ static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDyn
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
     {
-        qsSetInfoOccurrencesFound(pFindContext->nOccurrences);
+        qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
     }
 }
 
@@ -1400,7 +1408,7 @@ static void qsShowFindResults_FileOutput_Done(tFindAllContext* pFindContext, tDy
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
         addResultsToFileOutput( pFindContext );
 
-        qsSetInfoOccurrencesFound(pFindContext->nOccurrences);
+        qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
     }
 }
 
@@ -4044,6 +4052,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                             g_Options.dwFindAllMode -= QS_FINDALL_AUTO_COUNT_FLAG;
 
                         tDynamicBuffer_Free(&g_QSearchDlg.matchesBuf);
+                        g_QSearchDlg.hCurrentMatchEditWnd = NULL;
                     }
                     else
                         g_Options.dwFindAllMode |= QS_FINDALL_AUTO_COUNT_FLAG;
@@ -5143,6 +5152,7 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
     g_QSearchDlg.hDlg = NULL;
 
     tDynamicBuffer_Free(&g_QSearchDlg.matchesBuf);
+    g_QSearchDlg.hCurrentMatchEditWnd = NULL;
 
     if ( !g_Plugin.bAkelPadOnFinish )
     {
@@ -5294,6 +5304,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     else
     {
         tDynamicBuffer_Free(&g_QSearchDlg.matchesBuf);
+        g_QSearchDlg.hCurrentMatchEditWnd = NULL;
 
         //SendMessage(g_Plugin.hMainWnd, AKD_RESIZE, 0, 0);
         SetFocus(g_Plugin.hMainWnd);
@@ -6171,7 +6182,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                  ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
                  (g_QSearchDlg.matchesBuf.nBytesStored != 0) )
             {
-                qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)) );
+                qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), 0 );
             }
         }
         else // pFindAll
@@ -6322,6 +6333,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         tDynamicBuffer_Allocate(&g_QSearchDlg.matchesBuf, 1024*sizeof(INT_PTR));
                     else
                         tDynamicBuffer_Clear(&g_QSearchDlg.matchesBuf);
+
+                    g_QSearchDlg.hCurrentMatchEditWnd = NULL;
                 }
 
                 while ( SendMessageW(hFrameWndEdit, AEM_FINDTEXTW, 0, (LPARAM) &aeftW) )
@@ -6396,7 +6409,7 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 {
                     tDynamicBuffer_Swap(&g_QSearchDlg.matchesBuf, &tempMatchesBuf);
 
-                    qsSetInfoOccurrencesFound(nCurrentMatches);
+                    qsSetInfoOccurrencesFound(nCurrentMatches, 0);
                 }
                 else
                     qsSetInfoEmpty();

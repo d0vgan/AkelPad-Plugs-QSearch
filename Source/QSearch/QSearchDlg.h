@@ -134,6 +134,7 @@
         COLORREF         crTextColor;
         COLORREF         crBkgndColor;
         HBRUSH           hBkgndBrush;
+        HWND             hCurrentMatchEditWnd;
         tDynamicBuffer   matchesBuf;
     } QSearchDlgState;
 
@@ -152,6 +153,9 @@ BOOL qsearchIsSavingHistoryToStdLocation(void);
 
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
 void qsearchDlgApplyEditorColors();
+
+#define QS_SIOF_REMOVECURRENTMATCH 0x01
+void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 
 //---------------------------------------------------------------------------
 #endif

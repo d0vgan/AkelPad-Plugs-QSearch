@@ -1634,6 +1634,19 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         return 0;
 }
 
+static void removeCurrentMatchFromOccurrencesFound(const NMHDR* hdr)
+{
+    if ( ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
+         (g_QSearchDlg.matchesBuf.nBytesStored != 0) &&
+         (g_QSearchDlg.hCurrentMatchEditWnd != NULL) &&
+         (g_QSearchDlg.hCurrentMatchEditWnd == hdr->hwndFrom) &&
+         (GetFocus() == hdr->hwndFrom) )
+    {
+        qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), QS_SIOF_REMOVECURRENTMATCH );
+        g_QSearchDlg.hCurrentMatchEditWnd = NULL;
+    }
+}
+
 void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if ( (uMsg == WM_NOTIFY) && (wParam == ID_EDIT) )
@@ -1656,6 +1669,8 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         }
                     }
                 }
+
+                removeCurrentMatchFromOccurrencesFound(hdr);
             }
         }
         else
@@ -1676,6 +1691,8 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         }
                     }
                 }
+
+                removeCurrentMatchFromOccurrencesFound(hdr);
             }
         }
     }
