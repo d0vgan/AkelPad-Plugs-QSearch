@@ -195,7 +195,7 @@
 //AEN_PAINT type
 #define AEPNT_BEGIN             0x00000001  //Sends before painting is started, only AENPAINT.hDC member is valid.
 #define AEPNT_END               0x00000002  //Sends before clean-up paint resources.
-#define AEPNT_DRAWLINE          0x00000004  //Sends before line is drawn.
+#define AEPNT_DRAWLINE          0x00000004  //Sends before line is drawn. Used only in callback, see AEM_PAINTCALLBACK.
 
 //AEM_SETOPTIONS flags
                                                   // Window styles:
@@ -240,6 +240,7 @@
 #define AECOE_ALTDECINPUT             0x00000008  //Do Alt+NumPad decimal input with NumLock on (default is decimal input after two "Num 0").
 #define AECOE_INVERTHORZWHEEL         0x00000010  //Invert mouse horizontal wheel.
 #define AECOE_INVERTVERTWHEEL         0x00000020  //Invert mouse vertical wheel.
+#define AECOE_NOCARETHORZINDENT       0x00000040  //Caret horizontal indent isn't recovered after pressing VK_UP, VK_DOWN, VK_PRIOR, VK_NEXT.
 #define AECOE_NOPRINTCOLLAPSED        0x00001000  //Disables print collapsed lines. See AEM_COLLAPSEFOLD message.
 
 #define AECOOP_SET              1  //Sets the options to those specified by lParam.
@@ -366,8 +367,14 @@
 #define AELB_WRAP     9  //No new line, this line is wrapped.
 
 //AEM_SETNEWLINE flags
-#define AENL_INPUT           0x00000001  //Sets default new line for the input operations, for example AEM_PASTE.
-#define AENL_OUTPUT          0x00000002  //Sets default new line for the output operations, for example AEM_COPY.
+#define AENL_INPUT           0x00000001  //Sets default new line for the input operations, like paste.
+#define AENL_OUTPUT          0x00000002  //Sets default new line for the output operations, like cut,copy.
+
+//AEM_CUT, AEM_COPY flags
+#define AECFC_WORD           0x00000001  //Cut/Copy word under caret, if no selection.
+#define AECFC_LINE           0x00000002  //Cut/Copy line under caret, if no selection.
+#define AECFC_UNWRAPLINE     0x00000004  //Cut/Copy unwrapped line under caret, if no selection.
+#define AECFC_NEWLINE        0x00000008  //Cut/Copy also new line. Uses with AECFC_LINE or AECFC_UNWRAPLINE.
 
 //AEM_PASTE flags
 #define AEPFC_ANSI           0x00000001  //Paste text as ANSI. Default is paste as Unicode text, if no Unicode text available ANSI text will be used.
@@ -419,6 +426,20 @@
                               //Return                    == zero.
 
 
+//AEM_PAINTCALLBACK operations
+#define AEPCB_STACK         1 //Retrieve stack.
+                              //lParam                         == not used.
+                              //(AESTACKPAINTCALLBACK *)Return == pointer to an paint callback stack.
+#define AEPCB_ADD           2 //Add paint callback item.
+                              //(AEPAINTCALLBACKADD *)lParam   == pointer to a AEPAINTCALLBACKADD structure.
+                              //(AEPAINTCALLBACK *)Return      == pointer to an AEPAINTCALLBACK item.
+#define AEPCB_DEL           3 //Delete callback item.
+                              //(AEPAINTCALLBACK *)lParam      == pointer to an AEPAINTCALLBACK item.
+                              //Return                         == zero.
+#define AEPCB_FREE          4 //Free stack.
+                              //lParam                         == not used.
+                              //Return                         == zero.
+
 //AEM_SETCOLORS flags
 #define AECLR_DEFAULT          0x00000001  //Use default system colors for the specified flags, all members of the AECOLORS structure are ignored.
 #define AECLR_CARET            0x00000002  //Sets caret color. crCaret member is valid.
@@ -456,17 +477,18 @@
                     AECLR_ALTLINEBORDER)
 
 //Print
-#define AEPRN_TEST                      0x001  //Calculate data without painting.
-#define AEPRN_INHUNDREDTHSOFMILLIMETERS 0x002  //Indicates that hundredths of millimeters are the unit of measurement for margins.
-#define AEPRN_INTHOUSANDTHSOFINCHES     0x004  //Indicates that thousandths of inches are the unit of measurement for margins.
-#define AEPRN_WRAPNONE                  0x008  //Print without wrapping.
-#define AEPRN_WRAPWORD                  0x010  //Print with word wrapping (default).
-#define AEPRN_WRAPSYMBOL                0x020  //Print with symbols wrapping.
-#define AEPRN_IGNOREFORMFEED            0x040  //Ignore form-feed character '\f'.
-#define AEPRN_ANSI                      0x080  //Ansi text output. Can solve draw problems on Win95/98/Me.
-#define AEPRN_COLOREDTEXT               0x100  //Print colored text.
-#define AEPRN_COLOREDBACKGROUND         0x200  //Print on colored background.
-#define AEPRN_COLOREDSELECTION          0x400  //Print text selection.
+#define AEPRN_TEST                      0x00001  //Calculate data without painting.
+#define AEPRN_INHUNDREDTHSOFMILLIMETERS 0x00002  //Indicates that hundredths of millimeters are the unit of measurement for margins.
+#define AEPRN_INTHOUSANDTHSOFINCHES     0x00004  //Indicates that thousandths of inches are the unit of measurement for margins.
+#define AEPRN_WRAPNONE                  0x00008  //Print without wrapping.
+#define AEPRN_WRAPWORD                  0x00010  //Print with word wrapping (default).
+#define AEPRN_WRAPSYMBOL                0x00020  //Print with symbols wrapping.
+#define AEPRN_IGNOREFORMFEED            0x00040  //Ignore form-feed character '\f'.
+#define AEPRN_ANSI                      0x00080  //Ansi text output. Can solve draw problems on Win95/98/Me.
+#define AEPRN_COLOREDTEXT               0x00100  //Print colored text.
+#define AEPRN_COLOREDBACKGROUND         0x00200  //Print on colored background.
+#define AEPRN_COLOREDSELECTION          0x00400  //Print text selection.
+#define AEPRN_CALLEMPTY                 0x10000  //Don't use it. For internal code only.
 
 //AEM_HLFINDTHEME type
 #define AEHLFT_CURRENT 0  //Current theme handle.
@@ -539,9 +561,11 @@
 #define AEHLE_MARKRANGE              5  //Mark range - mark specified range of characters.
 
 //Highlight AEM_HLGETHIGHLIGHT flags
-#define AEGHF_NOSELECTION            0x00000001 //Ignore text selection coloring.
-#define AEGHF_NOACTIVELINE           0x00000002 //Ignore active line colors.
-#define AEGHF_NOALTLINE              0x00000004 //Ignore alternating line colors.
+#define AEGHF_NOSELECTION            0x00000001  //Ignore text selection coloring.
+#define AEGHF_NOACTIVELINE           0x00000002  //Ignore active line colors.
+#define AEGHF_NOALTLINE              0x00000004  //Ignore alternating line colors.
+#define AEGHF_CALLENDLINE            0x00010000  //Call function for end of non-empty line.
+#define AEGHF_CALLENDRANGE           0x00020000  //Call function for end range.
 
 //Highlight paint type
 #define AEHPT_SELECTION              0x00000001
@@ -1486,6 +1510,33 @@ typedef struct {
   POINT ptMaxDraw;        //Left upper corner in client coordinates of last character in line to paint.
 } AENPAINT;
 
+typedef DWORD (CALLBACK *AEPaintCallback)(UINT_PTR dwCookie, const AENPAINT *pnt);
+//dwCookie     Value of the dwCookie member of the AEPAINTCALLBACKADD structure. The application specifies this value when it sends the AEM_PAINTCALLBACK message with AEPCB_ADD.
+//pnt          Paint information.
+//
+//Return Value
+// To continue processing, the callback function must return zero; to stop processing (until next AEPNT_BEGIN), it must return nonzero.
+
+typedef struct {
+  AEPaintCallback lpCallback;
+  UINT_PTR dwCookie;
+} AEPAINTCALLBACKADD;
+
+typedef struct _AEPAINTCALLBACK {
+  struct _AEPAINTCALLBACK *next;
+  struct _AEPAINTCALLBACK *prev;
+  AEHDOC hDoc;                //Document handle. See AEM_CREATEDOCUMENT message.
+  HWND hWnd;                  //Window handle.
+  AEPaintCallback lpCallback; //Callback function.
+  UINT_PTR dwCookie;          //User parameter to callback function.
+  DWORD dwError;              //Indicates the result of the callback function.
+} AEPAINTCALLBACK;
+
+typedef struct {
+  AEPAINTCALLBACK *first;
+  AEPAINTCALLBACK *last;
+} AESTACKPAINTCALLBACK;
+
 typedef struct {
   AENMHDR hdr;
   UINT_PTR dwTextLimit;   //Current text limit.
@@ -1793,6 +1844,8 @@ typedef struct {
 #define AEM_GETCHARCOLORS         (WM_USER + 2242)
 #define AEM_SCROLLCARETOPTIONS    (WM_USER + 2243)
 #define AEM_FIXEDCHARWIDTH        (WM_USER + 2244)
+#define AEM_GETSCROLLSPEED        (WM_USER + 2245)
+#define AEM_SETSCROLLSPEED        (WM_USER + 2246)
 
 //Draw
 #define AEM_SHOWSCROLLBAR         (WM_USER + 2351)
@@ -1807,6 +1860,7 @@ typedef struct {
 #define AEM_REDRAWLINERANGE       (WM_USER + 2362)
 #define AEM_GETBACKGROUNDIMAGE    (WM_USER + 2366)
 #define AEM_SETBACKGROUNDIMAGE    (WM_USER + 2367)
+#define AEM_PAINTCALLBACK         (WM_USER + 2368)
 
 //Folding
 #define AEM_GETFOLDSTACK          (WM_USER + 2381)
@@ -2729,7 +2783,7 @@ _________
 
 Paste text from clipboard.
 
-wParam        == not used.
+(int)wParam   == see AELB_* defines.
 (DWORD)lParam == see AEPFC_* defines.
 
 Return Value
@@ -2744,11 +2798,12 @@ _______
 
 Delete the current selection, if any, and copy the deleted text to the clipboard.
 
-wParam == not used.
-lParam == not used.
+(int)wParam   == see AELB_* defines.
+(DWORD)lParam == see AECFC_* defines.
 
 Return Value
- Zero.
+ TRUE   clipboard changed.
+ FALSE  clipboard not changed.
 
 Example:
  SendMessage(hWndEdit, AEM_CUT, 0, 0);
@@ -2759,8 +2814,8 @@ ________
 
 Copy the current selection to the clipboard.
 
-wParam == not used.
-lParam == not used.
+(int)wParam   == see AELB_* defines.
+(DWORD)lParam == see AECFC_* defines.
 
 Return Value
  TRUE   clipboard changed.
@@ -4972,8 +5027,8 @@ ______________
 
 Set character external leading.
 
-(DWORD)wParam == line gap (external leading), default is zero.
-lParam        == not used.
+(int)wParam == line gap (external leading), default is zero.
+lParam      == not used.
 
 Return Value
  Zero.
@@ -5126,6 +5181,36 @@ Remarks
 
 Example:
  SendMessage(hWndEdit, AEM_FIXEDCHARWIDTH, (WPARAM)-AECS_MAXWIDTH, 0);
+
+
+AEM_GETSCROLLSPEED
+___________________
+
+Retrieve MButton scroll speed in percentage.
+
+wParam == not used.
+lParam == not used.
+
+Return Value
+ MButton scroll speed.
+
+Example:
+ SendMessage(hWndEdit, AEM_GETSCROLLSPEED, 0, 0);
+
+
+AEM_SETSCROLLSPEED
+___________________
+
+Set MButton scroll speed.
+
+(DWORD)wParam == MButton scroll speed in percentage (default is 10).
+lParam        == not used.
+
+Return Value
+ Zero.
+
+Example:
+ SendMessage(hWndEdit, AEM_SETSCROLLSPEED, 50, 0);
 
 
 AEM_SHOWSCROLLBAR
@@ -5336,6 +5421,44 @@ if (hBkImage=(HBITMAP)LoadImageA(NULL, "c:\\MyBackground.bmp", IMAGE_BITMAP, 0, 
 {
   SendMessage(hWndEdit, AEM_SETBACKGROUNDIMAGE, (WPARAM)hBkImage, 128);
 }
+
+
+AEM_PAINTCALLBACK
+_________________
+
+Receiving paint operations including draw line.
+
+(int)wParam  == see AEPCB_* defines.
+(void)lParam == depend of AEPCB_* define.
+
+Return Value
+ Depend of AEPCB_* define.
+
+Example:
+ DWORD CALLBACK PaintCallback(UINT_PTR dwCookie, const AENPAINT *pnt)
+ {
+   if (pnt->dwType == AEPNT_BEGIN)
+   {
+   }
+   else if (pnt->dwType == AEPNT_DRAWLINE)
+   {
+   }
+   else if (pnt->dwType == AEPNT_END)
+   {
+   }
+   return 0
+ }
+
+ //Init
+ AEPAINTCALLBACKADD pcba;
+
+ pcba.lpCallback=PaintCallback;
+ pcba.dwCookie=0;
+ lpPaintCallback=(AEPAINTCALLBACK *)SendMessage(hWndEdit, AEM_PAINTCALLBACK, AEPCB_ADD, (LPARAM)&pcba);
+
+ //Uninit
+ SendMessage(hWndEdit, AEM_PAINTCALLBACK, AEPCB_DEL, (LPARAM)lpPaintCallback);
+
 
 
 AEM_GETFOLDSTACK
@@ -5779,18 +5902,19 @@ Example:
 AEM_GETMASTER
 _____________
 
-Retrieve master window handle. Message send to a master or slave window.
+Retrieve master window/document handle. Message send to a master or slave window.
 
-wParam == not used.
-lParam == not used.
+(BOOL)wParam == TRUE   retrieve master document.
+                FALSE  retrieve master window.
+lParam       == not used.
 
 Return Value
- Master window handle.
+ Master window/document handle.
 
 Example:
  HWND hWndMaster;
 
- if (hWndMaster=(HWND)SendMessage(hWndEdit, AEM_GETMASTER, 0, 0))
+ if (hWndMaster=(HWND)SendMessage(hWndEdit, AEM_GETMASTER, FALSE, 0))
  {
    if (hWndMaster == hWndEdit)
      MessageBoxA(NULL, "hWndEdit is master", NULL, 0);
