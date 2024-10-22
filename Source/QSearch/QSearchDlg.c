@@ -478,55 +478,34 @@ static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t*
 // returns either a 0-based index or -1
 static int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch)
 {
-    int nMin;
-    int nMax;
-    int nDiff;
+    int nBegin;
+    int nEnd;
     int nDiv;
 
-    nMin = 0;
-    nMax = nItems - 1;
-
-    *pbExactMatch = FALSE;
-
-    if ( pArr[nMax] < val )
+    if ( nItems == 0 || val < pArr[0] )
     {
-        return nMax;
+        *pbExactMatch = FALSE;
+        return -1;
     }
+
+    nBegin = 0;
+    nEnd = nItems; // position after the last item
 
     for ( ; ; )
     {
-        nDiff = nMax - nMin;
-        if ( nDiff == 0 || nDiff == 1 )
-        {
-            if ( pArr[nMin] == val )
-            {
-                *pbExactMatch = TRUE;
-                return nMin;
-            }
-            if ( nDiff == 1 && pArr[nMax] == val )
-            {
-                *pbExactMatch = TRUE;
-                return nMax;
-            }
-            if ( nDiff == 1 && pArr[nMax] < val )
-            {
-                return nMax;
-            }
-            if ( pArr[nMin] < val )
-            {
-                return nMin;
-            }
-            return -1;
-        }
+        nDiv = (nEnd - nBegin)/2;
+        if ( nDiv == 0 )
+            break;
 
-        nDiv = nMin + nDiff/2;
-        if ( pArr[nMin] <= val && val <= pArr[nDiv] )
-            nMax = nDiv;
-        else if ( pArr[nDiv] <= val && val <= pArr[nMax] )
-            nMin = nDiv;
+        nDiv += nBegin;
+        if ( val < pArr[nDiv] )
+            nEnd = nDiv;
         else
-            return -1;
+            nBegin = nDiv;
     }
+
+    *pbExactMatch = (val == pArr[nBegin]) ? TRUE : FALSE;
+    return nBegin;
 }
 
 static int findPosInOccurrences(HWND hWndEdit, BOOL* pbExactMatch)
