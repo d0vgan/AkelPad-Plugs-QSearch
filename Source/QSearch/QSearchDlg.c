@@ -2507,6 +2507,52 @@ static LRESULT CALLBACK btnWndProc(HWND hBtn,
 }
 */
 
+static HWND GetDlgItemAndRect(HWND hDlg, int nItemId, RECT* pRect)
+{
+    HWND hDlgItm;
+
+    hDlgItm = GetDlgItem(hDlg, nItemId);
+    if ( hDlgItm )
+    {
+        GetWindowRect( hDlgItm, pRect );
+        ScreenToClient( hDlg, (POINT *) &pRect->left );
+        ScreenToClient( hDlg, (POINT *) &pRect->right );
+    }
+
+    return hDlgItm;
+}
+
+static void MoveWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
+{
+    if ( hWnd )
+    {
+        MoveWindow(hWnd, rc0->left + dx, rc0->top, rc0->right - rc0->left, rc0->bottom - rc0->top, TRUE);
+    }
+}
+
+static void ResizeWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
+{
+    if ( hWnd )
+    {
+        MoveWindow(hWnd, rc0->left, rc0->top, rc0->right - rc0->left + dx, rc0->bottom - rc0->top, TRUE);
+    }
+}
+
+static void RedrawWindowByDx(HWND hWnd)
+{
+    if ( hWnd )
+    {
+        InvalidateRect(hWnd, NULL, TRUE);
+        UpdateWindow(hWnd);
+    }
+}
+
+static void RedrawWindowEntire(HWND hWnd)
+{
+    InvalidateRect(hWnd, NULL, TRUE);
+    UpdateWindow(hWnd);
+}
+
 static wchar_t virtKeyToCharW(DWORD dwKey)
 {
     UINT uCh = MapVirtualKeyW(dwKey, 2 /*MAPVK_VK_TO_CHAR*/);
@@ -3151,8 +3197,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
         case WM_SETFOCUS:
         {
             qs_bEditIsActive = TRUE;
-            InvalidateRect(hEdit, NULL, TRUE);
-            UpdateWindow(hEdit);
+            RedrawWindowEntire(hEdit);
             if ( qs_bEditCanBeNonActive )
             {
                 if ( g_Options.dwFlags[OPTF_EDIT_FOCUS_SELECTALL] )
@@ -3217,8 +3262,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 //#endif
                 }
                 /*
-                InvalidateRect(hEdit, NULL, TRUE);
-                UpdateWindow(hEdit);
+                RedrawWindowEntire(hEdit);
                 */
             }
             break;
@@ -3571,8 +3615,7 @@ void qsearchDlgApplyEditorColors()
 
     if ( bColorChanged && g_QSearchDlg.hFindEdit && IsWindowVisible(g_QSearchDlg.hFindEdit) )
     {
-        InvalidateRect(g_QSearchDlg.hFindEdit, NULL, TRUE);
-        UpdateWindow(g_QSearchDlg.hFindEdit);
+        RedrawWindowEntire(g_QSearchDlg.hFindEdit);
     }
 }
 
@@ -3665,46 +3708,6 @@ static void fillToolInfoW(
     lptiW->rect.right = rect.right;
     lptiW->rect.bottom = rect.bottom;
     lptiW->lParam = 0;
-}
-
-static HWND GetDlgItemAndRect(HWND hDlg, int nItemId, RECT* pRect)
-{
-    HWND hDlgItm;
-
-    hDlgItm = GetDlgItem(hDlg, nItemId);
-    if ( hDlgItm )
-    {
-        GetWindowRect( hDlgItm, pRect );
-        ScreenToClient( hDlg, (POINT *) &pRect->left );
-        ScreenToClient( hDlg, (POINT *) &pRect->right );
-    }
-
-    return hDlgItm;
-}
-
-static void MoveWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
-{
-    if ( hWnd )
-    {
-        MoveWindow(hWnd, rc0->left + dx, rc0->top, rc0->right - rc0->left, rc0->bottom - rc0->top, TRUE);
-    }
-}
-
-static void ResizeWindowByDx(HWND hWnd, const RECT* rc0, LONG dx)
-{
-    if ( hWnd )
-    {
-        MoveWindow(hWnd, rc0->left, rc0->top, rc0->right - rc0->left + dx, rc0->bottom - rc0->top, TRUE);
-    }
-}
-
-static void RedrawWindowByDx(HWND hWnd)
-{
-    if ( hWnd )
-    {
-        InvalidateRect(hWnd, NULL, TRUE);
-        UpdateWindow(hWnd);
-    }
 }
 
 INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
@@ -5162,8 +5165,7 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
     {
         qsSetInfoEofOrNotFound(0, bNotFound, bNotRegExp);
     }
-    InvalidateRect(hEdit, NULL, TRUE);
-    UpdateWindow(hEdit);
+    RedrawWindowEntire(hEdit);
 }
 
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[])
@@ -5938,6 +5940,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                         SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                         pos = cr.cpMin;
+
+                        SendMessage( hWndEdit, WM_SETREDRAW, FALSE, 0 );
                         cr.cpMin = -1;
                         cr.cpMax = -1;
                         SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
@@ -5961,6 +5965,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                             SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
+                        SendMessage( hWndEdit, WM_SETREDRAW, TRUE, 0 );
+                        RedrawWindowEntire( hWndEdit );
                     }
                     else
                     {
@@ -6100,6 +6106,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
 
                         SendMessage( hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
                         pos = cr.cpMin;
+
+                        SendMessage( hWndEdit, WM_SETREDRAW, FALSE, 0 );
                         cr.cpMin = -1;
                         cr.cpMax = -1;
                         SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
@@ -6123,6 +6131,8 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                             SendMessage( hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
                             bNotFound = TRUE;
                         }
+                        SendMessage( hWndEdit, WM_SETREDRAW, TRUE, 0 );
+                        RedrawWindowEntire( hWndEdit );
                     }
                     else
                     {
