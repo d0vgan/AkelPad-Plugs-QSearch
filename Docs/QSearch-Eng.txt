@@ -613,6 +613,12 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
+v.8.2
+ * Glory to Ukraine! Glory to the heroes!
+ + added: showing "%u of %u matches" when "Auto Count All" is on
+ * various small improvements
+ * some unit tests added
+
 v.8.1 (March 2024)
  * Glory to Ukraine! Glory to the heroes!
  + added: showing ">>" or "<<" when crossing the end of the document (EOF)
