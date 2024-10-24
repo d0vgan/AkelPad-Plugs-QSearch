@@ -992,9 +992,9 @@ static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nP
             szQuoteTextW[0] = getQuoteChar(pFindContext);
             szQuoteTextW[1] = 0;
 
-            aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
-            aeftW.dwFlags &= ~(AEFR_WHOLEWORD|AEFR_REGEXP|AEFR_REGEXPNONEWLINEDOT|AEFR_REGEXPMINMATCH);
-            aeftW.pText = szQuoteTextW; // searching for a quote character, so AEFR_WHOLEWORD was excluded
+            // searching for a quote character, don't use AEFR_WHOLEWORD and AEFR_REGEXP!
+            aeftW.dwFlags = AEFR_DOWN;
+            aeftW.pText = szQuoteTextW;
             aeftW.dwTextLen = 1;
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
             x_mem_cpy( &aeftW.crSearch.ciMin, &ci, sizeof(AECHARINDEX) );
@@ -1012,9 +1012,9 @@ static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nP
 
         if ( bContinue )
         {
-            aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
-            aeftW.dwFlags &= ~(AEFR_WHOLEWORD|AEFR_REGEXP|AEFR_REGEXPNONEWLINEDOT|AEFR_REGEXPMINMATCH);
-            aeftW.pText = pFindContext->pFindTextW->pText; // searching for a RegExp's text (it may contain special characters and spaces)
+            // searching for a plain text or RegExp's text, don't use AEFR_WHOLEWORD and AEFR_REGEXP!
+            aeftW.dwFlags = AEFR_DOWN;
+            aeftW.pText = pFindContext->pFindTextW->pText;
             aeftW.dwTextLen = pFindContext->pFindTextW->dwTextLen;
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
             SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
