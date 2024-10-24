@@ -429,6 +429,10 @@ static void qsSetInfoEmpty()
             SetWindowTextA(g_QSearchDlg.hStInfo, "");
         else
             SetWindowTextW(g_QSearchDlg.hStInfo, L"");
+
+    #ifdef _DEBUG
+        Debug_OutputW(L"%S -> InfoText = \"\"\n", __func__);
+    #endif
     }
 
     tDynamicBuffer_Clear(&g_QSearchDlg.matchesBuf);
@@ -525,6 +529,10 @@ static int findPosInOccurrences(HWND hWndEdit, BOOL* pbExactMatch)
 
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
 {
+#ifdef _DEBUG
+    Debug_OutputA("%s: nOccurrences=%u, nFlags=%u\n", __func__, nOccurrences, nFlags);
+#endif
+
     if ( g_QSearchDlg.hStInfo )
     {
         int nLen;
@@ -545,7 +553,7 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
         nLen = 0;
         if ( ((nFlags & QS_SIOF_REMOVECURRENTMATCH) == 0) &&
              ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
-             (nOccurrences != 0) && 
+             (nOccurrences != 0) &&
              (nOccurrences == g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)) )
         {
             int nMatch;
@@ -589,6 +597,10 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
         }
 
         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
+
+    #ifdef _DEBUG
+        Debug_OutputW(L"%S -> InfoText = \"%s\"\n", __func__, szInfoTextW);
+    #endif
     }
 }
 
@@ -686,6 +698,10 @@ static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
         if ( lstrcmpA(szInfoTextA, szInfoTextA_0) != 0 )
         {
             SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
+
+        #ifdef _DEBUG
+            Debug_OutputA("%s -> InfoText = \"%s\"\n", __func__, szInfoTextA);
+        #endif
         }
     }
     else
@@ -729,6 +745,10 @@ static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
         if ( lstrcmpW(szInfoTextW, szInfoTextW_0) != 0 )
         {
             SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
+
+        #ifdef _DEBUG
+            Debug_OutputW(L"%S -> InfoText = \"%s\"\n", __func__, szInfoTextW);
+        #endif
         }
     }
 }
@@ -782,6 +802,9 @@ static void qsShowFindResults_CountOnly_AddOccurrence(tFindAllContext* pFindCont
 
 static void qsShowFindResults_CountOnly_Done(tFindAllContext* pFindContext, tDynamicBuffer* pTempBuf)
 {
+#ifdef _DEBUG
+    Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
+#endif
     qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
 }
 
@@ -1083,6 +1106,9 @@ static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDyn
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
     {
+    #ifdef _DEBUG
+        Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
+    #endif
         qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
     }
 }
@@ -1387,6 +1413,9 @@ static void qsShowFindResults_FileOutput_Done(tFindAllContext* pFindContext, tDy
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
         addResultsToFileOutput( pFindContext );
 
+    #ifdef _DEBUG
+        Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
+    #endif
         qsSetInfoOccurrencesFound(pFindContext->nOccurrences, 0);
     }
 }
@@ -2635,6 +2664,9 @@ static void OnSrchModeChanged()
         qsearchDoTryUnhighlightAll();
     }
 
+#ifdef _DEBUG
+    Debug_OutputA("%s -> qsSetInfoEmpty\n", __func__);
+#endif
     qsSetInfoEmpty();
 }
 
@@ -2852,11 +2884,15 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
         {
             setEditFindText(hEdit, g_QSearchDlg.szFindTextW);
             SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
+
+        #ifdef _DEBUG
+            Debug_OutputA("%s -> qsSetInfoEmpty\n", __func__);
+        #endif
             qsSetInfoEmpty();
         }
         SendMessage(hEdit, EM_SETSEL, 0, -1);
 #ifdef _DEBUG
-        Debug_Output("editWndProc, WM_KEYDOWN, (RETURN||F3)&&PickUp, SETSEL(0, -1)\n");
+        Debug_OutputA("editWndProc, WM_KEYDOWN, (RETURN||F3)&&PickUp, SETSEL(0, -1)\n");
 #endif
         qs_bEditTextChanged = TRUE;
         if ( dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
@@ -2925,7 +2961,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
     static BOOL  bEditTrackingMouse = FALSE;
 
 #ifdef _DEBUG
-    Debug_Output("Edit Msg 0x%X:  0x0%X  0x0%X\n", uMsg, wParam, lParam);
+    //Debug_OutputA("Edit Msg 0x%X:  0x0%X  0x0%X\n", uMsg, wParam, lParam);
 #endif
 
     switch ( uMsg )
@@ -3069,7 +3105,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     {
                         SendMessage( hEdit, EM_SETSEL, 0, -1 );
 #ifdef _DEBUG
-                        Debug_Output("editWndProc, WM_KEYDOWN, Ctrl+A, SETSEL(0, -1)\n");
+                        Debug_OutputA("editWndProc, WM_KEYDOWN, Ctrl+A, SETSEL(0, -1)\n");
 #endif
                         return 0;
                     }
@@ -3204,7 +3240,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 {
                     SendMessage(hEdit, EM_SETSEL, 0, -1);
 #ifdef _DEBUG
-                    Debug_Output("editWndProc, WM_SETFOCUS, if (SelectAll), SETSEL(0, -1)\n");
+                    Debug_OutputA("editWndProc, WM_SETFOCUS, if (SelectAll), SETSEL(0, -1)\n");
 #endif
                 }
                 else
@@ -3213,7 +3249,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     {
                         SendMessage(hEdit, EM_SETSEL, dwSelPos1, dwSelPos2);
 #ifdef _DEBUG
-                        Debug_Output("editWndProc, WM_SETFOCUS, if (!SelJustChanged), SETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
+                        Debug_OutputA("editWndProc, WM_SETFOCUS, if (!SelJustChanged), SETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
 #endif
                     }
                     else
@@ -3222,14 +3258,14 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                         SendMessage( hEdit, EM_GETSEL,
                           (WPARAM) &dwSelPos1, (LPARAM) &dwSelPos2 );
 #ifdef _DEBUG
-                        Debug_Output("editWndProc, WM_GETFOCUS, if (SelJustChanged), GETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
+                        Debug_OutputA("editWndProc, WM_GETFOCUS, if (SelJustChanged), GETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
 #endif
                     }
                 }
             }
             g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
 //#ifdef _DEBUG
-//            Debug_Output("QSearchDlg.c, editWndProc, WM_SETFOCUS, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
+//            Debug_OutputA("QSearchDlg.c, editWndProc, WM_SETFOCUS, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
 //#endif
             break;
         }
@@ -3245,7 +3281,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     SendMessage( hEdit, EM_GETSEL,
                       (WPARAM) &dwSelPos1, (LPARAM) &dwSelPos2 );
 #ifdef _DEBUG
-                    Debug_Output("editWndProc, WM_KILLFOCUS, GETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
+                    Debug_OutputA("editWndProc, WM_KILLFOCUS, GETSEL(%d, %d)\n", dwSelPos1, dwSelPos2);
 #endif
                 }
 
@@ -3258,7 +3294,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
                     g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
 //#ifdef _DEBUG
-//                    Debug_Output("QSearchDlg.c, editWndProc, WM_KILLFOCUS, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
+//                    Debug_OutputA("QSearchDlg.c, editWndProc, WM_KILLFOCUS, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
 //#endif
                 }
                 /*
@@ -3297,7 +3333,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 
                 g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
 //#ifdef _DEBUG
-//                Debug_Output("QSearchDlg.c, editWndProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
+//                Debug_OutputA("QSearchDlg.c, editWndProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
 //#endif
             }
             break;
@@ -3307,7 +3343,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             bEditTrackingMouse = FALSE;
             g_QSearchDlg.bMouseJustLeavedFindEdit = TRUE;
 //#ifdef _DEBUG
-//            Debug_Output("QSearchDlg.c, editWndProc, WM_MOUSELEAVE, g_QSearchDlg.MouseJustLeavedFindEdit = TRUE;\n");
+//            Debug_OutputA("QSearchDlg.c, editWndProc, WM_MOUSELEAVE, g_QSearchDlg.MouseJustLeavedFindEdit = TRUE;\n");
 //#endif
             break;
         }
@@ -3323,7 +3359,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     {
                         DWORD pos1, pos2;
                         SendMessage(hEdit, EM_GETSEL, (WPARAM)&pos1, (LPARAM)&pos2);
-                        Debug_Output("editWndProc, WM_GETDLGCODE, GETSEL(%d, %d)\n", pos1, pos2);
+                        Debug_OutputA("editWndProc, WM_GETDLGCODE, GETSEL(%d, %d)\n", pos1, pos2);
                     }
 #endif
                 }
@@ -3633,6 +3669,9 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
         nPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, FALSE) & QS_PSF_PICKEDUP;
     }
 
+#ifdef _DEBUG
+    Debug_OutputA("%s -> qsSetInfoEmpty\n", __func__);
+#endif
     qsSetInfoEmpty();
 
     if ( !nPickedUp )
@@ -3741,7 +3780,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
     static RECT rcEdFindText_0 = { 0, 0, 0, 0 };
 
 #ifdef _DEBUG
-    Debug_Output("Dlg Msg 0x%X:  0x0%X  0x0%X\n", uMsg, wParam, lParam);
+    //Debug_OutputA("Dlg Msg 0x%X:  0x0%X  0x0%X\n", uMsg, wParam, lParam);
 #endif
 
     switch ( uMsg )
@@ -3875,6 +3914,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         nPickedUp = qsPickUpSelection(g_QSearchDlg.hFindEdit, g_Options.dwFlags, TRUE) & QS_PSF_PICKEDUP;
                     }
 
+                #ifdef _DEBUG
+                    Debug_OutputA("%s, IDC_CH_HIGHLIGHTALL -> qsSetInfoEmpty\n", __func__);
+                #endif
                     qsSetInfoEmpty();
 
                     if ( !nPickedUp )
@@ -3910,6 +3952,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         qs_bForceFindFirst = TRUE;
                         g_QSearchDlg.uSearchOrigin = qs_Get_SO_QSEARCH(g_Options.dwFlags);
                         qsearchDoSetNotFound(g_QSearchDlg.hFindEdit, FALSE, FALSE, 0);
+                    #ifdef _DEBUG
+                        Debug_OutputA("%s, IDC_CB_FINDTEXT -> qsSetInfoEmpty\n", __func__);
+                    #endif
                         qsSetInfoEmpty();
                         break;
                     case CBN_DROPDOWN:
@@ -4035,6 +4080,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
                         tDynamicBuffer_Free(&g_QSearchDlg.matchesBuf);
                         g_QSearchDlg.hCurrentMatchEditWnd = NULL;
+                        qsSetInfoEmpty();
                     }
                     else
                         g_Options.dwFindAllMode |= QS_FINDALL_AUTO_COUNT_FLAG;
@@ -4579,6 +4625,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             if ( uFlags & QS_SNF_SETINFOEMPTY )
             {
+            #ifdef _DEBUG
+                Debug_OutputA("%s, QSM_SETNOTFOUND -> qsSetInfoEmpty\n", __func__);
+            #endif
                 qsSetInfoEmpty();
             }
             if ( uFlags & QS_SNF_FORCEFINDFIRST )
@@ -4797,7 +4846,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 SendMessage(g_QSearchDlg.hFindEdit, EM_SETSEL, 0, -1);
 #ifdef _DEBUG
-                Debug_Output("qsearchDlgProc, WM_INITDIALOG, if (!SelectAll), SETSEL(0, -1)\n");
+                Debug_OutputA("qsearchDlgProc, WM_INITDIALOG, if (!SelectAll), SETSEL(0, -1)\n");
 #endif
             }
 
@@ -5148,9 +5197,17 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
 
 void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEOF)
 {
+#ifdef _DEBUG
+    Debug_OutputA("%s: bNotFound=%d, bNotRegExp=%d, nIsEOF=%d\n", __func__, bNotFound, bNotRegExp, nIsEOF);
+#endif
+
     if ( bNotFound )
     {
         qsearchDoTryUnhighlightAll();
+
+    #ifdef _DEBUG
+        Debug_OutputA("%s, bNotFound -> qsSetInfoEmpty\n", __func__);
+    #endif
         qsSetInfoEmpty();
     }
 
@@ -5173,6 +5230,10 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     BOOL bChangeSelection = !IsWindowVisible(hDlg);
 
     qsearchDoSetNotFound( qsearchGetFindEdit(hDlg, NULL), FALSE, FALSE, 0 );
+
+#ifdef _DEBUG
+    Debug_OutputA("%s -> qsSetInfoEmpty\n", __func__);
+#endif
     qsSetInfoEmpty();
 
     if ( bShow )
@@ -5256,7 +5317,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
                 {
                     SendMessage(hEdit, EM_SETSEL, 0, -1);
     #ifdef _DEBUG
-                    Debug_Output("qsearchDoShowHide, PickUpSel, SETSEL(0, -1)\n");
+                    Debug_OutputA("qsearchDoShowHide, PickUpSel, SETSEL(0, -1)\n");
     #endif
                     qs_bEditSelJustChanged = TRUE;
                 }
@@ -5266,7 +5327,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
         {
             SendMessage(hEdit, EM_SETSEL, 0, -1);
 #ifdef _DEBUG
-            Debug_Output("qsearchDoShowHide, ChangeSel, SETSEL(0, -1)\n");
+            Debug_OutputA("qsearchDoShowHide, ChangeSel, SETSEL(0, -1)\n");
 #endif
             qs_bEditSelJustChanged = TRUE;
         }
@@ -5703,11 +5764,21 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         nLen = removeEofOrNotFoundFromInfoTextA(szInfoTextA, nLen);
                         lstrcatA(szInfoTextA, "...");
                         SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
+
+                    #ifdef _DEBUG
+                        Debug_OutputA("%s -> InfoText = \"%s\"\n", __func__, szInfoTextA);
+                    #endif
                     }
                 }
             }
             else
+            {
                 SetWindowTextA(g_QSearchDlg.hStInfo, "");
+
+            #ifdef _DEBUG
+                Debug_OutputA("%s -> InfoText = \"\"\n", __func__);
+            #endif
+            }
         }
 
         if ( 0 == ((LPCSTR) g_QSearchDlg.szFindTextW)[0] )
@@ -5745,11 +5816,21 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                         nLen = removeEofOrNotFoundFromInfoTextW(szInfoTextW, nLen);
                         lstrcatW(szInfoTextW, L"...");
                         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
+
+                    #ifdef _DEBUG
+                        Debug_OutputW(L"%S -> InfoText = \"%s\"\n", __func__, szInfoTextW);
+                    #endif
                     }
                 }
             }
             else
+            {
                 SetWindowTextW(g_QSearchDlg.hStInfo, L"");
+
+            #ifdef _DEBUG
+                Debug_OutputW(L"%S -> InfoText = \"\"\n", __func__);
+            #endif
+            }
         }
 
         if ( 0 == ((LPCWSTR) g_QSearchDlg.szFindTextW)[0] )
@@ -6171,6 +6252,9 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                  ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
                  (g_QSearchDlg.matchesBuf.nBytesStored != 0) )
             {
+            #ifdef _DEBUG
+                Debug_OutputA("%s, iFindResult >= 0 -> qsSetInfoOccurrencesFound\n", __func__);
+            #endif
                 qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), 0 );
             }
         }
@@ -6398,10 +6482,18 @@ void qsearchDoSearchText(HWND hEdit, DWORD dwParams, const DWORD dwOptFlags[], t
                 {
                     tDynamicBuffer_Swap(&g_QSearchDlg.matchesBuf, &tempMatchesBuf);
 
+                #ifdef _DEBUG
+                    Debug_OutputA("%s, bAllFiles -> qsSetInfoOccurrencesFound\n", __func__);
+                #endif
                     qsSetInfoOccurrencesFound(nCurrentMatches, 0);
                 }
                 else
+                {
+                #ifdef _DEBUG
+                    Debug_OutputA("%s, bAllFiles -> qsSetInfoEmpty\n", __func__);
+                #endif
                     qsSetInfoEmpty();
+                }
 
                 pFindAll->ShowFindResults.pfnAllFilesDone(&FindContext, &pFindAll->tempBuf);
                 tDynamicBuffer_Clear(&FindContext.ResultsBuf);

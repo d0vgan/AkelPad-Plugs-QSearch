@@ -109,7 +109,8 @@ int VersionCompare(DWORD dwVersion1, DWORD dwVersion2);
 
 // debug helper
 #ifdef _DEBUG
-void Debug_Output(const char* szFormat, ...);
+void Debug_OutputA(const char* szFormat, ...);
+void Debug_OutputW(const wchar_t* szFormat, ...);
 #endif
 
 //---------------------------------------------------------------------------

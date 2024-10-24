@@ -1363,7 +1363,7 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         }
                         g_QSearchDlg.bMouseJustLeavedFindEdit = FALSE;
                         //#ifdef _DEBUG
-                        //  Debug_Output("QSearch.c, NewEditProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
+                        //  Debug_OutputA("QSearch.c, NewEditProc, WM_MOUSEMOVE, g_QSearchDlg.MouseJustLeavedFindEdit = FALSE;\n");
                         //#endif
                     }
                 }
@@ -1647,6 +1647,9 @@ static void removeCurrentMatchFromOccurrencesFound(const NMHDR* hdr)
          (g_QSearchDlg.hCurrentMatchEditWnd == hdr->hwndFrom) &&
          (GetFocus() == hdr->hwndFrom) )
     {
+    #ifdef _DEBUG
+        Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
+    #endif
         qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), QS_SIOF_REMOVECURRENTMATCH );
         g_QSearchDlg.hCurrentMatchEditWnd = NULL;
     }
@@ -1661,6 +1664,9 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             if ( hdr->code == AEN_SELCHANGED )
             {
+                // Note: the code below will be executed literally each time the selection is changed,
+                // even when it was the result of searching or other activities by QSearch itself.
+
                 if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
                 {
                     AECHARRANGE* aeCrSel = &(((AENSELCHANGE *) hdr)->crSel);
@@ -1675,13 +1681,22 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                 }
 
-                removeCurrentMatchFromOccurrencesFound(hdr);
+                if ( !g_QSearchDlg.bIsQSearchingRightNow )
+                {
+                #ifdef _DEBUG
+                    Debug_OutputA("AEN_SELCHANGED -> removeCurrentMatchFromOccurrencesFound\n");
+                #endif
+                    removeCurrentMatchFromOccurrencesFound(hdr);
+                }
             }
         }
         else
         {
             if ( hdr->code == EN_SELCHANGE )
             {
+                // Note: the code below will be executed literally each time the selection is changed,
+                // even when it was the result of searching or other activities by QSearch itself.
+
                 if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
                 {
                     if ( GetFocus() == hdr->hwndFrom )
@@ -1697,7 +1712,13 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                 }
 
-                removeCurrentMatchFromOccurrencesFound(hdr);
+                if ( !g_QSearchDlg.bIsQSearchingRightNow )
+                {
+                #ifdef _DEBUG
+                    Debug_OutputA("EN_SELCHANGE -> removeCurrentMatchFromOccurrencesFound\n");
+                #endif
+                    removeCurrentMatchFromOccurrencesFound(hdr);
+                }
             }
         }
     }
@@ -3525,7 +3546,7 @@ int VersionCompare(DWORD dwVersion1, DWORD dwVersion2)
 
 // debug helper
 #ifdef _DEBUG
-void Debug_Output(const char* szFormat, ...)
+void Debug_OutputA(const char* szFormat, ...)
 {
     char szBuf[1024];
     va_list arg;
@@ -3533,7 +3554,18 @@ void Debug_Output(const char* szFormat, ...)
     wvsprintfA(szBuf, szFormat, arg);
     va_end(arg);
 
-    OutputDebugString(szBuf);
+    OutputDebugStringA(szBuf);
+}
+
+void Debug_OutputW(const wchar_t* szFormat, ...)
+{
+    wchar_t szBuf[1024];
+    va_list arg;
+    va_start(arg, szFormat);
+    wvsprintfW(szBuf, szFormat, arg);
+    va_end(arg);
+
+    OutputDebugStringW(szBuf);
 }
 #endif
 
