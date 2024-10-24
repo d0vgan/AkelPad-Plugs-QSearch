@@ -968,7 +968,7 @@ enum eHighlightCondition {
 void qsearchDoTryHighlightAll(HWND hDlg, const DWORD dwOptFlags[], DWORD dwHighlightCondition);
 void qsearchDoTryUnhighlightAll(void);
 
-static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, DWORD dwFrpHighlight, const tFindAllContext* pFindContext)
+static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nPos, DWORD dwFrpHighlight, const tFindAllContext* pFindContext)
 {
     int nFirstVisibleLine;
     AECHARINDEX ci;
@@ -1103,7 +1103,7 @@ static void qsShowFindResults_LogOutput_Done(tFindAllContext* pFindContext, tDyn
         tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
         LogOutput_AddText( (const wchar_t*) pFindContext->ResultsBuf.ptr, nLen );
 
-        scrollEditToPosition(hWndEdit, nStartPos, g_Options.LogOutputFRP.nHighlight, pFindContext);
+        scrollEditToPositionAndHighlightTheMatches(hWndEdit, nStartPos, g_Options.LogOutputFRP.nHighlight, pFindContext);
     }
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_ALLFILES) == 0 )
@@ -1163,7 +1163,7 @@ static void qsShowFindResults_LogOutput_AllFiles_Done(tFindAllContext* pFindCont
     tDynamicBuffer_Append( &pFindContext->ResultsBuf, L"\0", 1*sizeof(wchar_t) ); // the trailing '\0'
     LogOutput_AddText( (const wchar_t*) pFindContext->ResultsBuf.ptr, nLen );
 
-    scrollEditToPosition(hWndEdit, nStartPos, g_Options.LogOutputFRP.nHighlight, pFindContext);
+    scrollEditToPositionAndHighlightTheMatches(hWndEdit, nStartPos, g_Options.LogOutputFRP.nHighlight, pFindContext);
 }
 
 // FileOutput...
@@ -1383,7 +1383,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
                 SendMessageW( hWndEdit, AEM_ENDUNDOACTION, 0, 0 );
             }
 
-            scrollEditToPosition(hWndEdit, nStartPos, g_Options.FileOutputFRP.nHighlight, pFindContext);
+            scrollEditToPositionAndHighlightTheMatches(hWndEdit, nStartPos, g_Options.FileOutputFRP.nHighlight, pFindContext);
         }
     }
 }
