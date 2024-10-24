@@ -1013,8 +1013,8 @@ static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nP
         if ( bContinue )
         {
             aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
-            aeftW.dwFlags &= ~(AEFR_REGEXP|AEFR_REGEXPNONEWLINEDOT|AEFR_REGEXPMINMATCH);
-            aeftW.pText = pFindContext->pFindTextW->pText; // searching for a RegExp's text, AEFR_WHOLEWORD can be applied
+            aeftW.dwFlags &= ~(AEFR_WHOLEWORD|AEFR_REGEXP|AEFR_REGEXPNONEWLINEDOT|AEFR_REGEXPMINMATCH);
+            aeftW.pText = pFindContext->pFindTextW->pText; // searching for a RegExp's text (it may contain special characters and spaces)
             aeftW.dwTextLen = pFindContext->pFindTextW->dwTextLen;
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
             SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
