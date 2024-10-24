@@ -993,6 +993,10 @@ static void scrollEditToPosition(HWND hWndEdit, INT_PTR nPos, DWORD dwFrpHighlig
             szQuoteTextW[1] = 0;
 
             aeftW.dwFlags = pFindContext->pFindTextW->dwFlags;
+            if ( aeftW.dwFlags & AEFR_WHOLEWORD )
+                aeftW.dwFlags -= AEFR_WHOLEWORD;
+            if ( aeftW.dwFlags & AEFR_REGEXP )
+                aeftW.dwFlags -= AEFR_REGEXP;
             aeftW.pText = szQuoteTextW;
             aeftW.dwTextLen = 1;
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
