@@ -110,6 +110,12 @@
     #define  MAX_TEXT_SIZE  250
     #define  MAX_RESULTS_FRAMES 16
 
+    typedef struct sQSFindAllFrameItem {
+        const FRAMEDATA* pFrame;
+        INT_PTR nBufBytesOffset;
+        INT_PTR nMatches;
+    } tQSFindAllFrameItem;
+
     typedef struct tQSearchDlgState {
         HWND             hDlg;
         HWND             hFindEdit;
@@ -135,13 +141,32 @@
         COLORREF         crBkgndColor;
         HBRUSH           hBkgndBrush;
         HWND             hCurrentMatchEditWnd;
-        tDynamicBuffer   matchesBuf;
+        BOOL             bFindAllWasUsingLogOutput; 
+        tDynamicBuffer   matchesBuf; // RichEdit offsets as INT_PTR
+        tDynamicBuffer   findAllFramesBuf; // tQSFindAllFrameItem items
+        tDynamicBuffer   findAllMatchesBuf; // RichEdit offsets in all files as INT_PTR
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
     void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
-    BOOL QSearchDlgState_MatchResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    BOOL QSearchDlgState_IsResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+
+    void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset);
+    void QSearchDlgState_clearCurrentMatches(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
+    int  QSearchDlgState_findInCurrentMatches(const QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset, BOOL* pbExactMatch);
+
+    void QSearchDlgState_addFindAllMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset);
+    void QSearchDlgState_addFindAllFrameItem(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    void QSearchDlgState_clearFindAllMatchesAndFrames(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
+    int  QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, INT_PTR nRichEditOffset, BOOL* pbExactMatch);
+    const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    const INT_PTR* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    INT_PTR QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx);
+    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemForward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
 
@@ -156,6 +181,98 @@ void qsearchDlgApplyEditorColors();
 
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
+
+// returns either a 0-based index or -1
+int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch);
+
+// plugin call helpers
+void CallPluginFuncA(const char* cszFuncA, void* pParams);
+void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams);
+
+/* >>>>>>>>>>>>>>>>>>>>>>>> highlight plugin >>>>>>>>>>>>>>>>>>>>>>>> */
+#define DLLA_HIGHLIGHT_MARK                2
+#define DLLA_HIGHLIGHT_UNMARK              3
+#define DLLA_HIGHLIGHT_FINDMARK            4
+
+#define DLLA_CODER_SETALIAS         6
+#define DLLA_CODER_GETALIAS         18
+#define MAX_CODERALIAS              MAX_PATH
+
+#define MARKFLAG_MATCHCASE 0x01
+#define MARKFLAG_REGEXP    0x02
+#define MARKFLAG_WHOLEWORD 0x04
+
+// DLL External Call
+typedef struct sDLLECHIGHLIGHT_MARK {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    unsigned char *pColorText;
+    unsigned char *pColorBk;
+    UINT_PTR dwMarkFlags;
+    UINT_PTR dwFontStyle;
+    UINT_PTR dwMarkID;
+    wchar_t *wszMarkText;
+} DLLECHIGHLIGHT_MARK;
+
+typedef struct sDLLECHIGHLIGHT_UNMARK {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    UINT_PTR dwMarkID;
+} DLLECHIGHLIGHT_UNMARK;
+
+typedef struct sDLLECCODERSETTINGS_GETALIAS {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    HWND hWndEdit;
+    AEHDOC hDoc;
+    unsigned char* pszAlias;
+} DLLECCODERSETTINGS_GETALIAS;
+
+typedef struct sDLLECCODERSETTINGS_SETALIAS {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    const unsigned char* pszAlias;
+} DLLECCODERSETTINGS_SETALIAS;
+
+void CallHighlightMain(void* phlParams);
+void CallCoderSettings(void* pstParams);
+BOOL IsHighlightMainActive(void);
+/* <<<<<<<<<<<<<<<<<<<<<<<< highlight plugin <<<<<<<<<<<<<<<<<<<<<<<< */
+
+/* >>>>>>>>>>>>>>>>>>>>>>>> log plugin >>>>>>>>>>>>>>>>>>>>>>>> */
+// DLL External Call
+typedef struct sDLLECLOG_OUTPUT_1 {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    LPCWSTR pszProgram;
+    LPCWSTR pszWorkDir;
+    LPCWSTR pszRePattern;
+    LPCWSTR pszReTags;
+    INT_PTR nInputCodepage;
+    INT_PTR nOutputCodepage;
+    UINT_PTR nFlags;
+    LPCWSTR pszAlias;
+} DLLECLOG_OUTPUT_1;
+
+typedef struct sDLLECLOG_OUTPUT_2 {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    void* ptrToEditWnd;
+} DLLECLOG_OUTPUT_2;
+
+typedef struct sDLLECLOG_OUTPUT_4 {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    LPCWSTR pszText;
+    INT_PTR nTextLen;
+    INT_PTR nAppend;
+    INT_PTR nCodepage;
+    LPCWSTR pszAlias;
+} DLLECLOG_OUTPUT_4;
+
+void CallLogOutput(void* ploParams);
+BOOL IsLogOutputActive(void);
+/* <<<<<<<<<<<<<<<<<<<<<<<< log plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
 //---------------------------------------------------------------------------
 #endif

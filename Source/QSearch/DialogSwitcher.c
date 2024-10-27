@@ -731,10 +731,8 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                 {
                     PLUGINCALLSENDA pcsA;
 
+                    x_zero_mem(&pcsA, sizeof(PLUGINCALLSENDA));
                     pcsA.pFunction = (char *) g_szFunctionQSearchW;
-                    //pcsA.bOnStart = FALSE;
-                    pcsA.lParam = 0;
-                    pcsA.dwSupport = 0;
 
                     SendMessageA( ds_hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
                 }
@@ -742,10 +740,8 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                 {
                     PLUGINCALLSENDW pcsW;
 
+                    x_zero_mem(&pcsW, sizeof(PLUGINCALLSENDW));
                     pcsW.pFunction = g_szFunctionQSearchW;
-                    //pcsW.bOnStart = FALSE;
-                    pcsW.lParam = 0;
-                    pcsW.dwSupport = 0;
 
                     SendMessageW( ds_hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
                 }
