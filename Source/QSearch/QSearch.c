@@ -974,9 +974,7 @@ void __declspec(dllexport) SelFindPrev(PLUGINDATA* pd)
     pd->nUnload = UD_NONUNLOAD_NONACTIVE;
 }
 
-#define GTFAM_NEXT 0x01
-#define GTFAM_PREV 0x02
-static BOOL doGoToFindAllMatch(UINT nFlags)
+BOOL doGoToFindAllMatch(UINT nFlags)
 {
     const FRAMEDATA* pFrame;
     const tQSFindAllFrameItem* pItem;

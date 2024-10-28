@@ -126,6 +126,9 @@
         HWND             hStInfo;
         HMENU            hPopupMenu;
         HMENU            hFindAllPopupMenu;
+        DWORD            dwHotKeyQSearch;
+        DWORD            dwHotKeyGoToNextFindAllMatch;
+        DWORD            dwHotKeyGoToPrevFindAllMatch;
         BOOL             bMatchCase;
         BOOL             bQSearching;
         BOOL             bIsQSearchingRightNow;
@@ -181,6 +184,8 @@ void qsearchDlgApplyEditorColors();
 
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
+
+BOOL qsIsHotKeyPressed(DWORD dwHotKey);
 
 // returns either a 0-based index or -1
 int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch);

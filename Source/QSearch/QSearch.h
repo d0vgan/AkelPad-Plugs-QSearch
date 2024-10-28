@@ -103,6 +103,10 @@ void  ReadFindHistoryW(void);
 void  SaveFindHistoryA(void);
 void  SaveFindHistoryW(void);
 
+#define GTFAM_NEXT 0x01
+#define GTFAM_PREV 0x02
+BOOL doGoToFindAllMatch(UINT nFlags);
+
 #if AKELPAD_RUNTIME_VERSION_CHECK
 int VersionCompare(DWORD dwVersion1, DWORD dwVersion2);
 #endif
