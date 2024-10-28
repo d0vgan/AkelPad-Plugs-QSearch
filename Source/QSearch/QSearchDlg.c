@@ -3259,8 +3259,6 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    doGoToFindAllMatch(GTFAM_NEXT);
-                    SetFocus(GetWndEdit(g_Plugin.hMainWnd));
                     return 0;
                 }
             }
@@ -3269,8 +3267,6 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    doGoToFindAllMatch(GTFAM_PREV);
-                    SetFocus(GetWndEdit(g_Plugin.hMainWnd));
                     return 0;
                 }
             }
@@ -3293,8 +3289,6 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    doGoToFindAllMatch(GTFAM_NEXT);
-                    SetFocus(GetWndEdit(g_Plugin.hMainWnd));
                     return 0;
                 }
             }
@@ -3303,8 +3297,6 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    doGoToFindAllMatch(GTFAM_PREV);
-                    SetFocus(GetWndEdit(g_Plugin.hMainWnd));
                     return 0;
                 }
             }
@@ -4315,7 +4307,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    // if the hot key is F4, we are avoiding the context menu to be shown
+                    if ( doGoToFindAllMatch(GTFAM_NEXT) )
+                    {
+                        SetFocus(GetWndEdit(g_Plugin.hMainWnd));
+                    }
                     return 0;
                 }
             }
@@ -4324,7 +4319,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
-                    // if the hot key is Shift+F4, we are avoiding the context menu to be shown
+                    if ( doGoToFindAllMatch(GTFAM_PREV) )
+                    {
+                        SetFocus(GetWndEdit(g_Plugin.hMainWnd));
+                    }
                     return 0;
                 }
             }
@@ -4400,6 +4398,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
+                    if ( doGoToFindAllMatch(GTFAM_NEXT) )
+                    {
+                        SetFocus(GetWndEdit(g_Plugin.hMainWnd));
+                    }
                     return 0;
                 }
             }
@@ -4408,6 +4410,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyGoToFindAllMatchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
                 if ( bHotKeyGoToFindAllMatchPressed )
                 {
+                    if ( doGoToFindAllMatch(GTFAM_PREV) )
+                    {
+                        SetFocus(GetWndEdit(g_Plugin.hMainWnd));
+                    }
                     return 0;
                 }
             }

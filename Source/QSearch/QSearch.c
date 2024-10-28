@@ -997,7 +997,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         if ( pfW )
         {
             CallPluginFuncW(cszFuncW, NULL);
-            return FALSE;
+            return TRUE;
         }
     }
 
