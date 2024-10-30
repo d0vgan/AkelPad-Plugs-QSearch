@@ -482,6 +482,8 @@ BOOL IsLogOutputActive(void)
 
     void QSearchDlgState_clearFindAllMatchesAndFrames(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory)
     {
+        pQSearchDlg->szFindAllFindTextW[0] = 0;
+        pQSearchDlg->dwFindAllFlags = 0;
         pQSearchDlg->bFindAllWasUsingLogOutput = TRUE;
         if ( bFreeMemory )
         {
@@ -4301,7 +4303,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                             g_Options.dwFindAllMode -= QS_FINDALL_AUTO_COUNT_FLAG;
 
                         QSearchDlgState_clearCurrentMatches(&g_QSearchDlg, TRUE);
-                        QSearchDlgState_clearFindAllMatchesAndFrames(&g_QSearchDlg, TRUE);
                         #ifdef _DEBUG
                           Debug_OutputA("%s, IDM_FINDALL_AUTO_COUNT -> qsSetInfoEmpty\n", __func__);
                         #endif
