@@ -47,7 +47,7 @@
     BOOL equalFRP(const FindResultsOutputPolicy* pFRP1, const FindResultsOutputPolicy* pFRP2);
 
     typedef struct tQSearchOpt {
-        DWORD    dwFlags[OPTF_COUNT];
+        DWORD    dwFlags[OPTF_COUNT_TOTAL];
         RECT     dockRect;
         COLORREF colorNotFound;
         COLORREF colorNotRegExp;

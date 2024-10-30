@@ -156,6 +156,11 @@ void CloseLog(void)
         {
             pOptions->dwFlags[i] = WRONG_DWORD_VALUE;
         }
+        for ( i = OPTF_COUNT; i < OPTF_COUNT_TOTAL; i++ )
+        {
+            // additional internal flags
+            pOptions->dwFlags[i] = 0;
+        }
         pOptions->dockRect.left = 0;
         pOptions->dockRect.right = 0;
         pOptions->dockRect.top = 0;
@@ -198,7 +203,7 @@ void CloseLog(void)
 
     void copyOptionsFlags(DWORD dwOptFlagsDst[], const DWORD dwOptFlagsSrc[])
     {
-        x_mem_cpy(dwOptFlagsDst, dwOptFlagsSrc, OPTF_COUNT*sizeof(DWORD));
+        x_mem_cpy(dwOptFlagsDst, dwOptFlagsSrc, OPTF_COUNT_TOTAL*sizeof(DWORD));
     }
 
     void copyOptions(QSearchOpt* pOptDst, const QSearchOpt* pOptSrc)
@@ -981,7 +986,18 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     INT_PTR nRichEditOffset;
     int n;
     BOOL bExactMatch;
+    BOOL bSearchTextChanged = FALSE;
     CHARRANGE_X cr = { 0, 0 };
+
+    if ( g_QSearchDlg.hDlg && g_QSearchDlg.szFindTextW[0] && g_QSearchDlg.szFindAllFindTextW[0] )
+    {
+        if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 &&
+             !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg) )
+        {
+            bSearchTextChanged = TRUE;
+            qsSetInfoEmpty();
+        }
+    }
 
     if ( g_QSearchDlg.bFindAllWasUsingLogOutput && IsLogOutputActive() )
     {
@@ -997,6 +1013,12 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         if ( pfW )
         {
             CallPluginFuncW(cszFuncW, NULL);
+            if ( bSearchTextChanged || g_bFrameActivated )
+            {
+                g_bFrameActivated = FALSE;
+
+                qsUpdateHighlightForFindAll();
+            }
             return TRUE;
         }
     }
@@ -1112,6 +1134,13 @@ BOOL doGoToFindAllMatch(UINT nFlags)
 
         wsprintfW(szGoToW, L"%d:%d", nUnwrappedLine + 1, nLinePos + 1);
         SendMessageW(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) szGoToW);
+
+        if ( bSearchTextChanged || g_bFrameActivated )
+        {
+            g_bFrameActivated = FALSE;
+
+            qsUpdateHighlightForFindAll();
+        }
     }
 
     return TRUE;
@@ -1812,15 +1841,20 @@ static void removeCurrentMatchFromOccurrencesFound(const NMHDR* hdr)
 {
     if ( ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
          (g_QSearchDlg.matchesBuf.nBytesStored != 0) &&
-         (g_QSearchDlg.hCurrentMatchEditWnd != NULL) &&
-         (g_QSearchDlg.hCurrentMatchEditWnd == hdr->hwndFrom) &&
-         (GetFocus() == hdr->hwndFrom) )
+         (g_QSearchDlg.hCurrentMatchEditWnd != NULL) )
     {
-        #ifdef _DEBUG
-          Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
-        #endif
-        qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), QS_SIOF_REMOVECURRENTMATCH );
-        g_QSearchDlg.hCurrentMatchEditWnd = NULL;
+        HWND hFocusedWnd = GetFocus();
+        if ( hFocusedWnd == hdr->hwndFrom ||
+             hFocusedWnd == g_QSearchDlg.hDlg ||
+             IsChild(g_QSearchDlg.hDlg, hFocusedWnd) ||
+             (g_QSearchDlg.bFindAllWasUsingLogOutput && hFocusedWnd == LogOutput_GetEditHwnd()) )
+        {
+            #ifdef _DEBUG
+              Debug_OutputA("%s -> qsSetInfoOccurrencesFound\n", __func__);
+            #endif
+            qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), QS_SIOF_REMOVECURRENTMATCH );
+            g_QSearchDlg.hCurrentMatchEditWnd = NULL;
+        }
     }
 }
 
@@ -2258,6 +2292,11 @@ void ReadOptions(void)
 
     if ( g_Options.dwHighlightState == WRONG_DWORD_VALUE )
         g_Options.dwHighlightState = 0;
+
+    if ( g_Options.dwHighlightState & HLS_IS_CHECKED )
+        g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL] = 1;
+    else
+        g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL] = 0;
 
     if ( g_Options.dwUseAltHotkeys == WRONG_DWORD_VALUE )
         g_Options.dwUseAltHotkeys = DEFAULT_USE_ALT_HOTKEYS;
@@ -3168,13 +3207,16 @@ void ReadFindHistoryA(void)
                 RegCloseKey(hKey);
             }
 
+            g_Options.dwFlags[OPTF_SRCH_MATCHCASE] = 0;
+            g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] = 0;
+
             if ( dwSearchFlags & QSF_MATCHCASE )
             {
                 HWND hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
                 if ( hDlgItm )
                 {
                     SendMessage(hDlgItm, BM_SETCHECK, BST_CHECKED, 0);
-                    g_QSearchDlg.bMatchCase = TRUE;
+                    g_Options.dwFlags[OPTF_SRCH_MATCHCASE] = 1;
                 }
             }
             if ( dwSearchFlags & QSF_WHOLEWORD )
@@ -3183,6 +3225,7 @@ void ReadFindHistoryA(void)
                 if ( hDlgItm )
                 {
                     SendMessage(hDlgItm, BM_SETCHECK, BST_CHECKED, 0);
+                    g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] = 1;
                 }
             }
         }
@@ -3320,13 +3363,16 @@ void ReadFindHistoryW(void)
                 RegCloseKey(hKey);
             }
 
+            g_Options.dwFlags[OPTF_SRCH_MATCHCASE] = 0;
+            g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] = 0;
+
             if ( dwSearchFlags & QSF_MATCHCASE )
             {
                 HWND hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
                 if ( hDlgItm )
                 {
                     SendMessage(hDlgItm, BM_SETCHECK, BST_CHECKED, 0);
-                    g_QSearchDlg.bMatchCase = TRUE;
+                    g_Options.dwFlags[OPTF_SRCH_MATCHCASE] = 1;
                 }
             }
             if ( dwSearchFlags & QSF_WHOLEWORD )
@@ -3335,6 +3381,7 @@ void ReadFindHistoryW(void)
                 if ( hDlgItm )
                 {
                     SendMessage(hDlgItm, BM_SETCHECK, BST_CHECKED, 0);
+                    g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] = 1;
                 }
             }
         }
@@ -3450,28 +3497,19 @@ void SaveFindHistoryA(void)
         if ( qsearchIsSearchFlagsBeingSaved() )
         {
             DWORD dwSearchFlags;
-            HWND  hDlgItm;
             HKEY  hKey;
 
             dwSearchFlags = 0;
             hKey = NULL;
 
-            hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
-            if ( hDlgItm )
+            if ( g_Options.dwFlags[OPTF_SRCH_MATCHCASE] )
             {
-                if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                {
-                    dwSearchFlags |= QSF_MATCHCASE;
-                }
+                dwSearchFlags |= QSF_MATCHCASE;
             }
 
-            hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_WHOLEWORD);
-            if ( hDlgItm )
+            if ( g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] )
             {
-                if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                {
-                    dwSearchFlags |= QSF_WHOLEWORD;
-                }
+                dwSearchFlags |= QSF_WHOLEWORD;
             }
 
             if ( qsearchIsSavingHistoryToStdLocation() )
@@ -3585,28 +3623,19 @@ void SaveFindHistoryW(void)
         if ( qsearchIsSearchFlagsBeingSaved() )
         {
             DWORD dwSearchFlags;
-            HWND  hDlgItm;
             HKEY  hKey;
 
             dwSearchFlags = 0;
             hKey = NULL;
 
-            hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_MATCHCASE);
-            if ( hDlgItm )
+            if ( g_Options.dwFlags[OPTF_SRCH_MATCHCASE] )
             {
-                if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                {
-                    dwSearchFlags |= QSF_MATCHCASE;
-                }
+                dwSearchFlags |= QSF_MATCHCASE;
             }
 
-            hDlgItm = GetDlgItem(g_QSearchDlg.hDlg, IDC_CH_WHOLEWORD);
-            if ( hDlgItm )
+            if ( g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] )
             {
-                if ( SendMessage(hDlgItm, BM_GETCHECK, 0, 0) == BST_CHECKED )
-                {
-                    dwSearchFlags |= QSF_WHOLEWORD;
-                }
+                dwSearchFlags |= QSF_WHOLEWORD;
             }
 
             if ( qsearchIsSavingHistoryToStdLocation() )
@@ -3889,7 +3918,10 @@ BOOL PatOpenLine(HWND hWndEdit)
                     tDynamicBuffer_Append( &textBuf, L"\0", sizeof(wchar_t) ); // trailing '\0'
 
                     if ( SendMessage(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) textBuf.ptr) )
+                    {
+                        qsUpdateHighlightForFindAll();
                         bResult = TRUE;
+                    }
                 }
             }
         }

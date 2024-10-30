@@ -21,6 +21,12 @@
 #define  OPTF_DOCK_RECT_DISABLED      16
 #define  OPTF_COUNT                   17
 
+// additional internal flags
+#define  OPTF_SRCH_MATCHCASE          (OPTF_COUNT + 0)
+#define  OPTF_SRCH_WHOLEWORD          (OPTF_COUNT + 1)
+#define  OPTF_SRCH_HIGHLIGHTALL       (OPTF_COUNT + 2)
+#define  OPTF_COUNT_TOTAL             (OPTF_COUNT + 3)
+
 #define  OPT_DOCK_RECT                17
 #define  OPT_COLOR_NOTFOUND           18
 #define  OPT_COLOR_NOTREGEXP          19

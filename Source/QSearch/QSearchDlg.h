@@ -50,6 +50,8 @@
 
 #define  QS_FF_NOPICKUPSEL   0x0001 // do not pick up selection
 #define  QS_FF_NOSETSELFIRST 0x0002 // see QSEARCH_NOSETSEL_FIRST
+#define  QS_FF_NOFINDUP      0x0004 // see QSEARCH_NOFINDUP
+#define  QS_FF_NOHISTORYUPD  0x0008 // see QSEARCH_NOHISTORYUPD
 
 #define  QS_PS_UPDATEHISTORY  0x01
 
@@ -105,6 +107,12 @@
 #define QS_FINDALL_REPATTERN_SINGLEFILE  L"^[ ]*\\((\\d+):(\\d+)\\)"
 #define QS_FINDALL_RETAGS_SINGLEFILE     L"/GOTOLINE=\\1:\\2"
 
+// FindAllFlags
+#define QS_FAF_SPECCHAR  0x0001
+#define QS_FAF_REGEXP    0x0002
+#define QS_FAF_MATCHCASE 0x0010
+#define QS_FAF_WHOLEWORD 0x0020
+
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     #define  MAX_TEXT_SIZE  250
@@ -127,9 +135,9 @@
         HMENU            hPopupMenu;
         HMENU            hFindAllPopupMenu;
         DWORD            dwHotKeyQSearch;
+        DWORD            dwHotKeyFindAll;
         DWORD            dwHotKeyGoToNextFindAllMatch;
         DWORD            dwHotKeyGoToPrevFindAllMatch;
-        BOOL             bMatchCase;
         BOOL             bQSearching;
         BOOL             bIsQSearchingRightNow;
         BOOL             bMouseJustLeavedFindEdit;
@@ -138,6 +146,8 @@
         int              nFrameCount;
         const FRAMEDATA* pSearchResultsFrames[MAX_RESULTS_FRAMES];
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
+        wchar_t          szFindAllFindTextW[MAX_TEXT_SIZE];
+        DWORD            dwFindAllFlags; // see QS_FAF_*
         UINT             uSearchOrigin; // see QS_SO_*
         UINT             uWmShowFlags; // see QS_SF_*
         COLORREF         crTextColor;
@@ -170,6 +180,8 @@
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
 
+    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg);
+
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 
 
@@ -182,8 +194,12 @@ BOOL qsearchIsSavingHistoryToStdLocation(void);
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
 void qsearchDlgApplyEditorColors();
 
+void qsUpdateHighlightForFindAll(void);
+
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
+
+void qsSetInfoEmpty();
 
 BOOL qsIsHotKeyPressed(DWORD dwHotKey);
 
@@ -277,6 +293,7 @@ typedef struct sDLLECLOG_OUTPUT_4 {
 
 void CallLogOutput(void* ploParams);
 BOOL IsLogOutputActive(void);
+HWND LogOutput_GetEditHwnd();
 /* <<<<<<<<<<<<<<<<<<<<<<<< log plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
 //---------------------------------------------------------------------------
