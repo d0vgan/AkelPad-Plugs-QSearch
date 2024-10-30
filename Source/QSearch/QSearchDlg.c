@@ -6029,6 +6029,17 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
     {
         // searching for the first time, clear the EOF flag
         qs_nEditEOF = 0;
+
+        if ( !dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
+        {
+            if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 )
+            {
+                #ifdef _DEBUG
+                  Debug_OutputA("%s, !OnTheFly -> qsSetInfoEmpty\n", __func__);
+                #endif
+                qsSetInfoEmpty();
+            }
+        }
     }
     else
     {

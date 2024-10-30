@@ -995,6 +995,10 @@ BOOL doGoToFindAllMatch(UINT nFlags)
              !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg) )
         {
             bSearchTextChanged = TRUE;
+
+            #ifdef _DEBUG
+              Debug_OutputA("%s -> qsSetInfoEmpty\n", __func__);
+            #endif
             qsSetInfoEmpty();
         }
     }
