@@ -992,7 +992,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     if ( g_QSearchDlg.hDlg && g_QSearchDlg.szFindTextW[0] && g_QSearchDlg.szFindAllFindTextW[0] )
     {
         if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 &&
-             !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg) )
+             !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags) )
         {
             bSearchTextChanged = TRUE;
 

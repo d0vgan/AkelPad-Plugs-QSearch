@@ -180,7 +180,7 @@
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
 
-    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg);
+    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[]);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 

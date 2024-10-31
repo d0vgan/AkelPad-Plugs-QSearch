@@ -586,24 +586,24 @@ BOOL IsLogOutputActive(void)
         return (pItem->nBufBytesOffset + pItem->nMatches*sizeof(INT_PTR) <= pQSearchDlg->findAllMatchesBuf.nBytesStored) ? TRUE : FALSE;
     }
 
-    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg)
+    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[])
     {
-        if ( (!g_Options.dwFlags[OPTF_SRCH_MATCHCASE] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_MATCHCASE)) ||
-             (!g_Options.dwFlags[OPTF_SRCH_WHOLEWORD] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_WHOLEWORD)) ||
-             (!g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_REGEXP)) ||
-             (!g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_SPECCHAR)) )
+        if ( (!dwOptFlags[OPTF_SRCH_MATCHCASE] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_MATCHCASE)) ||
+             (!dwOptFlags[OPTF_SRCH_WHOLEWORD] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_WHOLEWORD)) ||
+             (!dwOptFlags[OPTF_SRCH_USE_REGEXP] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_REGEXP)) ||
+             (!dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] != !(pQSearchDlg->dwFindAllFlags & QS_FAF_SPECCHAR)) )
         {
             return FALSE;
         }
 
         if ( pQSearchDlg->dwFindAllFlags & QS_FAF_MATCHCASE )
         {
-            if ( lstrcmpW(pQSearchDlg->szFindTextW, pQSearchDlg->szFindAllFindTextW) != 0 )
+            if ( lstrcmpW(cszFindWhat, pQSearchDlg->szFindAllFindTextW) != 0 )
                 return FALSE;
         }
         else
         {
-            if ( lstrcmpiW(pQSearchDlg->szFindTextW, pQSearchDlg->szFindAllFindTextW) != 0 )
+            if ( lstrcmpiW(cszFindWhat, pQSearchDlg->szFindAllFindTextW) != 0 )
                 return FALSE;
         }
 
@@ -792,7 +792,7 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
             szInfoTextW[nLen] = 0; // without the trailing '.'
         }
 
-        if ( nIsEOF != 0 )
+        if ( nIsEOF != 0 && (nFlags & QS_SIOF_REMOVECURRENTMATCH) == 0 )
         {
             lstrcpyW(szInfoTextW + nLen, L" ");
             ++nLen;
@@ -6950,32 +6950,62 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
     {
         UINT nDelayMs;
         UINT_PTR nTimerId;
+        BOOL bGotCountAllResults = FALSE;
 
-        if ( (dwParams & (QSEARCH_FIRST | QSEARCH_USEDELAY)) == (QSEARCH_FIRST | QSEARCH_USEDELAY) )
-            nDelayMs = g_Options.dwFindAllCountDelay;
-        else
-            nDelayMs = 0;
-
-        if ( nDelayMs != 0 )
+        if ( g_QSearchDlg.matchesBuf.nBytesStored == 0 &&
+             g_QSearchDlg.findAllMatchesBuf.nBytesStored != 0 &&
+             QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, cszFindWhat, dwOptFlags) )
         {
-            nTimerId = SetTimer(NULL, 0, nDelayMs, CountAllTimerProc);
+            const FRAMEDATA* pFrame;
+            const tQSFindAllFrameItem* pItem;
+            const INT_PTR* pItemMatches;
+
+            pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
+            if ( pFrame->ei.hWndEdit == hWndEdit )
+            {
+                pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
+                if ( pItem && QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
+                {
+                    pItemMatches = QSearchDlgState_getFindAllFrameItemMatches(&g_QSearchDlg, pItem);
+                    tDynamicBuffer_Append(&g_QSearchDlg.matchesBuf, pItemMatches, pItem->nMatches*sizeof(INT_PTR));
+
+                    #ifdef _DEBUG
+                      Debug_OutputA("%s, bNeedsFindAllCountOnly && !pFindAll -> qsSetInfoOccurrencesFound\n", __func__);
+                    #endif
+                    qsSetInfoOccurrencesFound( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), 0 );
+                    bGotCountAllResults = TRUE;
+                }
+            }
         }
-        else
-        {
-            nTimerId = 0;
-        }
 
-        EnterCriticalSection(&csFindAllTimerId);
-        if ( nFindAllTimerId != 0 )
+        if ( !bGotCountAllResults )
         {
-            KillTimer(NULL, nFindAllTimerId);
-        }
-        nFindAllTimerId = nTimerId;
-        LeaveCriticalSection(&csFindAllTimerId);
+            if ( (dwParams & (QSEARCH_FIRST | QSEARCH_USEDELAY)) == (QSEARCH_FIRST | QSEARCH_USEDELAY) )
+                nDelayMs = g_Options.dwFindAllCountDelay;
+            else
+                nDelayMs = 0;
 
-        if ( nDelayMs == 0 )
-        {
-            PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
+            if ( nDelayMs != 0 )
+            {
+                nTimerId = SetTimer(NULL, 0, nDelayMs, CountAllTimerProc);
+            }
+            else
+            {
+                nTimerId = 0;
+            }
+
+            EnterCriticalSection(&csFindAllTimerId);
+            if ( nFindAllTimerId != 0 )
+            {
+                KillTimer(NULL, nFindAllTimerId);
+            }
+            nFindAllTimerId = nTimerId;
+            LeaveCriticalSection(&csFindAllTimerId);
+
+            if ( nDelayMs == 0 )
+            {
+                PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
+            }
         }
     }
 }
