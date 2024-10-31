@@ -153,7 +153,7 @@
         COLORREF         crTextColor;
         COLORREF         crBkgndColor;
         HBRUSH           hBkgndBrush;
-        HWND             hCurrentMatchEditWnd;
+        HWND             hCurrentMatchSetInfoEditWnd;
         BOOL             bFindAllWasUsingLogOutput; 
         tDynamicBuffer   matchesBuf; // RichEdit offsets as INT_PTR
         tDynamicBuffer   findAllFramesBuf; // tQSFindAllFrameItem items
@@ -176,9 +176,10 @@
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     const INT_PTR* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     INT_PTR QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx);
-    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemForward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
-    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemForward(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    BOOL QSearchDlgState_isFindAllMatchesEmpty(QSearchDlgState* pQSearchDlg);
 
     BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[]);
 
@@ -195,6 +196,14 @@ INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
 void qsearchDlgApplyEditorColors();
 
 void qsUpdateHighlightForFindAll(void);
+
+#ifdef _DEBUG
+  #define qsSetInfoOccurrencesFound_Tracking(nOccurrences, nFlags, comment) { Debug_OutputA(comment ## " -> qsSetInfoOccurrencesFound\n"); qsSetInfoOccurrencesFound(nOccurrences, nFlags); }
+  #define qsSetInfoEmpty_Tracking(comment)  { Debug_OutputA(comment ## " -> qsSetInfoEmpty\n"); qsSetInfoEmpty(); }
+#else
+  #define qsSetInfoOccurrencesFound_Tracking(nOccurrences, nFlags, comment) qsSetInfoOccurrencesFound(nOccurrences, nFlags)
+  #define qsSetInfoEmpty_Tracking(comment)  qsSetInfoEmpty()
+#endif
 
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
