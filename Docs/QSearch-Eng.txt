@@ -83,6 +83,18 @@ When both "Search: Pick up selected text" and "Window: Catch main F3" are
 checked, FindAll picks up the selected text or selects the current word
 according to the option 'select_by_f3'.
 
+GoToNextFindAllMatch - jumps to the next match of the Find All results.
+Recommended hot-key - F4.
+(When the Find All results are shown by the Log::Output panel,
+GoToNextFindAllMatch actually calls Log::Output::NextMatch.
+If the Log::Output panel is closed, GoToNextFindAllMatch works independently).
+
+GoToPrevFindAllMatch - jumps to the previous match of the Find All results.
+Recommended hot-key - Shift+F4.
+(When the Find All results are shown by the Log::Output panel,
+GoToPrevFindAllMatch actually calls Log::Output::PrevMatch.
+If the Log::Output panel is closed, GoToPrevFindAllMatch works independently).
+
 The plugin also contains two functions: SelFindNext and SelFindPrev -
 for quick searching for selected word/phrase below or above in the text
 right in the editor window.
@@ -121,8 +133,8 @@ Follow these three steps to activate it:
    This allows QSearch to be silently loaded when AkelPad starts.
 
 
-Additional options (QSearch panel's popup menu or file
-"AkelFiles\Plugs\QSearch.ini"):
+Additional options (QSearch panel's popup menu, "Find All" button's popup menu
+or file "AkelFiles\Plugs\QSearch.ini"):
 
 1) "Search: On-the-fly mode"
    srch_onthefly_mode = 1
@@ -613,10 +625,11 @@ Additional options (QSearch panel's popup menu or file
 --------
 History:
 --------
-v.8.2
+v.8.2 (November 2024)
  * Glory to Ukraine! Glory to the heroes!
  + added: showing "%u of %u matches" when "Auto Count All" is on
- * various small improvements
+ + added: functions GoToNextFindAllMatch and GoToPrevFindAllMatch
+ * various internal improvements
  * some unit tests added
 
 v.8.1 (March 2024)
@@ -959,7 +972,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Mar 2024, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Nov 2024, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);
