@@ -1290,8 +1290,8 @@ static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nP
         {
             // searching for a plain text or RegExp's text, don't use AEFR_WHOLEWORD and AEFR_REGEXP!
             aeftW.dwFlags = AEFR_DOWN;
-            aeftW.pText = pFindContext->pFindTextW->pText;
-            aeftW.dwTextLen = pFindContext->pFindTextW->dwTextLen;
+            aeftW.pText = pFindContext->cszFindWhat;
+            aeftW.dwTextLen = lstrlenW(pFindContext->cszFindWhat);
             aeftW.nNewLine = pFindContext->pFindTextW->nNewLine;
             SendMessageW( hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
 
@@ -6652,13 +6652,13 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
             tDynamicBuffer_Init(&tempMatchesBuf);
 
-            if ( bSearchEx )
+            if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
                 FindContext.dwFindAllFlags |= QS_FAF_SPECCHAR;
-            else if ( dwSearchFlags & FRF_REGEXP )
+            else if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
                 FindContext.dwFindAllFlags |= QS_FAF_REGEXP;
-            if ( dwSearchFlags & FR_MATCHCASE )
+            if ( dwOptFlags[OPTF_SRCH_MATCHCASE] )
                 FindContext.dwFindAllFlags |= QS_FAF_MATCHCASE;
-            if ( dwSearchFlags & FR_WHOLEWORD )
+            if ( dwOptFlags[OPTF_SRCH_WHOLEWORD] )
                 FindContext.dwFindAllFlags |= QS_FAF_WHOLEWORD;
 
             if ( g_Plugin.nMDI == WMD_SDI )
@@ -6735,7 +6735,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                     else
                         tDynamicBuffer_Clear(&g_QSearchDlg.findAllMatchesBuf);
 
-                    lstrcpyW(g_QSearchDlg.szFindAllFindTextW, szFindTextW);
+                    lstrcpyW(g_QSearchDlg.szFindAllFindTextW, cszFindWhat);
                     g_QSearchDlg.dwFindAllFlags = FindContext.dwFindAllFlags;
                 }
 
