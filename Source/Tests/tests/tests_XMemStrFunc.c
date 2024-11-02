@@ -313,5 +313,5 @@ void tests_xmem_str_func()
     test_tDynamicBuffer_Append_Clear();
     test_tDynamicBuffer_Swap();
 
-    printf("%s() passed!\n", __func__);
+    printf("%s() passed!\n", __FUNCTION__);
 }

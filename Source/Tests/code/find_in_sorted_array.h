@@ -3,6 +3,12 @@
 
 #include <windows.h>
 
-int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch);
+typedef unsigned __int64 matchpos_t;
+
+matchpos_t to_matchpos(unsigned int line, unsigned int pos_in_line);
+unsigned int get_matchpos_line(matchpos_t pos);
+unsigned int get_matchpos_pos_in_line(matchpos_t pos);
+
+int find_in_sorted_matchpos_array(const matchpos_t* pArr, unsigned int nItems, matchpos_t val, BOOL* pbExactMatch);
 
 #endif
