@@ -1237,9 +1237,10 @@ static void initLogOutput(DWORD dwFindAllResult)
 
 // funcs
 enum eHighlightConditionFlags {
-    QHC_CHECKBOX_CHECKED = 0x00,
-    QHC_IGNORE_CHECKBOX  = 0x01,
-    QHC_IGNORE_SELECTION = 0x10
+    QHC_CHECKBOX_CHECKED = 0x0000,
+    QHC_IGNORE_CHECKBOX  = 0x0001,
+    QHC_IGNORE_SELECTION = 0x0010,
+    QHC_DONT_CUT_REGEXP  = 0x0100
 };
 void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[], DWORD dwHighlightConditionFlags);
 void qsearchDoTryUnhighlightAll(void);
@@ -1311,7 +1312,7 @@ static void scrollEditToPositionAndHighlightTheMatches(HWND hWndEdit, INT_PTR nP
                         SendMessageW( hWndEdit, WM_PAINT, 0, 0 );
 
                         // Actual highlighting:
-                        qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_IGNORE_CHECKBOX);
+                        qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_IGNORE_CHECKBOX | QHC_DONT_CUT_REGEXP);
                     }
                 }
             }
@@ -3774,7 +3775,7 @@ void qsUpdateHighlightForFindAll(void)
         g_QSearchDlg.hDlg,
         g_QSearchDlg.szFindAllFindTextW,
         dwOptFlagsTemp,
-        QHC_CHECKBOX_CHECKED | QHC_IGNORE_SELECTION
+        QHC_CHECKBOX_CHECKED | QHC_IGNORE_SELECTION | QHC_DONT_CUT_REGEXP
     );
 }
 
@@ -4903,7 +4904,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if ( wParam )
                     dwSearch |= QSEARCH_FINDUP;
                 qsearchDoSearchText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW, dwSearch, g_Options.dwFlags, pqsfa );
-                qsearchDoTryHighlightAll( hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_CHECKBOX_CHECKED );
+                qsearchDoTryHighlightAll( hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_CHECKBOX_CHECKED | QHC_DONT_CUT_REGEXP );
             }
             else
             {
@@ -4916,7 +4917,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 qsearchDoSearchText( g_QSearchDlg.hFindEdit, g_QSearchDlg.szFindTextW, dwSearch, g_Options.dwFlags, pqsfa );
                 if ( bPrevNotFound && !qs_bEditNotFound )
                 {
-                    qsearchDoTryHighlightAll( hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_CHECKBOX_CHECKED );
+                    qsearchDoTryHighlightAll( hDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags, QHC_CHECKBOX_CHECKED | QHC_DONT_CUT_REGEXP );
                 }
             }
             return 1;
@@ -5762,7 +5763,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
     }
 }
 
-static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[])
+static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[], BOOL bCutTrailingSequence)
 {
     int n1, n2;
 
@@ -5782,16 +5783,24 @@ static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[])
     if ( n1 == 0 )
         return; // just "", nothing to do
 
-    n2 = n1;
-    // skipping trailing '?'
-    while ( szTextA[n1 - 1] == '?' )
+    if ( bCutTrailingSequence )
     {
-        --n1;
-        if ( n2 - n1 > 1 )
-            return; // syntax error: "??"
+        n2 = n1;
+        // skipping trailing '?'
+        while ( szTextA[n1 - 1] == '?' )
+        {
+            --n1;
+            if ( n2 - n1 > 1 )
+                return; // syntax error: "??"
 
-        if ( n1 == 0 )
-            return; // just "?", nothing to do
+            if ( n1 == 0 )
+                return; // just "?", nothing to do
+        }
+    }
+    else
+    {
+        if ( szTextA[n1 - 1] == '?' )
+            return; // trailing '?', nothing to do
     }
 
     n2 = n1;
@@ -5824,11 +5833,20 @@ static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[])
     if ( ((n1 - n2) % 2) != 0 )
         return; // '+' or '*' is escaped by '\', nothing to do
 
-    // exclude trailing '+' or '*'
-    szTextA[n1] = 0;
+    if ( bCutTrailingSequence )
+    {
+        // exclude trailing '+' or '*'
+        szTextA[n1] = 0;
+    }
+    else
+    {
+        // adding trailing '?'
+        szTextA[n1 + 1] = '?';
+        szTextA[n1 + 2] = 0;
+    }
 }
 
-static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[])
+static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[], BOOL bCutTrailingSequence)
 {
     int n1, n2;
 
@@ -5848,16 +5866,24 @@ static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[])
     if ( n1 == 0 )
         return; // just "", nothing to do
 
-    n2 = n1;
-    // skipping trailing '?'
-    while ( szTextW[n1 - 1] == L'?' )
+    if ( bCutTrailingSequence )
     {
-        --n1;
-        if ( n2 - n1 > 1 )
-            return; // syntax error: "??"
+        n2 = n1;
+        // skipping trailing '?'
+        while ( szTextW[n1 - 1] == L'?' )
+        {
+            --n1;
+            if ( n2 - n1 > 1 )
+                return; // syntax error: "??"
 
-        if ( n1 == 0 )
-            return; // just "?", nothing to do
+            if ( n1 == 0 )
+                return; // just "?", nothing to do
+        }
+    }
+    else
+    {
+        if ( szTextW[n1 - 1] == L'?' )
+            return; // trailing '?', nothing to do
     }
 
     n2 = n1;
@@ -5890,8 +5916,17 @@ static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[])
     if ( ((n1 - n2) % 2) != 0 )
         return; // '+' or '*' is escaped by '\', nothing to do
 
-    // exclude trailing '+' or '*'
-    szTextW[n1] = 0;
+    if ( bCutTrailingSequence )
+    {
+        // exclude trailing '+' or '*'
+        szTextW[n1] = 0;
+    }
+    else
+    {
+        // adding trailing '?'
+        szTextW[n1 + 1] = L'?';
+        szTextW[n1 + 2] = 0;
+    }
 }
 
 static void convertFindExToRegExA(const char* cszFindExA, char* pszRegExA)
@@ -6271,12 +6306,13 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
         TEXTFINDA tfA;
         BOOL      bSearchEx = FALSE;
         INT_X     iFindResult = -1;
-        char      szFindTextA[MAX_TEXT_SIZE];
+        char      szFindTextA[MAX_TEXT_SIZE + 2];
 
         getTextToSearchA( (LPCSTR) cszFindWhat, &bSearchEx, dwOptFlags, szFindTextA );
         if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
         {
-            adjustIncompleteRegExA(szFindTextA, dwOptFlags);
+            BOOL bCutTrailingSequence = (dwParams & QSEARCH_FIRST) && dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] && !pFindAll;
+            adjustIncompleteRegExA(szFindTextA, dwOptFlags, bCutTrailingSequence);
         }
 
         if ( !pFindAll )
@@ -6435,12 +6471,13 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
         TEXTFINDW tfW;
         BOOL      bSearchEx = FALSE;
         INT_X     iFindResult = -1;
-        wchar_t   szFindTextW[MAX_TEXT_SIZE];
+        wchar_t   szFindTextW[MAX_TEXT_SIZE + 2];
 
         getTextToSearchW( cszFindWhat, &bSearchEx, dwOptFlags, szFindTextW );
         if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
         {
-            adjustIncompleteRegExW(szFindTextW, dwOptFlags);
+            BOOL bCutTrailingSequence = (dwParams & QSEARCH_FIRST) && dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] && !pFindAll;
+            adjustIncompleteRegExW(szFindTextW, dwOptFlags, bCutTrailingSequence);
         }
 
         if ( !pFindAll )
@@ -7062,7 +7099,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                     DLLECHIGHLIGHT_MARK hlParams;
                     wchar_t szTextColor[16];
                     wchar_t szBkgndColor[16];
-                    wchar_t szMarkTextBufW[2*MAX_TEXT_SIZE + 4]; // plus room for the leading & trailing "\\b"
+                    wchar_t szMarkTextBufW[2*MAX_TEXT_SIZE + 6]; // plus room for the leading & trailing "\\b"
 
                     if ( g_Plugin.bOldWindows )
                     {
@@ -7128,7 +7165,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                             if ( g_Plugin.bOldWindows )
                             {
                                 const char* cszFindTextA;
-                                char szRegExBufA[2*MAX_TEXT_SIZE + 4];
+                                char szRegExBufA[2*MAX_TEXT_SIZE + 6];
 
                                 if ( bFindExAsRegExp )
                                 {
@@ -7150,7 +7187,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
 
                             if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] )
                             {
-                                adjustIncompleteRegExW( pszMarkTextW, dwOptFlags );
+                                adjustIncompleteRegExW( pszMarkTextW, dwOptFlags, (dwHighlightConditionFlags & QHC_DONT_CUT_REGEXP) == 0 );
                             }
 
                             if ( pszMarkTextW[0] != 0 )
