@@ -118,8 +118,25 @@
     #define  MAX_TEXT_SIZE  250
     #define  MAX_RESULTS_FRAMES 16
 
+    #define QS_FIS_INVALID     0x0001  // frame is invalid, e.g. it was closed
+    #define QS_FIS_TEXTCHANGED 0x0002  // frame's text contains new modifications
+
+    typedef unsigned __int64 matchpos_t; // represents a match position within a text
+
+    #define MATCHPOS_INVALID ((matchpos_t)(-1))
+
+    matchpos_t to_matchpos_ae(const AECHARINDEX* ci, HWND hWndEdit);
+    matchpos_t to_matchpos_ae_ex(const AECHARINDEX* ci, HWND hWndEdit, BOOL bWordWrap);
+    matchpos_t to_matchpos(unsigned int line, unsigned int pos_in_line);
+    unsigned int get_matchpos_line(matchpos_t pos);
+    unsigned int get_matchpos_pos_in_line(matchpos_t pos);
+
+    // returns either a 0-based index or -1
+    int find_in_sorted_matchpos_array(const matchpos_t* pArr, unsigned int nItems, matchpos_t val, BOOL* pbExactMatch);
+
     typedef struct sQSFindAllFrameItem {
         const FRAMEDATA* pFrame;
+        UINT_PTR nItemState; // see QS_FIS_*
         INT_PTR nBufBytesOffset;
         INT_PTR nMatches;
     } tQSFindAllFrameItem;
@@ -155,9 +172,9 @@
         HBRUSH           hBkgndBrush;
         HWND             hCurrentMatchSetInfoEditWnd;
         BOOL             bFindAllWasUsingLogOutput; 
-        tDynamicBuffer   matchesBuf; // RichEdit offsets as INT_PTR
+        tDynamicBuffer   currentMatchesBuf; // match positions as matchpos_t
         tDynamicBuffer   findAllFramesBuf; // tQSFindAllFrameItem items
-        tDynamicBuffer   findAllMatchesBuf; // RichEdit offsets in all files as INT_PTR
+        tDynamicBuffer   findAllMatchesBuf; // match positions in all files as matchpos_t
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
@@ -165,21 +182,21 @@
     void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     BOOL QSearchDlgState_IsResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
 
-    void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset);
+    void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos);
     void QSearchDlgState_clearCurrentMatches(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
-    int  QSearchDlgState_findInCurrentMatches(const QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset, BOOL* pbExactMatch);
+    int  QSearchDlgState_findInCurrentMatches(const QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos, BOOL* pbExactMatch);
 
-    void QSearchDlgState_addFindAllMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset);
+    void QSearchDlgState_addFindAllMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos);
     void QSearchDlgState_addFindAllFrameItem(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     void QSearchDlgState_clearFindAllMatchesAndFrames(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
-    int  QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, INT_PTR nRichEditOffset, BOOL* pbExactMatch);
+    int  QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, matchpos_t nMatchPos, BOOL* pbExactMatch);
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
-    const INT_PTR* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
-    INT_PTR QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx);
+    const matchpos_t* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
+    matchpos_t QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx);
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemForward(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemBackward(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
-    BOOL QSearchDlgState_isFindAllMatchesEmpty(QSearchDlgState* pQSearchDlg);
+    BOOL QSearchDlgState_isFindAllMatchesEmpty(const QSearchDlgState* pQSearchDlg);
 
     BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[]);
 
@@ -211,9 +228,6 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 void qsSetInfoEmpty();
 
 BOOL qsIsHotKeyPressed(DWORD dwHotKey);
-
-// returns either a 0-based index or -1
-int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch);
 
 // plugin call helpers
 void CallPluginFuncA(const char* cszFuncA, void* pParams);

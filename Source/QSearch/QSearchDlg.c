@@ -295,6 +295,87 @@ BOOL IsLogOutputActive(void)
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
+    matchpos_t to_matchpos_ae(const AECHARINDEX* ci, HWND hWndEdit)
+    {
+        BOOL bWordWrap = (SendMessageW(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE) ? TRUE : FALSE;
+        return to_matchpos_ae_ex(ci, hWndEdit, bWordWrap);
+    }
+
+    matchpos_t to_matchpos_ae_ex(const AECHARINDEX* ci, HWND hWndEdit, BOOL bWordWrap)
+    {
+        int nLine;
+        int nPosInLine;
+        AECHARINDEX ciTemp;
+
+        nLine = ci->nLine;
+        if ( bWordWrap )
+        {
+            nLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, nLine, 0);
+        }
+        x_mem_cpy(&ciTemp, ci, sizeof(AECHARINDEX));
+        nPosInLine = AEC_WrapLineBegin(&ciTemp);
+        return to_matchpos(nLine, nPosInLine);
+    }
+
+    matchpos_t to_matchpos(unsigned int line, unsigned int pos_in_line)
+    {
+        matchpos_t pos = line;
+    #ifdef _WIN64
+        return ((pos << 32) | pos_in_line);
+    #else
+        pos = Int64ShllMod32(pos, 16); // ShiftCount is in the range of 0-31; we need 32
+        return (Int64ShllMod32(pos, 16) | pos_in_line);
+    #endif
+    }
+
+    unsigned int get_matchpos_line(matchpos_t pos)
+    {
+    #ifdef _WIN64
+        return (unsigned int) (pos >> 32);
+    #else
+        pos = Int64ShrlMod32(pos, 16);
+        return (unsigned int) Int64ShrlMod32(pos, 16);
+    #endif
+    }
+
+    unsigned int get_matchpos_pos_in_line(matchpos_t pos)
+    {
+        return (unsigned int) (pos & 0xFFFFFFFF);
+    }
+
+    // returns either a 0-based index or -1
+    int find_in_sorted_matchpos_array(const matchpos_t* pArr, unsigned int nItems, matchpos_t val, BOOL* pbExactMatch)
+    {
+        int nBegin;
+        int nEnd;
+        int nDiv;
+
+        if ( nItems == 0 || val < pArr[0] )
+        {
+            *pbExactMatch = FALSE;
+            return -1;
+        }
+
+        nBegin = 0;
+        nEnd = nItems; // position after the last item
+
+        for ( ; ; )
+        {
+            nDiv = (nEnd - nBegin)/2;
+            if ( nDiv == 0 )
+                break;
+
+            nDiv += nBegin;
+            if ( val < pArr[nDiv] )
+                nEnd = nDiv;
+            else
+                nBegin = nDiv;
+        }
+
+        *pbExactMatch = (val == pArr[nBegin]) ? TRUE : FALSE;
+        return nBegin;
+    }
+
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg)
     {
         pQSearchDlg->hDlg = NULL;
@@ -328,7 +409,7 @@ BOOL IsLogOutputActive(void)
         pQSearchDlg->hBkgndBrush = NULL;
         pQSearchDlg->hCurrentMatchSetInfoEditWnd = NULL;
         pQSearchDlg->bFindAllWasUsingLogOutput = TRUE;
-        tDynamicBuffer_Init(&pQSearchDlg->matchesBuf);
+        tDynamicBuffer_Init(&pQSearchDlg->currentMatchesBuf);
         tDynamicBuffer_Init(&pQSearchDlg->findAllFramesBuf);
         tDynamicBuffer_Init(&pQSearchDlg->findAllMatchesBuf);
     }
@@ -445,34 +526,34 @@ BOOL IsLogOutputActive(void)
         return FALSE;
     }
 
-    void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset)
+    void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos)
     {
-        tDynamicBuffer_Append(&pQSearchDlg->matchesBuf, &nRichEditOffset, sizeof(INT_PTR));
+        tDynamicBuffer_Append(&pQSearchDlg->currentMatchesBuf, &nMatchPos, sizeof(matchpos_t));
     }
 
     void QSearchDlgState_clearCurrentMatches(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory)
     {
         pQSearchDlg->hCurrentMatchSetInfoEditWnd = NULL;
         if ( bFreeMemory )
-            tDynamicBuffer_Free(&pQSearchDlg->matchesBuf);
+            tDynamicBuffer_Free(&pQSearchDlg->currentMatchesBuf);
         else
-            tDynamicBuffer_Clear(&pQSearchDlg->matchesBuf);
+            tDynamicBuffer_Clear(&pQSearchDlg->currentMatchesBuf);
     }
 
-    int QSearchDlgState_findInCurrentMatches(const QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset, BOOL* pbExactMatch)
+    int QSearchDlgState_findInCurrentMatches(const QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos, BOOL* pbExactMatch)
     {
-        // items in the matchesBuf are sorted
-        return find_in_sorted_array(
-            (const INT_PTR *) pQSearchDlg->matchesBuf.ptr,
-            (unsigned int) (pQSearchDlg->matchesBuf.nBytesStored/sizeof(INT_PTR)),
-            nRichEditOffset,
+        // items in the currentMatchesBuf are sorted
+        return find_in_sorted_matchpos_array(
+            (const matchpos_t *) pQSearchDlg->currentMatchesBuf.ptr,
+            (unsigned int) (pQSearchDlg->currentMatchesBuf.nBytesStored/sizeof(matchpos_t)),
+            nMatchPos,
             pbExactMatch
         );
     }
 
-    void QSearchDlgState_addFindAllMatch(QSearchDlgState* pQSearchDlg, INT_PTR nRichEditOffset)
+    void QSearchDlgState_addFindAllMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos)
     {
-        tDynamicBuffer_Append(&pQSearchDlg->findAllMatchesBuf, &nRichEditOffset, sizeof(INT_PTR));
+        tDynamicBuffer_Append(&pQSearchDlg->findAllMatchesBuf, &nMatchPos, sizeof(matchpos_t));
     }
 
     void QSearchDlgState_addFindAllFrameItem(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem)
@@ -497,13 +578,13 @@ BOOL IsLogOutputActive(void)
         }
     }
 
-    int QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, INT_PTR nRichEditOffset, BOOL* pbExactMatch)
+    int QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, matchpos_t nMatchPos, BOOL* pbExactMatch)
     {
         // items in the findAllMatchesBuf are sorted within each pItem's range
-        return find_in_sorted_array(
+        return find_in_sorted_matchpos_array(
             QSearchDlgState_getFindAllFrameItemMatches(pQSearchDlg, pItem),
-            (int) pItem->nMatches,
-            nRichEditOffset,
+            (unsigned int) pItem->nMatches,
+            nMatchPos,
             pbExactMatch
         );
     }
@@ -518,29 +599,33 @@ BOOL IsLogOutputActive(void)
         pEndItem = pItem + pQSearchDlg->findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem);
         bFound = FALSE;
 
-        while ( pItem < pEndItem && !bFound )
+        for ( ; pItem < pEndItem; ++pItem )
         {
             if ( pFrame == pItem->pFrame )
-                bFound = TRUE;
-            else
-                ++pItem;
+            {
+                if ( !(pItem->nItemState & QS_FIS_INVALID) )
+                {
+                    bFound = TRUE;
+                }
+                break; // for invalid item, bFound remains FALSE
+            }
         }
 
         return bFound ? pItem : NULL;
     }
 
-    const INT_PTR* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem)
+    const matchpos_t* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem)
     {
-        return (const INT_PTR *) (((const BYTE *) pQSearchDlg->findAllMatchesBuf.ptr) + pItem->nBufBytesOffset);
+        return (const matchpos_t *) (((const BYTE *) pQSearchDlg->findAllMatchesBuf.ptr) + pItem->nBufBytesOffset);
     }
 
-    INT_PTR QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx)
+    matchpos_t QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx)
     {
         if ( idx >= 0 && idx < pItem->nMatches )
         {
             return QSearchDlgState_getFindAllFrameItemMatches(pQSearchDlg, pItem)[idx];
         }
-        return -1;
+        return MATCHPOS_INVALID;
     }
 
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllValidFrameItemForward(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem)
@@ -553,7 +638,7 @@ BOOL IsLogOutputActive(void)
 
         for ( ; pItem < pEndItem; ++pItem )
         {
-            if ( pItem->pFrame )
+            if ( !(pItem->nItemState & QS_FIS_INVALID) )
             {
                 if ( SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pItem->pFrame) )
                 {
@@ -561,7 +646,7 @@ BOOL IsLogOutputActive(void)
                     break;
                 }
 
-                ((tQSFindAllFrameItem *) pItem)->pFrame = NULL; // invalid
+                ((tQSFindAllFrameItem *) pItem)->nItemState |= QS_FIS_INVALID;
             }
         }
 
@@ -578,7 +663,7 @@ BOOL IsLogOutputActive(void)
 
         for ( ; pItem >= pBeginItem; --pItem )
         {
-            if ( pItem->pFrame )
+            if ( !(pItem->nItemState & QS_FIS_INVALID) )
             {
                 if ( SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) pItem->pFrame) )
                 {
@@ -586,7 +671,7 @@ BOOL IsLogOutputActive(void)
                     break;
                 }
 
-                ((tQSFindAllFrameItem *) pItem)->pFrame = NULL; // invalid
+                ((tQSFindAllFrameItem *) pItem)->nItemState |= QS_FIS_INVALID;
             }
         }
 
@@ -595,36 +680,12 @@ BOOL IsLogOutputActive(void)
 
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem)
     {
-        return (pItem->pFrame && pItem->nBufBytesOffset + pItem->nMatches*sizeof(INT_PTR) <= pQSearchDlg->findAllMatchesBuf.nBytesStored) ? TRUE : FALSE;
+        return ( !(pItem->nItemState & QS_FIS_INVALID) && (pItem->nBufBytesOffset + pItem->nMatches*sizeof(matchpos_t) <= pQSearchDlg->findAllMatchesBuf.nBytesStored) );
     }
 
-    BOOL QSearchDlgState_isFindAllMatchesEmpty(QSearchDlgState* pQSearchDlg)
+    BOOL QSearchDlgState_isFindAllMatchesEmpty(const QSearchDlgState* pQSearchDlg)
     {
-        const tQSFindAllFrameItem* pItem;
-        const tQSFindAllFrameItem* pEndItem;
-        BOOL bIsEmpty;
-
-        if ( pQSearchDlg->findAllMatchesBuf.nBytesStored == 0 || pQSearchDlg->findAllFramesBuf.nBytesStored == 0 )
-            return TRUE;
-
-        pItem = (const tQSFindAllFrameItem *) pQSearchDlg->findAllFramesBuf.ptr;
-        pEndItem = pItem + pQSearchDlg->findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem);
-        bIsEmpty = TRUE;
-
-        while ( pItem < pEndItem && bIsEmpty )
-        {
-            if ( pItem->pFrame )
-                bIsEmpty = FALSE;
-            else
-                ++pItem;
-        }
-
-        if ( bIsEmpty )
-        {
-            QSearchDlgState_clearFindAllMatchesAndFrames(pQSearchDlg, FALSE);
-        }
-
-        return bIsEmpty;
+        return ( pQSearchDlg->findAllMatchesBuf.nBytesStored == 0 || pQSearchDlg->findAllFramesBuf.nBytesStored == 0 );
     }
 
     BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[])
@@ -745,39 +806,6 @@ static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t*
     return nInfoLen;
 }
 
-// returns either a 0-based index or -1
-int find_in_sorted_array(const INT_PTR* pArr, unsigned int nItems, INT_PTR val, BOOL* pbExactMatch)
-{
-    int nBegin;
-    int nEnd;
-    int nDiv;
-
-    if ( nItems == 0 || val < pArr[0] )
-    {
-        *pbExactMatch = FALSE;
-        return -1;
-    }
-
-    nBegin = 0;
-    nEnd = nItems; // position after the last item
-
-    for ( ; ; )
-    {
-        nDiv = (nEnd - nBegin)/2;
-        if ( nDiv == 0 )
-            break;
-
-        nDiv += nBegin;
-        if ( val < pArr[nDiv] )
-            nEnd = nDiv;
-        else
-            nBegin = nDiv;
-    }
-
-    *pbExactMatch = (val == pArr[nBegin]) ? TRUE : FALSE;
-    return nBegin;
-}
-
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
 {
     #ifdef _DEBUG
@@ -805,15 +833,17 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
         if ( ((nFlags & QS_SIOF_REMOVECURRENTMATCH) == 0) &&
              ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
              (nOccurrences != 0) &&
-             (nOccurrences == g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)) )
+             (nOccurrences == g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)) )
         {
+            matchpos_t nMatchPos;
             int nMatch;
             BOOL bExactMatch;
-            CHARRANGE_X cr = { 0, 0 };
+            AECHARINDEX aeCi;
 
             g_QSearchDlg.hCurrentMatchSetInfoEditWnd = GetWndEdit(g_Plugin.hMainWnd);
-            SendMessage( g_QSearchDlg.hCurrentMatchSetInfoEditWnd, EM_EXGETSEL_X, 0, (LPARAM) &cr );
-            nMatch = QSearchDlgState_findInCurrentMatches(&g_QSearchDlg, cr.cpMin, &bExactMatch);
+            SendMessage( g_QSearchDlg.hCurrentMatchSetInfoEditWnd, AEM_GETINDEX, AEGI_FIRSTSELCHAR, (LPARAM) &aeCi );
+            nMatchPos = to_matchpos_ae(&aeCi, g_QSearchDlg.hCurrentMatchSetInfoEditWnd);
+            nMatch = QSearchDlgState_findInCurrentMatches(&g_QSearchDlg, nMatchPos, &bExactMatch);
             if ( nMatch != -1 )
             {
                 if ( bExactMatch )
@@ -1018,6 +1048,7 @@ typedef struct sFindAllContext {
     DWORD dwFindAllMode;
     DWORD dwFindAllFlags;
     DWORD dwFindAllResult;
+    BOOL  bWordWrap; // in current file
     unsigned int nOccurrences; // in current file
     unsigned int nTotalOccurrences; // in all files
     unsigned int nTotalFiles;
@@ -1700,6 +1731,11 @@ typedef struct sShowFindResults {
 
 typedef void (*tStoreResultCallback)(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const int nLinesBeforeAfter[2], const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
+static inline int getUnwrappedLine(HWND hWndEdit, BOOL bWordWrap, int nLine)
+{
+    return bWordWrap ? (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, nLine, 0) : nLine;
+}
+
 static void formatFindResult(const tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const int nLinesBeforeAfter[2], const tDynamicBuffer* pFindResult, tDynamicBuffer* pTempBuf)
 {
     pTempBuf->nBytesStored = 0;
@@ -1749,10 +1785,7 @@ static void formatFindResult(const tFindAllContext* pFindContext, const AECHARRA
                 szPrefixBuf[nPrefixLen++] = L' ';
             }
 
-            if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-                nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, pcrFound->ciMin.nLine, 0);
-            else
-                nUnwrappedLine = pcrFound->ciMin.nLine;
+            nUnwrappedLine = getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, pcrFound->ciMin.nLine);
 
             x_mem_cpy(&ci, &pcrFound->ciMin, sizeof(AECHARINDEX));
             nLinePos = AEC_WrapLineBegin(&ci);
@@ -1909,28 +1942,18 @@ typedef struct sGetFindResultPolicy {
 
 typedef void (*tFindResultCallback)(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pTempBuf, tDynamicBuffer* pTempBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence);
 
-static inline int getUnwrappedLine(BOOL bWordWrap, HWND hWndEdit, int nLine)
-{
-    return bWordWrap ? (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, nLine, 0) : nLine;
-}
-
 static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANGE* pcrFound, const tGetFindResultPolicy* pfrPolicy, tDynamicBuffer* pTempBuf, tDynamicBuffer* pTempBuf2, tShowFindResults_AddOccurrence pfnAddOccurrence)
 {
     AETEXTRANGEW tr;
     HWND         hWndEdit;
     UINT_PTR     nBytesToAllocate;
     BOOL         bAddLineCR;
-    BOOL         bWordWrap;
     int          nLinesBeforeAfter[2];
 
     if ( !pfrPolicy->pfnStoreResultCallback )
         return; // no sense to retrieve the find result
 
     hWndEdit = pFindContext->pFrame->ei.hWndEdit;
-    if ( SendMessage(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-        bWordWrap = TRUE;
-    else
-        bWordWrap = FALSE;
 
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
     x_mem_cpy( &tr.cr, pcrFound, sizeof(AECHARRANGE) );
@@ -2027,7 +2050,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     for ( ; ; )
                     {
                         AEC_WrapLineBegin(&tr.cr.ciMin);
-                        nMinLine = getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMin.nLine);
+                        nMinLine = getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, tr.cr.ciMin.nLine);
                         if ( nBefore == 0 || nMinLine == 0 ||
                              (pFindContext->nLastLine != -1 && nMinLine <= pFindContext->nLastLine + 1) )
                         {
@@ -2040,7 +2063,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     nLinesBeforeAfter[0] = pfrPolicy->nBefore - nBefore;
                 }
 
-                nLines = pFindContext->nLastLine - getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMin.nLine);
+                nLines = pFindContext->nLastLine - getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, tr.cr.ciMin.nLine);
                 if ( nLines > 0 || ((nLines == 0 || nLines == -1) && pFindContext->nLastLine != -1) )
                 {
                     if ( bAddLineCR )
@@ -2055,7 +2078,7 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 
                     if ( pfrPolicy->nAfter > 0 )
                     {
-                        if ( pFindContext->nLastOccurrenceLine < getUnwrappedLine(bWordWrap, hWndEdit, pcrFound->ciMin.nLine) )
+                        if ( pFindContext->nLastOccurrenceLine < getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, pcrFound->ciMin.nLine) )
                             ++nLines;
                     }
 
@@ -2085,12 +2108,12 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
                     nLinesBeforeAfter[1] = pfrPolicy->nAfter - nAfter;
                 }
 
-                pFindContext->nLastLine = getUnwrappedLine(bWordWrap, hWndEdit, tr.cr.ciMax.nLine);
+                pFindContext->nLastLine = getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, tr.cr.ciMax.nLine);
             }
         }
     }
 
-    pFindContext->nLastOccurrenceLine = getUnwrappedLine(bWordWrap, hWndEdit, pcrFound->ciMin.nLine);
+    pFindContext->nLastOccurrenceLine = getUnwrappedLine(hWndEdit, pFindContext->bWordWrap, pcrFound->ciMin.nLine);
 
     tr.bColumnSel = FALSE;
     tr.pBuffer = NULL;
@@ -6033,7 +6056,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
         if ( !dwOptFlags[OPTF_SRCH_ONTHEFLY_MODE] )
         {
-            if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 )
+            if ( g_QSearchDlg.currentMatchesBuf.nBytesStored != 0 )
             {
                 qsSetInfoEmpty_Tracking("qsearchDoSearchText, !OnTheFly");
             }
@@ -6563,16 +6586,16 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
             if ( (iFindResult >= 0) &&
                  ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
-                 (g_QSearchDlg.matchesBuf.nBytesStored != 0) )
+                 (g_QSearchDlg.currentMatchesBuf.nBytesStored != 0) )
             {
-                qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), 0, "qsearchDoSearchText, iFindResult >= 0" );
+                qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)), 0, "qsearchDoSearchText, iFindResult >= 0" );
             }
         }
         else // pFindAll
         {
             const FRAMEDATA*     pFrameInitial;   // all files
             HWND                 hFrameWndEdit;
-            INT_PTR              nRichEditOffset;
+            matchpos_t           nMatchPos;
             unsigned int         nCurrentMatches; // current (initial) file
             BOOL                 bAllFiles;
             tFindAllContext      FindContext;
@@ -6615,6 +6638,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
             FindContext.dwFindAllMode = g_Options.dwFindAllMode;
             FindContext.dwFindAllFlags = 0;
             FindContext.dwFindAllResult = g_Options.dwFindAllResult;
+            FindContext.bWordWrap = FALSE;
             FindContext.nOccurrences = 0;
             FindContext.nTotalOccurrences = 0;
             FindContext.nTotalFiles = 0;
@@ -6703,11 +6727,11 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                         tDynamicBuffer_Clear(&g_QSearchDlg.findAllFramesBuf);
 
                     // findAllMatchesBuf
-                    if ( g_QSearchDlg.findAllMatchesBuf.nBytesAllocated > 16*1024*sizeof(INT_PTR) )
+                    if ( g_QSearchDlg.findAllMatchesBuf.nBytesAllocated > 16*1024*sizeof(matchpos_t) )
                         tDynamicBuffer_Free(&g_QSearchDlg.findAllMatchesBuf);
 
                     if ( g_QSearchDlg.findAllMatchesBuf.nBytesAllocated == 0 )
-                        tDynamicBuffer_Allocate(&g_QSearchDlg.findAllMatchesBuf, 2*1024*sizeof(INT_PTR));
+                        tDynamicBuffer_Allocate(&g_QSearchDlg.findAllMatchesBuf, 2*1024*sizeof(matchpos_t));
                     else
                         tDynamicBuffer_Clear(&g_QSearchDlg.findAllMatchesBuf);
 
@@ -6736,6 +6760,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                     SendMessageW( hFrameWndEdit, AEM_GETINDEX, AEGI_FIRSTCHAR, (LPARAM) &aeftW.crSearch.ciMin );
                     SendMessageW( hFrameWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeftW.crSearch.ciMax);
 
+                    FindContext.bWordWrap = (SendMessageW(hFrameWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE) ? TRUE : FALSE;
                     FindContext.nOccurrences = 0;
                     FindContext.nLastLine = -1;
                     FindContext.nLastOccurrenceLine = -1;
@@ -6744,14 +6769,14 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                     if  ( !bAllFiles || pFrameInitial == FindContext.pFrame )
                     {
-                        // matchesBuf
-                        if ( g_QSearchDlg.matchesBuf.nBytesAllocated > 8*1024*sizeof(INT_PTR) )
-                            tDynamicBuffer_Free(&g_QSearchDlg.matchesBuf);
+                        // currentMatchesBuf
+                        if ( g_QSearchDlg.currentMatchesBuf.nBytesAllocated > 8*1024*sizeof(matchpos_t) )
+                            tDynamicBuffer_Free(&g_QSearchDlg.currentMatchesBuf);
 
-                        if ( g_QSearchDlg.matchesBuf.nBytesAllocated == 0 )
-                            tDynamicBuffer_Allocate(&g_QSearchDlg.matchesBuf, 1024*sizeof(INT_PTR));
+                        if ( g_QSearchDlg.currentMatchesBuf.nBytesAllocated == 0 )
+                            tDynamicBuffer_Allocate(&g_QSearchDlg.currentMatchesBuf, 1024*sizeof(matchpos_t));
                         else
-                            tDynamicBuffer_Clear(&g_QSearchDlg.matchesBuf);
+                            tDynamicBuffer_Clear(&g_QSearchDlg.currentMatchesBuf);
 
                         g_QSearchDlg.hCurrentMatchSetInfoEditWnd = NULL;
                     }
@@ -6766,16 +6791,16 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                             pFindAll->pfnFindResultCallback(&FindContext, &aeftW.crFound, &pFindAll->GetFindResultPolicy, &pFindAll->tempBuf, &pFindAll->tempBuf2, pFindAll->ShowFindResults.pfnAddOccurrence);
                         }
 
-                        nRichEditOffset = (INT_PTR) SendMessageW(hFrameWndEdit, AEM_INDEXTORICHOFFSET, 0, (LPARAM) &aeftW.crFound.ciMin);
+                        nMatchPos = to_matchpos_ae_ex(&aeftW.crFound.ciMin, hFrameWndEdit, FindContext.bWordWrap);
 
                         if ( !bAllFiles || pFrameInitial == FindContext.pFrame )
                         {
-                            QSearchDlgState_addCurrentMatch(&g_QSearchDlg, nRichEditOffset);
+                            QSearchDlgState_addCurrentMatch(&g_QSearchDlg, nMatchPos);
                         }
 
                         if ( (dwParams & QSEARCH_COUNTALL) == 0 )
                         {
-                            QSearchDlgState_addFindAllMatch(&g_QSearchDlg, nRichEditOffset);
+                            QSearchDlgState_addFindAllMatch(&g_QSearchDlg, nMatchPos);
                         }
 
                         x_mem_cpy( &aeftW.crSearch.ciMin, &aeftW.crFound.ciMax, sizeof(AECHARINDEX) );
@@ -6804,7 +6829,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                         if ( bAllFiles )
                         {
-                            tDynamicBuffer_Swap(&tempMatchesBuf, &g_QSearchDlg.matchesBuf);
+                            tDynamicBuffer_Swap(&tempMatchesBuf, &g_QSearchDlg.currentMatchesBuf);
                         }
                     }
 
@@ -6842,7 +6867,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                     if ( pFrameInitial != g_QSearchDlg.pSearchResultsFrame )
                     {
-                        tDynamicBuffer_Swap(&g_QSearchDlg.matchesBuf, &tempMatchesBuf);
+                        tDynamicBuffer_Swap(&g_QSearchDlg.currentMatchesBuf, &tempMatchesBuf);
                         qsSetInfoOccurrencesFound_Tracking(nCurrentMatches, 0, "qsearchDoSearchText, bAllFiles");
                     }
                     else
@@ -6882,7 +6907,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
             if ( (dwParams & QSEARCH_COUNTALL) == 0 )
             {
-                if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 )
+                if ( g_QSearchDlg.currentMatchesBuf.nBytesStored != 0 )
                 {
                     // there are matches in the current file
                     qsUpdateHighlightForFindAll();
@@ -6943,23 +6968,24 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
         UINT_PTR nTimerId;
         BOOL bGotCountAllResults = FALSE;
 
-        if ( g_QSearchDlg.matchesBuf.nBytesStored == 0 &&
+        if ( g_QSearchDlg.currentMatchesBuf.nBytesStored == 0 &&
              !QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) &&
              QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, cszFindWhat, dwOptFlags) )
         {
             const FRAMEDATA* pFrame;
             const tQSFindAllFrameItem* pItem;
-            const INT_PTR* pItemMatches;
+            const matchpos_t* pItemMatches;
 
             pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
             if ( pFrame && pFrame->ei.hWndEdit == hWndEdit )
             {
                 pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
-                if ( pItem && QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
+                if ( pItem && !(pItem->nItemState & QS_FIS_TEXTCHANGED) &&
+                     QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
                 {
                     pItemMatches = QSearchDlgState_getFindAllFrameItemMatches(&g_QSearchDlg, pItem);
-                    tDynamicBuffer_Append(&g_QSearchDlg.matchesBuf, pItemMatches, pItem->nMatches*sizeof(INT_PTR));
-                    qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), 0, "qsearchDoSearchText, bNeedsFindAllCountOnly && !pFindAll" );
+                    tDynamicBuffer_Append(&g_QSearchDlg.currentMatchesBuf, pItemMatches, pItem->nMatches*sizeof(matchpos_t));
+                    qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)), 0, "qsearchDoSearchText, bNeedsFindAllCountOnly && !pFindAll" );
                     bGotCountAllResults = TRUE;
                 }
             }

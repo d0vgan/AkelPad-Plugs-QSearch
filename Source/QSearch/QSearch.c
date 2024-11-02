@@ -983,15 +983,19 @@ BOOL doGoToFindAllMatch(UINT nFlags)
 {
     const FRAMEDATA* pFrame;
     const tQSFindAllFrameItem* pItem;
-    INT_PTR nRichEditOffset;
+    matchpos_t nMatchPos;
+    int nLine;
+    int nPosInLine;
     int n;
     BOOL bExactMatch;
-    BOOL bSearchTextChanged = FALSE;
-    CHARRANGE_X cr = { 0, 0 };
+    BOOL bSearchTextChanged;
+    wchar_t szGoToW[64];
+
+    bSearchTextChanged = FALSE;
 
     if ( g_QSearchDlg.hDlg && g_QSearchDlg.szFindTextW[0] && g_QSearchDlg.szFindAllFindTextW[0] )
     {
-        if ( g_QSearchDlg.matchesBuf.nBytesStored != 0 &&
+        if ( g_QSearchDlg.currentMatchesBuf.nBytesStored != 0 &&
              !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags) )
         {
             bSearchTextChanged = TRUE;
@@ -1033,8 +1037,10 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
     if ( pItem )
     {
-        SendMessageW( pFrame->ei.hWndEdit, EM_EXGETSEL_X, 0, (LPARAM) &cr );
-        nRichEditOffset = cr.cpMin;
+        AECHARINDEX aeCi;
+
+        SendMessage( pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_FIRSTSELCHAR, (LPARAM) &aeCi );
+        nMatchPos = to_matchpos_ae(&aeCi, pFrame->ei.hWndEdit);
     }
     else
     {
@@ -1049,7 +1055,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             pItem = QSearchDlgState_getFindAllValidFrameItemForward(&g_QSearchDlg, pItem);
         }
 
-        if ( pItem && pItem->pFrame )
+        if ( pItem )
         {
             pFrame = pItem->pFrame;
             if ( pFrame != (const FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0) )
@@ -1057,13 +1063,17 @@ BOOL doGoToFindAllMatch(UINT nFlags)
                 SendMessageW( g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrame );
             }
         }
-        nRichEditOffset = -1;
+        nMatchPos = MATCHPOS_INVALID;
     }
 
     if ( !pItem || !QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
         return FALSE;
 
-    n = QSearchDlgState_findInFindAllFrameItemMatches(&g_QSearchDlg, pItem, nRichEditOffset, &bExactMatch);
+    if ( nMatchPos != MATCHPOS_INVALID )
+        n = QSearchDlgState_findInFindAllFrameItemMatches(&g_QSearchDlg, pItem, nMatchPos, &bExactMatch);
+    else
+        n = -1;
+
     if ( n == -1 )
     {
         if ( nFlags & GTFAM_PREV )
@@ -1082,8 +1092,8 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             ++n;
     }
 
-    nRichEditOffset = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, n);
-    if ( nRichEditOffset >= 0 )
+    nMatchPos = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, n);
+    if ( nMatchPos != MATCHPOS_INVALID )
     {
         pFrame = pItem->pFrame;
     }
@@ -1098,9 +1108,9 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             return FALSE;
 
         if ( nFlags & GTFAM_PREV )
-            nRichEditOffset = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, (int) pItem->nMatches - 1);
+            nMatchPos = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, (int) pItem->nMatches - 1);
         else
-            nRichEditOffset = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, 0);
+            nMatchPos = QSearchDlgState_getFindAllFrameItemMatchAt(&g_QSearchDlg, pItem, 0);
 
         pFrame = pItem->pFrame;
         if ( pFrame != (const FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0) )
@@ -1109,40 +1119,17 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         }
     }
 
+    // setting the match position
+    nLine = get_matchpos_line(nMatchPos);
+    nPosInLine = get_matchpos_pos_in_line(nMatchPos);
+    wsprintfW(szGoToW, L"%d:%d", nLine + 1, nPosInLine + 1);
+    SendMessageW(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) szGoToW);
+
+    if ( bSearchTextChanged || g_bFrameActivated )
     {
-        /*
-        // A simplest way:
-        cr.cpMin = nRichEditOffset;
-        cr.cpMax = nRichEditOffset;
-        SendMessageW( pFrame->ei.hWndEdit, EM_EXSETSEL_X, 0, (LPARAM) &cr );
-        */
+        g_bFrameActivated = FALSE;
 
-        HWND hWndEdit;
-        int nUnwrappedLine;
-        int nLinePos;
-        AECHARINDEX aeCi;
-        wchar_t szGoToW[64];
-
-        hWndEdit = pFrame->ei.hWndEdit;
-        x_zero_mem(&aeCi, sizeof(AECHARINDEX));
-        SendMessageW(hWndEdit, AEM_RICHOFFSETTOINDEX, (WPARAM) nRichEditOffset, (LPARAM) &aeCi);
-
-        if ( SendMessageW(hWndEdit, AEM_GETWORDWRAP, 0, 0) != AEWW_NONE )
-            nUnwrappedLine = (int) SendMessage(hWndEdit, AEM_GETUNWRAPLINE, aeCi.nLine, 0);
-        else
-            nUnwrappedLine = aeCi.nLine;
-
-        nLinePos = AEC_WrapLineBegin(&aeCi);
-
-        wsprintfW(szGoToW, L"%d:%d", nUnwrappedLine + 1, nLinePos + 1);
-        SendMessageW(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) szGoToW);
-
-        if ( bSearchTextChanged || g_bFrameActivated )
-        {
-            g_bFrameActivated = FALSE;
-
-            qsUpdateHighlightForFindAll();
-        }
+        qsUpdateHighlightForFindAll();
     }
 
     return TRUE;
@@ -1488,7 +1475,7 @@ HWND GetWndEdit(HWND hMainWnd)
 
 static BOOL GetLineAtIndex(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf);
 static BOOL PatOpenLine(HWND hWndEdit);
-static void invalidateFrameInFindAllFrames(const FRAMEDATA* pFrame);
+static void updateFrameStateInFindAllFrames(const FRAMEDATA* pFrame, UINT uFrameItemState);
 
 LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1762,7 +1749,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             const FRAMEDATA* pFrame = (FRAMEDATA *) lParam;
             QSearchDlgState_RemoveResultsFrame(&g_QSearchDlg, pFrame);
-            invalidateFrameInFindAllFrames(pFrame);
+            updateFrameStateInFindAllFrames(pFrame, QS_FIS_INVALID);
             qsSetInfoEmpty_Tracking("NewMainProc, AKDN_FRAME_DESTROY");
             break;
         }
@@ -1845,7 +1832,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 static void removeCurrentMatchFromOccurrencesFound(const NMHDR* hdr)
 {
     if ( ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
-         (g_QSearchDlg.matchesBuf.nBytesStored != 0) &&
+         (g_QSearchDlg.currentMatchesBuf.nBytesStored != 0) &&
          (g_QSearchDlg.hCurrentMatchSetInfoEditWnd != NULL) )
     {
         HWND hFocusedWnd = GetFocus();
@@ -1854,27 +1841,24 @@ static void removeCurrentMatchFromOccurrencesFound(const NMHDR* hdr)
              IsChild(g_QSearchDlg.hDlg, hFocusedWnd) ||
              (g_QSearchDlg.bFindAllWasUsingLogOutput && hFocusedWnd == LogOutput_GetEditHwnd()) )
         {
-            qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.matchesBuf.nBytesStored / sizeof(INT_PTR)), QS_SIOF_REMOVECURRENTMATCH, "removeCurrentMatchFromOccurrencesFound" );
+            qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)), QS_SIOF_REMOVECURRENTMATCH, "removeCurrentMatchFromOccurrencesFound" );
             g_QSearchDlg.hCurrentMatchSetInfoEditWnd = NULL;
         }
     }
 }
 
-void invalidateFrameInFindAllFrames(const FRAMEDATA* pFrame)
+void updateFrameStateInFindAllFrames(const FRAMEDATA* pFrame, UINT uFrameItemState)
 {
     tQSFindAllFrameItem* pItem;
 
-    if ( !pFrame )
-        return;
-
-    if ( QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) )
+    if ( !pFrame || QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) )
         return;
 
     pItem = (tQSFindAllFrameItem *) QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
     if ( !pItem )
         return;
 
-    pItem->pFrame = NULL;
+    pItem->nItemState |= uFrameItemState;
 }
 
 void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1925,7 +1909,7 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             break; // do nothing
                         default:
                             pFrame = (const FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
-                            invalidateFrameInFindAllFrames(pFrame);
+                            updateFrameStateInFindAllFrames(pFrame, QS_FIS_TEXTCHANGED);
                             qsSetInfoEmpty_Tracking("CheckEditNotification, AEN_TEXTCHANGED");
                             break;
                     }
@@ -3931,6 +3915,7 @@ BOOL PatOpenLine(HWND hWndEdit)
         if ( nGroups > 1 )
         {
             unsigned int i = 0;
+
             if ( nGroups > 2 )
             {
                 // -> FRAME
@@ -3944,7 +3929,7 @@ BOOL PatOpenLine(HWND hWndEdit)
                 ++i;
             }
 
-            if ( hWndEdit )
+            if ( (i == 0 || bResult) && hWndEdit )
             {
                 int nLineCount = (int) SendMessage( hWndEdit, EM_GETLINECOUNT, 0, 0 );
                 if ( nLineCount >= (int) xatoiW(wszGroups[i], NULL) )
