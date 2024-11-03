@@ -1,0 +1,7 @@
+.git/**
+Source/*.vcxproj.user
+Source/.vs/**
+Source/Debug/**
+Source/Release/**
+Source/x64/**
+QSearch.dll
