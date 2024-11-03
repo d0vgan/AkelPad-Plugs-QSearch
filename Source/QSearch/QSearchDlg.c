@@ -3199,7 +3199,8 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 
             if ( wParam == VK_F3 )
             {
-                return 0; // VK_F3 is actually processed by qsearchDlgProc
+                // F3 is actually processed by qsearchDlgProc
+                return 0; 
             }
             else if ( wParam == VK_RETURN )
             {
@@ -3382,9 +3383,14 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     return 0;
                 }
             }
-            if ( (wParam == VK_RETURN) || (wParam == VK_F3) )
+            if ( wParam == VK_F3 )
             {
-                // (if Alt+Enter or Alt+F3 pressed)
+                // Alt+F3 is actually processed by qsearchDlgProc
+                return 0;
+            }
+            if ( wParam == VK_RETURN  )
+            {
+                // Alt+Enter pressed
                 OnEditKeyDown_Enter_or_F3(hEdit, wParam, g_Options.dwFlags);
                 return 0;
             }
@@ -4511,6 +4517,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         //}
         case WM_SYSKEYDOWN:
         {
+            if ( wParam == VK_F3 ) // Alt+F3
+            {
+                return OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, wParam, g_Options.dwFlags);
+            }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyFindAll) )
             {
                 bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll);
