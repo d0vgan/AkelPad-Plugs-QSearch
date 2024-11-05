@@ -629,6 +629,7 @@ v.8.2 (November 2024)
  * Glory to Ukraine! Glory to the heroes!
  + added: showing "%u of %u matches" when "Auto Count All" is on
  + added: functions GoToNextFindAllMatch and GoToPrevFindAllMatch
+ * various corrections and improvements around search results highlighting
  * various internal improvements
  * some unit tests added
 

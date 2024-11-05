@@ -1021,7 +1021,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             {
                 g_bFrameActivated = FALSE;
 
-                qsUpdateHighlightForFindAll();
+                qsUpdateHighlightForFindAll(TRUE);
             }
             return TRUE;
         }
@@ -1129,7 +1129,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     {
         g_bFrameActivated = FALSE;
 
-        qsUpdateHighlightForFindAll();
+        qsUpdateHighlightForFindAll(TRUE);
     }
 
     return TRUE;
@@ -1716,6 +1716,8 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                 }
                 g_bFrameActivated = TRUE;
+                g_QSearchDlg.szLastHighlightTextW[0] = 0;
+                g_QSearchDlg.dwLastHighlightFlags = 0;
             }
             else if ( uMsg == AKDN_OPENDOCUMENT_FINISH )
             {
@@ -1815,6 +1817,8 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
                 g_bFrameActivated = TRUE;
+                g_QSearchDlg.szLastHighlightTextW[0] = 0;
+                g_QSearchDlg.dwLastHighlightFlags = 0;
             }
             break;
         default:
@@ -3924,7 +3928,7 @@ BOOL PatOpenLine(HWND hWndEdit)
                 {
                     SendMessage( g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pFrame );
                     hWndEdit = (HWND) SendMessage( g_Plugin.hMainWnd, AKD_GETFRAMEINFO, FI_WNDEDIT, (LPARAM) NULL );
-                    bResult = TRUE;
+                    bResult = TRUE; // it also indicates that a frame has been activated
                 }
                 ++i;
             }
@@ -3943,7 +3947,11 @@ BOOL PatOpenLine(HWND hWndEdit)
 
                     if ( SendMessage(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) textBuf.ptr) )
                     {
-                        qsUpdateHighlightForFindAll();
+                        qsUpdateHighlightForFindAll(bResult ? TRUE : FALSE);
+                        if ( bResult )
+                        {
+                            g_bFrameActivated = FALSE;
+                        }
                         bResult = TRUE;
                     }
                 }

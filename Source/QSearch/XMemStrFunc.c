@@ -253,6 +253,29 @@ int x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen)
     return -1; // not found
 }
 
+int x_wstr_cmp(const WCHAR* str1, const WCHAR* str2)
+{
+    while ( *str1 != 0 )
+    {
+        if ( *str1 != *str2 )
+            return ((WORD) *str1) > ((WORD) *str2) ? 1 : -1;
+
+        ++str1;
+        ++str2;
+    }
+
+    return (*str2 == 0) ? 0 : -1;
+}
+
+void x_wstr_cpy(WCHAR* dst, const WCHAR* src)
+{
+    while ( *src != 0 )
+    {
+        *(dst++) = *(src++);
+    }
+    *dst = 0;
+}
+
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext)
 {
     INT_PTR nNumber = 0;

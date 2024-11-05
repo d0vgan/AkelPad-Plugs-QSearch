@@ -164,7 +164,9 @@
         const FRAMEDATA* pSearchResultsFrames[MAX_RESULTS_FRAMES];
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
         wchar_t          szFindAllFindTextW[MAX_TEXT_SIZE];
+        wchar_t          szLastHighlightTextW[2*MAX_TEXT_SIZE+6];
         DWORD            dwFindAllFlags; // see QS_FAF_*
+        DWORD            dwLastHighlightFlags; // see QS_FAF_*
         UINT             uSearchOrigin; // see QS_SO_*
         UINT             uWmShowFlags; // see QS_SF_*
         COLORREF         crTextColor;
@@ -212,7 +214,7 @@ BOOL qsearchIsSavingHistoryToStdLocation(void);
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
 void qsearchDlgApplyEditorColors();
 
-void qsUpdateHighlightForFindAll(void);
+void qsUpdateHighlightForFindAll(BOOL bForceHighlight);
 
 #ifdef _DEBUG
   #define qsSetInfoOccurrencesFound_Tracking(nOccurrences, nFlags, comment) { Debug_OutputA(comment ## " -> qsSetInfoOccurrencesFound\n"); qsSetInfoOccurrencesFound(nOccurrences, nFlags); }
