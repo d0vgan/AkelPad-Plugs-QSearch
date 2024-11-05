@@ -134,6 +134,63 @@ void test_x_wstr_rfindch()
     assert(x_wstr_rfindch(s, 'x', len) == -1);
 }
 
+void test_x_wstr_cmp()
+{
+    assert(x_wstr_cmp(L"", L"") == 0);
+    assert(x_wstr_cmp(L"a", L"") == 1);
+    assert(x_wstr_cmp(L"", L"a") == -1);
+    assert(x_wstr_cmp(L"a", L"a") == 0);
+    assert(x_wstr_cmp(L"abc", L"a") == 1);
+    assert(x_wstr_cmp(L"a", L"abc") == -1);
+    assert(x_wstr_cmp(L"abc", L"abc") == 0);
+    assert(x_wstr_cmp(L"abc", L"Abc") == 1); // 'a' = 97, 'A' = 65, so 'a' > 'A'
+    assert(x_wstr_cmp(L"abc", L"abC") == 1);
+    assert(x_wstr_cmp(L"Abc", L"abc") == -1);
+    assert(x_wstr_cmp(L"abC", L"abc") == -1);
+}
+
+void test_x_wstr_cpy()
+{
+    wchar_t dst[16] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
+    x_wstr_cpy(dst, L"");
+    assert(dst[0] == 0);
+    assert(dst[1] == 0xFF);
+
+    x_wstr_cpy(dst, L"a");
+    assert(dst[0] == L'a');
+    assert(dst[1] == 0);
+    assert(dst[2] == 0xFF);
+
+    x_wstr_cpy(dst, L"ABC");
+    assert(dst[0] == L'A');
+    assert(dst[1] == L'B');
+    assert(dst[2] == L'C');
+    assert(dst[3] == 0);
+    assert(dst[4] == 0xFF);
+
+    x_wstr_cpy(dst, L"");
+    assert(dst[0] == 0);
+    assert(dst[1] == L'B');
+
+    x_wstr_cpy(dst, L"xyz1234");
+    assert(dst[0] == L'x');
+    assert(dst[1] == L'y');
+    assert(dst[2] == L'z');
+    assert(dst[3] == L'1');
+    assert(dst[4] == L'2');
+    assert(dst[5] == L'3');
+    assert(dst[6] == L'4');
+    assert(dst[7] == 0);
+    assert(dst[8] == 0xFF);
+
+    x_wstr_cpy(dst, L"\0\0\0");
+    assert(dst[0] == 0);
+    assert(dst[1] == L'y');
+    assert(dst[2] == L'z');
+    assert(dst[3] == L'1');
+}
+
 void test_tDynamicBuffer_Allocate()
 {
     tDynamicBuffer buf;
@@ -309,6 +366,8 @@ void tests_xmem_str_func()
     test_x_wstr_endswith();
     test_x_wstr_findch();
     test_x_wstr_rfindch();
+    test_x_wstr_cmp();
+    test_x_wstr_cpy();
     test_tDynamicBuffer_Allocate();
     test_tDynamicBuffer_Append_Clear();
     test_tDynamicBuffer_Swap();
