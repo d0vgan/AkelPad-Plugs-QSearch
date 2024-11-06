@@ -113,6 +113,8 @@
 #define QS_FAF_MATCHCASE 0x0010
 #define QS_FAF_WHOLEWORD 0x0020
 
+DWORD getFindAllFlags(const DWORD dwOptFlags[]);
+
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearchdlg state >>>>>>>>>>>>>>>>>>>>>>>> */
     #define  MAX_TEXT_SIZE  250
@@ -200,7 +202,11 @@
     BOOL QSearchDlgState_isFindAllFrameItemInternallyValid(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     BOOL QSearchDlgState_isFindAllMatchesEmpty(const QSearchDlgState* pQSearchDlg);
 
-    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, const DWORD dwOptFlags[]);
+    BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, DWORD dwFindAllFlags);
+
+    BOOL QSearchDlgState_isLastHighlightedEqualToTheSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, DWORD dwFindAllFlags);
+    BOOL QSearchDlgState_isLastHighlightedEqualToTheSearchW(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhatW, DWORD dwFindAllFlags);
+    void QSearchDlgState_clearLastHighlighted(QSearchDlgState* pQSearchDlg);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<< qsearchdlg state <<<<<<<<<<<<<<<<<<<<<<<< */
 

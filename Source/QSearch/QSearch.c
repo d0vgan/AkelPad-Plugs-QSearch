@@ -993,10 +993,9 @@ BOOL doGoToFindAllMatch(UINT nFlags)
 
     bSearchTextChanged = FALSE;
 
-    if ( g_QSearchDlg.hDlg && g_QSearchDlg.szFindTextW[0] && g_QSearchDlg.szFindAllFindTextW[0] )
+    if ( g_QSearchDlg.hDlg && g_QSearchDlg.szFindAllFindTextW[0] )
     {
-        if ( g_QSearchDlg.currentMatchesBuf.nBytesStored != 0 &&
-             !QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, g_QSearchDlg.szFindTextW, g_Options.dwFlags) )
+        if ( !QSearchDlgState_isLastHighlightedEqualToTheSearchW(&g_QSearchDlg, g_QSearchDlg.szFindAllFindTextW, g_QSearchDlg.dwFindAllFlags) )
         {
             bSearchTextChanged = TRUE;
             qsSetInfoEmpty_Tracking("doGoToFindAllMatch");
@@ -1020,7 +1019,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             if ( bSearchTextChanged || g_bFrameActivated )
             {
                 g_bFrameActivated = FALSE;
-
+                
                 qsUpdateHighlightForFindAll(TRUE);
             }
             return TRUE;
@@ -1716,8 +1715,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                 }
                 g_bFrameActivated = TRUE;
-                g_QSearchDlg.szLastHighlightTextW[0] = 0;
-                g_QSearchDlg.dwLastHighlightFlags = 0;
+                QSearchDlgState_clearLastHighlighted(&g_QSearchDlg);
             }
             else if ( uMsg == AKDN_OPENDOCUMENT_FINISH )
             {
@@ -1817,8 +1815,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
                 g_bFrameActivated = TRUE;
-                g_QSearchDlg.szLastHighlightTextW[0] = 0;
-                g_QSearchDlg.dwLastHighlightFlags = 0;
+                QSearchDlgState_clearLastHighlighted(&g_QSearchDlg);
             }
             break;
         default:
