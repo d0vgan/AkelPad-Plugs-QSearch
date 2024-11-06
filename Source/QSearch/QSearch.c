@@ -1909,9 +1909,14 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         case AETCT_WRAP:
                             break; // do nothing
                         default:
-                            pFrame = (const FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
-                            updateFrameStateInFindAllFrames(pFrame, QS_FIS_TEXTCHANGED);
-                            qsSetInfoEmpty_Tracking("CheckEditNotification, AEN_TEXTCHANGED");
+                            if ( !g_QSearchDlg.bIsQSearchingRightNow ||
+                                 g_Plugin.nMDI != WMD_SDI ||
+                                 (g_Options.dwFindAllMode & QS_FINDALL_MASK) != QS_FINDALL_FILEOUTPUT_SNGL )
+                            {
+                                pFrame = (const FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
+                                updateFrameStateInFindAllFrames(pFrame, QS_FIS_TEXTCHANGED);
+                                qsSetInfoEmpty_Tracking("CheckEditNotification, AEN_TEXTCHANGED");
+                            }
                             break;
                     }
                 }
