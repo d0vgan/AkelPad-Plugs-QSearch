@@ -1019,7 +1019,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             if ( bSearchTextChanged || g_bFrameActivated )
             {
                 g_bFrameActivated = FALSE;
-                
+
                 qsUpdateHighlightForFindAll(TRUE);
             }
             return TRUE;
@@ -1902,7 +1902,7 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 const FRAMEDATA* pFrame;
 
                 pChange = (const AENTEXTCHANGE *) lParam;
-                if ( (pChange->dwType & AETCT_NONE) == 0 ) 
+                if ( (pChange->dwType & AETCT_NONE) == 0 )
                 {
                     switch ( pChange->dwType )
                     {

@@ -3245,7 +3245,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             if ( wParam == VK_F3 )
             {
                 // F3 is actually processed by qsearchDlgProc
-                return 0; 
+                return 0;
             }
             else if ( wParam == VK_RETURN )
             {
@@ -6226,7 +6226,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
             if ( !pFindAll )
             {
-                if ( (dwParams & QSEARCH_FINDUP) || 
+                if ( (dwParams & QSEARCH_FINDUP) ||
                      (((dwParams & QSEARCH_NOFINDUP) != QSEARCH_NOFINDUP) && (GetKeyState(VK_QS_FINDUP) & 0x80)) )
                     srchEOF = QSEARCH_EOF_UP;
                 else
@@ -7221,7 +7221,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
         }
     }
 
-    if ( g_bHighlightPlugin && 
+    if ( g_bHighlightPlugin &&
          (!qs_bEditNotFound || (dwHighlightConditionFlags & QHC_FORCE_HIGHLIGHT)) )
     {
         if ( (dwHighlightConditionFlags & QHC_IGNORE_CHECKBOX) ||

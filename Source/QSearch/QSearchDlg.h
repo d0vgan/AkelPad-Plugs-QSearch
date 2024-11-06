@@ -175,7 +175,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
         COLORREF         crBkgndColor;
         HBRUSH           hBkgndBrush;
         HWND             hCurrentMatchSetInfoEditWnd;
-        BOOL             bFindAllWasUsingLogOutput; 
+        BOOL             bFindAllWasUsingLogOutput;
         tDynamicBuffer   currentMatchesBuf; // match positions as matchpos_t
         tDynamicBuffer   findAllFramesBuf; // tQSFindAllFrameItem items
         tDynamicBuffer   findAllMatchesBuf; // match positions in all files as matchpos_t
