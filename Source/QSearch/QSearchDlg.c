@@ -746,13 +746,9 @@ BOOL IsLogOutputActive(void)
         if ( dwFindAllFlags != g_QSearchDlg.dwLastHighlightFlags )
             return FALSE;
 
-        if ( !g_Plugin.bOldWindows )
-        {
-            int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = (dwFindAllFlags & QS_FAF_MATCHCASE) ? lstrcmpW : lstrcmpiW;
-            return (cmpfuncW(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
-        }
+        if ( !g_Plugin.bOldWindows && !(dwFindAllFlags & QS_FAF_MATCHCASE) )
+            return (lstrcmpiW(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
 
-        // g_Plugin.bOldWindows
         return (x_wstr_cmp(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
     }
 
@@ -3823,7 +3819,7 @@ void qsUpdateHighlightForFindAll(BOOL bForceHighlight)
 {
     DWORD dwOptFlagsTemp[OPTF_COUNT_TOTAL];
 
-    if ( !g_QSearchDlg.hDlg || !g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL] )
+    if ( !g_QSearchDlg.hDlg || !g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL] || g_Plugin.bOldWindows )
         return;
 
     copyOptionsFlags(dwOptFlagsTemp, g_Options.dwFlags);
@@ -7189,8 +7185,8 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
         UINT_PTR nTimerId;
         BOOL bGotCountAllResults = FALSE;
 
-        if ( g_QSearchDlg.currentMatchesBuf.nBytesStored == 0 &&
-             !QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) &&
+        if ( !QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) &&
+             !g_Plugin.bOldWindows &&
              QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, cszFindWhat, getFindAllFlags(dwOptFlags)) )
         {
             const FRAMEDATA* pFrame;
@@ -7205,6 +7201,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                      QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
                 {
                     pItemMatches = QSearchDlgState_getFindAllFrameItemMatches(&g_QSearchDlg, pItem);
+                    tDynamicBuffer_Clear(&g_QSearchDlg.currentMatchesBuf);
                     tDynamicBuffer_Append(&g_QSearchDlg.currentMatchesBuf, pItemMatches, pItem->nMatches*sizeof(matchpos_t));
                     qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)), 0, "qsearchDoSearchText, bNeedsFindAllCountOnly && !pFindAll" );
                     bGotCountAllResults = TRUE;
@@ -7282,7 +7279,6 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
 
                 if ( (dwHighlightConditionFlags & QHC_IGNORE_SELECTION) != 0 || cr.cpMin != cr.cpMax )
                 {
-                    wchar_t* pszMarkTextW;
                     DWORD dwFindAllFlags;
                     BOOL bFindExAsRegExp;
                     DLLECHIGHLIGHT_MARK hlParams;
@@ -7311,11 +7307,12 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                         }
                     }
 
-                    pszMarkTextW = NULL;
                     szMarkTextBufW[0] = 0;
 
                     if ( dwOptFlags[OPTF_SRCH_USE_REGEXP] || bFindExAsRegExp )
                     {
+                        wchar_t* pszMarkTextW;
+
                         pszMarkTextW = szMarkTextBufW + 2; // preserving 2 chars for the leading "\b", if needed
                         pszMarkTextW[0] = 0;
 
@@ -7360,8 +7357,6 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                             }
                             hlParams.wszMarkText = pszMarkTextW;
                         }
-                        else
-                            pszMarkTextW = NULL;
                     }
                     else
                     {
@@ -7370,20 +7365,15 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                         else
                             lstrcpyW(szMarkTextBufW, cszFindWhat);
 
-                        pszMarkTextW = szMarkTextBufW;
-
                         if ( dwHighlightConditionFlags & QHC_IGNORE_SELECTION )
                             hlParams.wszMarkText = szMarkTextBufW;
                     }
 
-                    // at this point, pszMarkTextW is either NULL or
-                    // it points to non-NULL hlParams.wszMarkText or to szMarkTextBufW
-
                     dwFindAllFlags = getFindAllFlags(dwOptFlags);
 
                     if ( (dwHighlightConditionFlags & QHC_FORCE_HIGHLIGHT) ||
-                         !pszMarkTextW ||
-                         !QSearchDlgState_isLastHighlightedEqualToTheSearchW(&g_QSearchDlg, pszMarkTextW, dwFindAllFlags) )
+                         !hlParams.wszMarkText ||
+                         !QSearchDlgState_isLastHighlightedEqualToTheSearch(&g_QSearchDlg, cszFindWhat, dwFindAllFlags) )
                     {
                         wchar_t szTextColor[16];
                         wchar_t szBkgndColor[16];
@@ -7417,17 +7407,10 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                         CallHighlightMain( &hlParams );
 
                         g_QSearchDlg.dwLastHighlightFlags = dwFindAllFlags;
-                        if ( hlParams.wszMarkText )
-                        {
-                            x_wstr_cpy(g_QSearchDlg.szLastHighlightTextW, hlParams.wszMarkText);
-                        }
+                        if ( g_Plugin.bOldWindows )
+                            MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhat, -1, g_QSearchDlg.szLastHighlightTextW, MAX_TEXT_SIZE );
                         else
-                        {
-                            if ( g_Plugin.bOldWindows )
-                                MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhat, -1, g_QSearchDlg.szLastHighlightTextW, 2*MAX_TEXT_SIZE - 1 );
-                            else
-                                lstrcpyW(g_QSearchDlg.szLastHighlightTextW, cszFindWhat);
-                        }
+                            lstrcpyW(g_QSearchDlg.szLastHighlightTextW, cszFindWhat);
                     }
                 }
                 else

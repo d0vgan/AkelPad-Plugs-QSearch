@@ -166,7 +166,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
         const FRAMEDATA* pSearchResultsFrames[MAX_RESULTS_FRAMES];
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
         wchar_t          szFindAllFindTextW[MAX_TEXT_SIZE];
-        wchar_t          szLastHighlightTextW[2*MAX_TEXT_SIZE+6];
+        wchar_t          szLastHighlightTextW[MAX_TEXT_SIZE];
         DWORD            dwFindAllFlags; // see QS_FAF_*
         DWORD            dwLastHighlightFlags; // see QS_FAF_*
         UINT             uSearchOrigin; // see QS_SO_*
