@@ -327,5 +327,9 @@ BOOL IsLogOutputActive(void);
 HWND LogOutput_GetEditHwnd();
 /* <<<<<<<<<<<<<<<<<<<<<<<< log plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
+//// Utils ////
+void strcpyAorW(LPWSTR lpDst, LPCWSTR lpSrc);
+int  strcmpAorW(LPCWSTR lpStr1, LPCWSTR lpStr2, BOOL bMatchCase);
+
 //---------------------------------------------------------------------------
 #endif

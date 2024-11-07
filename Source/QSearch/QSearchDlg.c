@@ -708,23 +708,9 @@ BOOL IsLogOutputActive(void)
 
     BOOL QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, DWORD dwFindAllFlags)
     {
-        if ( pQSearchDlg->dwFindAllFlags != dwFindAllFlags )
-        {
-            return FALSE;
-        }
-
-        if ( pQSearchDlg->dwFindAllFlags & QS_FAF_MATCHCASE )
-        {
-            if ( lstrcmpW(cszFindWhat, pQSearchDlg->szFindAllFindTextW) != 0 )
-                return FALSE;
-        }
-        else
-        {
-            if ( lstrcmpiW(cszFindWhat, pQSearchDlg->szFindAllFindTextW) != 0 )
-                return FALSE;
-        }
-
-        return TRUE;
+        // Note: Be sure to call this function only in Unicode Windows!
+        return ( pQSearchDlg->dwFindAllFlags == dwFindAllFlags &&
+                 ((pQSearchDlg->dwFindAllFlags & QS_FAF_MATCHCASE) ? lstrcmpW : lstrcmpiW)(cszFindWhat, pQSearchDlg->szFindAllFindTextW) == 0 );
     }
 
     BOOL QSearchDlgState_isLastHighlightedEqualToTheSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, DWORD dwFindAllFlags)
@@ -3031,37 +3017,13 @@ UINT qsPickUpSelection(HWND hEdit, const DWORD dwOptFlags[], BOOL isHighlightAll
     UINT nResult = 0;
     wchar_t prevFindTextW[MAX_TEXT_SIZE];
 
-    if ( g_Plugin.bOldWindows )
-    {
-        lstrcpyA( (LPSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW );
-    }
-    else
-    {
-        lstrcpyW( (LPWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW );
-    }
+    strcpyAorW(prevFindTextW, g_QSearchDlg.szFindTextW);
 
     if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlags) )
     {
         if ( !isHighlightAll )
         {
-            qs_bEditTextChanged = FALSE;
-
-            if ( g_Plugin.bOldWindows )
-            {
-                int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpA : lstrcmpiA;
-                if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
-                {
-                    qs_bEditTextChanged = TRUE;
-                }
-            }
-            else
-            {
-                int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpW : lstrcmpiW;
-                if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
-                {
-                    qs_bEditTextChanged = TRUE;
-                }
-            }
+            qs_bEditTextChanged = (strcmpAorW(prevFindTextW, g_QSearchDlg.szFindTextW, dwOptFlags[OPTF_SRCH_MATCHCASE]) != 0);
         }
         else
         {
@@ -3744,51 +3706,50 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
         }
         else
         {
-            wchar_t szText1[MAX_TEXT_SIZE];
-            wchar_t szText2[MAX_TEXT_SIZE];
-            const wchar_t* psz1;
-            const wchar_t* psz2;
+            const wchar_t* pszFindText;
+            const wchar_t* pszSelText;
+            wchar_t szFindTextBuf[MAX_TEXT_SIZE];
+            wchar_t szSelTextBuf[MAX_TEXT_SIZE];
 
             if ( dwOptFlags[OPTF_SRCH_MATCHCASE] )
             {
                 // match case
-                psz1 = g_QSearchDlg.szFindTextW;
-                psz2 = szSelectedTextW;
+                pszFindText = g_QSearchDlg.szFindTextW;
+                pszSelText = szSelectedTextW;
             }
             else
             {
-                // case-insensitive
+                // case-insensitive, needed for match_mask and match_maskw
                 if ( g_Plugin.bOldWindows )
                 {
-                    lstrcpyA( (LPSTR) szText1, (LPCSTR) g_QSearchDlg.szFindTextW );
-                    CharUpperA( (LPSTR) szText1 );
-                    lstrcpyA( (LPSTR) szText2, (LPCSTR) szSelectedTextW );
-                    CharUpperA( (LPSTR) szText2 );
+                    lstrcpyA( (LPSTR) szFindTextBuf, (LPCSTR) g_QSearchDlg.szFindTextW );
+                    CharUpperA( (LPSTR) szFindTextBuf );
+                    lstrcpyA( (LPSTR) szSelTextBuf, (LPCSTR) szSelectedTextW );
+                    CharUpperA( (LPSTR) szSelTextBuf );
                 }
                 else
                 {
-                    lstrcpyW( szText1, g_QSearchDlg.szFindTextW );
-                    CharUpperW( szText1 );
-                    lstrcpyW( szText2, szSelectedTextW );
-                    CharUpperW( szText2 );
+                    lstrcpyW( szFindTextBuf, g_QSearchDlg.szFindTextW );
+                    CharUpperW( szFindTextBuf );
+                    lstrcpyW( szSelTextBuf, szSelectedTextW );
+                    CharUpperW( szSelTextBuf );
                 }
-                psz1 = szText1;
-                psz2 = szText2;
+                pszFindText = szFindTextBuf;
+                pszSelText = szSelTextBuf;
             }
 
             if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
             {
                 if ( g_Plugin.bOldWindows )
-                    bEqual = (match_mask((LPCSTR)psz1, (LPCSTR)psz2, 0, 0) > 0);
+                    bEqual = (match_mask((LPCSTR)pszFindText, (LPCSTR)pszSelText, 0, 0) > 0);
                 else
-                    bEqual = (match_maskw(psz1, psz2, 0, 0) > 0);
+                    bEqual = (match_maskw(pszFindText, pszSelText, 0, 0) > 0);
             }
             else
             {
-                if ( g_Plugin.bOldWindows )
-                    bEqual = (lstrcmpA((LPCSTR)psz1, (LPCSTR)psz2) == 0);
-                else
-                    bEqual = (lstrcmpW(psz1, psz2) == 0);
+                // in case of case-insensitive comparison, CharUpper have already been called,
+                // so characters' case is the same (it's upper)
+                bEqual = (strcmpAorW(pszFindText, pszSelText, TRUE) == 0);
             }
         }
 
@@ -5734,36 +5695,13 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
             {
                 wchar_t prevFindTextW[MAX_TEXT_SIZE];
 
-                if ( g_Plugin.bOldWindows )
-                {
-                    lstrcpyA( (LPSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW );
-                }
-                else
-                {
-                    lstrcpyW( (LPWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW );
-                }
+                strcpyAorW(prevFindTextW, g_QSearchDlg.szFindTextW);
 
                 bGotSelectedText = getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlags);
                 if ( bGotSelectedText )
                 {
                     bChangeSelection = TRUE;
-
-                    if ( g_Plugin.bOldWindows )
-                    {
-                        int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpA : lstrcmpiA;
-                        if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
-                        {
-                            bFindTextChanged = TRUE;
-                        }
-                    }
-                    else
-                    {
-                        int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpW : lstrcmpiW;
-                        if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
-                        {
-                            bFindTextChanged = TRUE;
-                        }
-                    }
+                    bFindTextChanged = (strcmpAorW(prevFindTextW, g_QSearchDlg.szFindTextW, dwOptFlags[OPTF_SRCH_MATCHCASE]) != 0);
 
                     if ( bFindTextChanged )
                     {
@@ -5819,14 +5757,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
     wchar_t prevFindTextW[MAX_TEXT_SIZE];
     DWORD   dwOptFlagsTemp[OPTF_COUNT_TOTAL];
 
-    if ( g_Plugin.bOldWindows )
-    {
-        lstrcpyA( (LPSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW );
-    }
-    else
-    {
-        lstrcpyW( (LPWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW );
-    }
+    strcpyAorW(prevFindTextW, g_QSearchDlg.szFindTextW);
 
     if ( dwOptFlags[OPTF_SRCH_SELFIND_PICKUP] )
     {
@@ -5853,23 +5784,10 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
         qs_bEditNotRegExp = FALSE;
         qs_nEditIsEOF = 0;
 
-        if ( g_Plugin.bOldWindows )
+        if ( strcmpAorW(prevFindTextW, g_QSearchDlg.szFindTextW, dwOptFlags[OPTF_SRCH_MATCHCASE]) != 0 )
         {
-            int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpA : lstrcmpiA;
-            if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
-            {
-                qs_bEditTextChanged = TRUE;
-                qs_nEditEOF = 0;
-            }
-        }
-        else
-        {
-            int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpW : lstrcmpiW;
-            if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
-            {
-                qs_bEditTextChanged = TRUE;
-                qs_nEditEOF = 0;
-            }
+            qs_bEditTextChanged = TRUE;
+            qs_nEditEOF = 0;
         }
 
         dwSearchParams = QSEARCH_NEXT | QSEARCH_SEL;
@@ -7582,4 +7500,19 @@ BOOL qsearchFindHistoryAdd(HWND hEdit, const wchar_t* cszTextAW, UINT uUpdFlags)
     }
 
     return FALSE;
+}
+
+void strcpyAorW(LPWSTR lpDst, LPCWSTR lpSrc)
+{
+    if ( g_Plugin.bOldWindows )
+        lstrcpyA( (LPSTR) lpDst, (LPCSTR) lpSrc );
+    else
+        lstrcpyW( lpDst, lpSrc );
+}
+
+int strcmpAorW(LPCWSTR lpStr1, LPCWSTR lpStr2, BOOL bMatchCase)
+{
+    return ( g_Plugin.bOldWindows ?
+        (bMatchCase ? lstrcmpA : lstrcmpiA)((LPCSTR) lpStr1, (LPCSTR) lpStr2) :
+            (bMatchCase ? lstrcmpW : lstrcmpiW)(lpStr1, lpStr2) );
 }
