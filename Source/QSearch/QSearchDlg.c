@@ -743,8 +743,17 @@ BOOL IsLogOutputActive(void)
 
     BOOL QSearchDlgState_isLastHighlightedEqualToTheSearchW(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhatW, DWORD dwFindAllFlags)
     {
-        return ( dwFindAllFlags == g_QSearchDlg.dwLastHighlightFlags &&
-                 x_wstr_cmp(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0 );
+        if ( dwFindAllFlags != g_QSearchDlg.dwLastHighlightFlags )
+            return FALSE;
+
+        if ( !g_Plugin.bOldWindows )
+        {
+            int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = (dwFindAllFlags & QS_FAF_MATCHCASE) ? lstrcmpW : lstrcmpiW;
+            return (cmpfuncW(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
+        }
+
+        // g_Plugin.bOldWindows
+        return (x_wstr_cmp(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
     }
 
     void QSearchDlgState_clearLastHighlighted(QSearchDlgState* pQSearchDlg)
@@ -5656,7 +5665,6 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     BOOL bChangeSelection = !IsWindowVisible(hDlg);
 
     qsearchDoSetNotFound( qsearchGetFindEdit(hDlg, NULL), FALSE, FALSE, 0 );
-    qsSetInfoEmpty_Tracking("qsearchDoShowHide");
 
     if ( bShow )
     {
@@ -5679,6 +5687,8 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     else
     {
         qs_nEditEOF = 0;
+
+        qsSetInfoEmpty_Tracking("qsearchDoShowHide, !bShow");
     }
 
     g_QSearchDlg.uWmShowFlags = 0; // forbid to pick up selected text on WM_SHOWWINDOW
@@ -5719,16 +5729,50 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     if ( bShow )
     {
         BOOL bGotSelectedText = FALSE;
+        BOOL bFindTextChanged = FALSE;
         HWND hEdit = qsearchGetFindEdit(hDlg, NULL);
 
         if ( uShowFlags & QS_SF_CANPICKUPSELTEXT )
         {
             if ( dwOptFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
             {
+                wchar_t prevFindTextW[MAX_TEXT_SIZE];
+
+                if ( g_Plugin.bOldWindows )
+                {
+                    lstrcpyA( (LPSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW );
+                }
+                else
+                {
+                    lstrcpyW( (LPWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW );
+                }
+
                 bGotSelectedText = getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlags);
                 if ( bGotSelectedText )
                 {
                     bChangeSelection = TRUE;
+
+                    if ( g_Plugin.bOldWindows )
+                    {
+                        int (WINAPI *cmpfuncA)(LPCSTR, LPCSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpA : lstrcmpiA;
+                        if ( cmpfuncA((LPCSTR) prevFindTextW, (LPCSTR) g_QSearchDlg.szFindTextW) != 0 )
+                        {
+                            bFindTextChanged = TRUE;
+                        }
+                    }
+                    else
+                    {
+                        int (WINAPI *cmpfuncW)(LPCWSTR, LPCWSTR) = dwOptFlags[OPTF_SRCH_MATCHCASE] ? lstrcmpW : lstrcmpiW;
+                        if ( cmpfuncW((LPCWSTR) prevFindTextW, (LPCWSTR) g_QSearchDlg.szFindTextW) != 0 )
+                        {
+                            bFindTextChanged = TRUE;
+                        }
+                    }
+
+                    if ( bFindTextChanged )
+                    {
+                        qsSetInfoEmpty_Tracking("qsearchDoShowHide, bFindTextChanged");
+                    }
                 }
                 else
                 {
