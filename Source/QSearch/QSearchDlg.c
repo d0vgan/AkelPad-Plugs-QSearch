@@ -5754,8 +5754,9 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
 
 void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
 {
-    wchar_t prevFindTextW[MAX_TEXT_SIZE];
     DWORD   dwOptFlagsTemp[OPTF_COUNT_TOTAL];
+    wchar_t prevFindTextW[MAX_TEXT_SIZE];
+    wchar_t selFindTextW[MAX_TEXT_SIZE];
 
     strcpyAorW(prevFindTextW, g_QSearchDlg.szFindTextW);
 
@@ -5775,7 +5776,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
     dwOptFlagsTemp[OPTF_SRCH_USE_REGEXP] = 0;
 
     // getting selected text with modified search flags
-    if ( getAkelPadSelectedText(g_QSearchDlg.szFindTextW, dwOptFlagsTemp) )
+    if ( getAkelPadSelectedText(selFindTextW, dwOptFlagsTemp) )
     {
         DWORD  dwSearchParams;
 
@@ -5784,15 +5785,14 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
         qs_bEditNotRegExp = FALSE;
         qs_nEditIsEOF = 0;
 
-        if ( strcmpAorW(prevFindTextW, g_QSearchDlg.szFindTextW, dwOptFlags[OPTF_SRCH_MATCHCASE]) != 0 )
+        if ( strcmpAorW(prevFindTextW, selFindTextW, dwOptFlags[OPTF_SRCH_MATCHCASE]) != 0 )
         {
-            qs_bEditTextChanged = TRUE;
             qs_nEditEOF = 0;
         }
 
         dwSearchParams = QSEARCH_NEXT | QSEARCH_SEL;
         if ( bFindPrev )  dwSearchParams |= QSEARCH_SEL_FINDUP;
-        qsearchDoSearchText(hEdit, g_QSearchDlg.szFindTextW, dwSearchParams, dwOptFlagsTemp, NULL);
+        qsearchDoSearchText(hEdit, selFindTextW, dwSearchParams, dwOptFlagsTemp, NULL);
     }
 }
 
@@ -7276,15 +7276,14 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhat, const DWORD
                             hlParams.wszMarkText = pszMarkTextW;
                         }
                     }
-                    else
+                    else if ( dwHighlightConditionFlags & QHC_IGNORE_SELECTION )
                     {
                         if ( g_Plugin.bOldWindows )
                             MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhat, -1, szMarkTextBufW, 2*MAX_TEXT_SIZE - 1 );
                         else
                             lstrcpyW(szMarkTextBufW, cszFindWhat);
 
-                        if ( dwHighlightConditionFlags & QHC_IGNORE_SELECTION )
-                            hlParams.wszMarkText = szMarkTextBufW;
+                        hlParams.wszMarkText = szMarkTextBufW;
                     }
 
                     dwFindAllFlags = getFindAllFlags(dwOptFlags);

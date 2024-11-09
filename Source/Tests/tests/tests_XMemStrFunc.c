@@ -140,6 +140,8 @@ void test_x_wstr_cmp()
     assert(x_wstr_cmp(L"a", L"") == 1);
     assert(x_wstr_cmp(L"", L"a") == -1);
     assert(x_wstr_cmp(L"a", L"a") == 0);
+    assert(x_wstr_cmp(L"a", L"aa") == -1);
+    assert(x_wstr_cmp(L"aa", L"a") == 1);
     assert(x_wstr_cmp(L"abc", L"a") == 1);
     assert(x_wstr_cmp(L"a", L"abc") == -1);
     assert(x_wstr_cmp(L"abc", L"abc") == 0);
