@@ -195,6 +195,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
     void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     int  QSearchDlgState_FindResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     const FRAMEDATA* QSearchDlgState_GetSearchResultsFrame(const QSearchDlgState* pQSearchDlg);
+    tQSSearchResultsItem* QSearchDlgState_GetSearchResultsItem(QSearchDlgState* pQSearchDlg);
 
     void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos);
     void QSearchDlgState_clearCurrentMatches(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);

@@ -551,8 +551,14 @@ BOOL IsLogOutputActive(void)
 
     const FRAMEDATA* QSearchDlgState_GetSearchResultsFrame(const QSearchDlgState* pQSearchDlg)
     {
+        const tQSSearchResultsItem* pItem = QSearchDlgState_GetSearchResultsItem((QSearchDlgState *) pQSearchDlg);
+        return (pItem != NULL ? pItem->pFrame : NULL);
+    }
+
+    tQSSearchResultsItem* QSearchDlgState_GetSearchResultsItem(QSearchDlgState* pQSearchDlg)
+    {
         int n = pQSearchDlg->nResultsItemsCount;
-        return (n != 0 ? pQSearchDlg->SearchResultsItems[n - 1].pFrame : NULL);
+        return (n != 0 ? &pQSearchDlg->SearchResultsItems[n - 1] : NULL);
     }
 
     void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos)
@@ -1539,7 +1545,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     {
         tQSSearchResultsItem* pItem;
 
-        pItem = &g_QSearchDlg.SearchResultsItems[g_QSearchDlg.nResultsItemsCount - 1];
+        pItem = QSearchDlgState_GetSearchResultsItem(&g_QSearchDlg);
         pSearchResultsFrame = pItem->pFrame;
         // updating the existing item:
         tQSSearchResultsItem_Assign(pItem, pSearchResultsFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
