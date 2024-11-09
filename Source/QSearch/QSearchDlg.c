@@ -416,8 +416,27 @@ BOOL IsLogOutputActive(void)
         return nBegin;
     }
 
+    void tQSSearchResultsItem_Init(tQSSearchResultsItem* pItem)
+    {
+        x_zero_mem(pItem, sizeof(tQSSearchResultsItem));
+    }
+
+    void tQSSearchResultsItem_Assign(tQSSearchResultsItem* pItem, const FRAMEDATA* pFrame, const wchar_t* cszFindWhat, DWORD dwFindAllFlags)
+    {
+        pItem->pFrame = pFrame;
+        pItem->dwFindAllFlags = dwFindAllFlags;
+        lstrcpyW(pItem->szFindTextW, cszFindWhat);
+    }
+
+    void tQSSearchResultsItem_Copy(tQSSearchResultsItem* pDstItem, const tQSSearchResultsItem* pSrcItem)
+    {
+        x_mem_cpy(pDstItem, pSrcItem, sizeof(tQSSearchResultsItem));
+    }
+
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg)
     {
+        int i;
+
         pQSearchDlg->hDlg = NULL;
         pQSearchDlg->hFindEdit = NULL;
         pQSearchDlg->hFindListBox = NULL;
@@ -436,9 +455,11 @@ BOOL IsLogOutputActive(void)
         pQSearchDlg->bIsQSearchingRightNow = FALSE;
         pQSearchDlg->bMouseJustLeavedFindEdit = FALSE;
         pQSearchDlg->pDockData = NULL;
-        pQSearchDlg->pSearchResultsFrame = NULL;
-        pQSearchDlg->nFrameCount = 0;
-        x_zero_mem( (void*) pQSearchDlg->pSearchResultsFrames, MAX_RESULTS_FRAMES*sizeof(FRAMEDATA*) );
+        pQSearchDlg->nResultsItemsCount = 0;
+        for ( i = 0; i < MAX_RESULTS_FRAMES; i++ )
+        {
+            tQSSearchResultsItem_Init(&pQSearchDlg->SearchResultsItems[i]);
+        }
         pQSearchDlg->szFindTextW[0] = 0;
         pQSearchDlg->szFindAllFindTextW[0] = 0;
         pQSearchDlg->szLastHighlightTextW[0] = 0;
@@ -456,33 +477,19 @@ BOOL IsLogOutputActive(void)
         tDynamicBuffer_Init(&pQSearchDlg->findAllMatchesBuf);
     }
 
-    static BOOL isAnyMDIandFileOutput(void)
-    {
-        if ( g_Plugin.nMDI != WMD_SDI )
-        {
-            DWORD dwFindAllMode = (g_Options.dwFindAllMode & QS_FINDALL_MASK);
-            if ( (dwFindAllMode == QS_FINDALL_FILEOUTPUT_MULT) ||
-                 (dwFindAllMode == QS_FINDALL_FILEOUTPUT_SNGL) )
-            {
-                return TRUE;
-            }
-        }
-        return FALSE;
-    }
-
     static void removeFrameFromResults(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
     {
         int i, j;
 
         i = 0;
         j = 0;
-        while ( j < pQSearchDlg->nFrameCount )
+        while ( j < pQSearchDlg->nResultsItemsCount )
         {
-            if ( pQSearchDlg->pSearchResultsFrames[j] != pFrame )
+            if ( pQSearchDlg->SearchResultsItems[j].pFrame != pFrame )
             {
                 if ( i != j )
                 {
-                    pQSearchDlg->pSearchResultsFrames[i] = pQSearchDlg->pSearchResultsFrames[j];
+                    tQSSearchResultsItem_Copy(&pQSearchDlg->SearchResultsItems[i], &pQSearchDlg->SearchResultsItems[j]);
                 }
                 ++i;
             }
@@ -491,81 +498,61 @@ BOOL IsLogOutputActive(void)
 
         if ( i != j ) // pFrame has been removed
         {
-            pQSearchDlg->nFrameCount = i;
-            pQSearchDlg->pSearchResultsFrames[i] = NULL;
-            if ( pQSearchDlg->pSearchResultsFrame == pFrame )
-            {
-                if ( i != 0 )
-                    pQSearchDlg->pSearchResultsFrame = pQSearchDlg->pSearchResultsFrames[i - 1];
-                else
-                    pQSearchDlg->pSearchResultsFrame = NULL;
-            }
+            pQSearchDlg->nResultsItemsCount = i;
+            tQSSearchResultsItem_Init(&pQSearchDlg->SearchResultsItems[i]);
         }
     }
 
-    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame, const wchar_t* cszFindWhat, DWORD dwFindAllFlags)
     {
-        if ( isAnyMDIandFileOutput() )
+        if ( pQSearchDlg->nResultsItemsCount != 0 )
         {
-            if ( pQSearchDlg->nFrameCount != 0 )
-            {
-                removeFrameFromResults(pQSearchDlg, pFrame); // to ensure that pFrame is unique
-            }
-
-            if ( pQSearchDlg->nFrameCount == MAX_RESULTS_FRAMES ) // full
-            {
-                int i;
-
-                for ( i = 0; i < MAX_RESULTS_FRAMES - 1; ++i )
-                {
-                    pQSearchDlg->pSearchResultsFrames[i] = pQSearchDlg->pSearchResultsFrames[i + 1];
-                }
-                pQSearchDlg->nFrameCount = MAX_RESULTS_FRAMES - 1;
-            }
-
-            pQSearchDlg->pSearchResultsFrames[pQSearchDlg->nFrameCount] = pFrame;
-            ++pQSearchDlg->nFrameCount;
+            removeFrameFromResults(pQSearchDlg, pFrame); // to ensure that pFrame is unique
         }
 
-        pQSearchDlg->pSearchResultsFrame = pFrame;
+        if ( pQSearchDlg->nResultsItemsCount == MAX_RESULTS_FRAMES ) // full
+        {
+            int i;
+
+            for ( i = 0; i < MAX_RESULTS_FRAMES - 1; ++i )
+            {
+                tQSSearchResultsItem_Copy(&pQSearchDlg->SearchResultsItems[i], &pQSearchDlg->SearchResultsItems[i + 1]);
+            }
+            pQSearchDlg->nResultsItemsCount = MAX_RESULTS_FRAMES - 1;
+        }
+
+        tQSSearchResultsItem_Assign(&pQSearchDlg->SearchResultsItems[pQSearchDlg->nResultsItemsCount], pFrame, cszFindWhat, dwFindAllFlags);
+        ++pQSearchDlg->nResultsItemsCount;
     }
 
     void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
     {
-        if ( isAnyMDIandFileOutput() || (pQSearchDlg->nFrameCount != 0) )
+        if ( pQSearchDlg->nResultsItemsCount != 0 )
         {
-            if ( pQSearchDlg->nFrameCount != 0 )
-            {
-                removeFrameFromResults(pQSearchDlg, pFrame);
-            }
-            else if ( pFrame == pQSearchDlg->pSearchResultsFrame )
-            {
-                pQSearchDlg->pSearchResultsFrame = NULL;
-            }
-        }
-        else if ( pFrame == pQSearchDlg->pSearchResultsFrame )
-        {
-            pQSearchDlg->pSearchResultsFrame = NULL;
+            removeFrameFromResults(pQSearchDlg, pFrame);
         }
     }
 
-    BOOL QSearchDlgState_IsResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
+    int QSearchDlgState_FindResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
     {
-        if ( pFrame == pQSearchDlg->pSearchResultsFrame )
-            return TRUE;
-
-        if ( isAnyMDIandFileOutput() || (pQSearchDlg->nFrameCount != 0) )
+        if ( pQSearchDlg->nResultsItemsCount != 0 )
         {
             int i;
 
-            for ( i = 0; i < pQSearchDlg->nFrameCount; ++i )
+            for ( i = 0; i < pQSearchDlg->nResultsItemsCount; ++i )
             {
-                if ( pQSearchDlg->pSearchResultsFrames[i] == pFrame )
-                    return TRUE;
+                if ( pQSearchDlg->SearchResultsItems[i].pFrame == pFrame )
+                    return i;
             }
         }
 
-        return FALSE;
+        return -1;
+    }
+
+    const FRAMEDATA* QSearchDlgState_GetSearchResultsFrame(const QSearchDlgState* pQSearchDlg)
+    {
+        int n = pQSearchDlg->nResultsItemsCount;
+        return (n != 0 ? pQSearchDlg->SearchResultsItems[n - 1].pFrame : NULL);
     }
 
     void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos)
@@ -1513,6 +1500,7 @@ static void qsShowFindResults_FileOutput_AddOccurrence(tFindAllContext* pFindCon
 
 static void addResultsToFileOutput(tFindAllContext* pFindContext)
 {
+    const FRAMEDATA* pSearchResultsFrame;
     HWND hMainWnd;
     HWND hWndEdit;
     BOOL bSingleFileOutput;
@@ -1532,6 +1520,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         szCoderAlias[0] = 0;
     }
 
+    pSearchResultsFrame = NULL;
     hMainWnd = g_Plugin.hMainWnd;
     hWndEdit = NULL;
     bSingleFileOutput = ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_SNGL) ? TRUE : FALSE;
@@ -1540,16 +1529,25 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
     if ( bSingleFileOutput && (g_Plugin.nMDI == WMD_SDI) )
     {
-        g_QSearchDlg.pSearchResultsFrame = (FRAMEDATA *) SendMessageW(hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
+        pSearchResultsFrame = (FRAMEDATA *) SendMessageW(hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
+        g_QSearchDlg.nResultsItemsCount = 0; // only one in SDI
+        QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pSearchResultsFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
         bOutputResult = TRUE;
     }
-    else if ( bSingleFileOutput && (g_QSearchDlg.pSearchResultsFrame != NULL) &&
-              SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
+    else if ( bSingleFileOutput && (g_QSearchDlg.nResultsItemsCount != 0) &&
+              SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) QSearchDlgState_GetSearchResultsFrame(&g_QSearchDlg)) )
     {
+        tQSSearchResultsItem* pItem;
+
+        pItem = &g_QSearchDlg.SearchResultsItems[g_QSearchDlg.nResultsItemsCount - 1];
+        pSearchResultsFrame = pItem->pFrame;
+        // updating the existing item:
+        tQSSearchResultsItem_Assign(pItem, pSearchResultsFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
+
         if ( g_Plugin.nMDI != WMD_SDI )
             qs_bEditCanBeNonActive = TRUE;
 
-        SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame);
+        SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEACTIVATE, 0, (LPARAM) pSearchResultsFrame);
         bOutputResult = TRUE;
     }
     else if ( ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_FILEOUTPUT_MULT) &&
@@ -1651,7 +1649,6 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
         tDynamicBuffer_Free(&oldCmdLineEnd);
         tDynamicBuffer_Free(&newCmdLineEnd);
 
-        g_QSearchDlg.pSearchResultsFrame = NULL;
         bOutputResult = TRUE;
         bNewWindow = TRUE;
     }
@@ -1662,17 +1659,20 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
         if ( SendMessageW(g_Plugin.hMainWnd, WM_COMMAND, IDM_FILE_NEW, 0) == TRUE )
         {
-            g_QSearchDlg.pSearchResultsFrame = NULL;
             bOutputResult = TRUE;
         }
     }
 
     if ( bOutputResult )
     {
-        if ( g_QSearchDlg.pSearchResultsFrame == NULL )
+        if ( pSearchResultsFrame == NULL && !bNewWindow )
         {
             FRAMEDATA* pFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
-            QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pFrame);
+            if ( g_Plugin.nMDI == WMD_SDI )
+            {
+                g_QSearchDlg.nResultsItemsCount = 0; // only one in SDI
+            }
+            QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
         }
 
         if ( bNewWindow && hWndEdit )
@@ -3800,7 +3800,7 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
     }
 }
 
-void qsUpdateHighlightForFindAll(BOOL bForceHighlight)
+void qsUpdateHighlightForFindAll(const wchar_t* cszFindWhat, DWORD dwFindAllFlags, BOOL bForceHighlight)
 {
     DWORD dwOptFlagsTemp[OPTF_COUNT_TOTAL];
 
@@ -3811,12 +3811,12 @@ void qsUpdateHighlightForFindAll(BOOL bForceHighlight)
     dwOptFlagsTemp[OPTF_SRCH_FROM_BEGINNING] = 0;
     dwOptFlagsTemp[OPTF_SRCH_STOP_EOF] = 0;
     dwOptFlagsTemp[OPTF_SRCH_REGEXP_DOT_NEWLINE] = 0;
-    dwOptFlagsTemp[OPTF_SRCH_USE_SPECIALCHARS] = (g_QSearchDlg.dwFindAllFlags & QS_FAF_SPECCHAR) ? 1 : 0;
-    dwOptFlagsTemp[OPTF_SRCH_USE_REGEXP] = (g_QSearchDlg.dwFindAllFlags & QS_FAF_REGEXP) ? 1 : 0;
-    dwOptFlagsTemp[OPTF_SRCH_MATCHCASE] = (g_QSearchDlg.dwFindAllFlags & QS_FAF_MATCHCASE) ? 1 : 0;
-    dwOptFlagsTemp[OPTF_SRCH_WHOLEWORD] = (g_QSearchDlg.dwFindAllFlags & QS_FAF_WHOLEWORD) ? 1 : 0;
+    dwOptFlagsTemp[OPTF_SRCH_USE_SPECIALCHARS] = (dwFindAllFlags & QS_FAF_SPECCHAR) ? 1 : 0;
+    dwOptFlagsTemp[OPTF_SRCH_USE_REGEXP] = (dwFindAllFlags & QS_FAF_REGEXP) ? 1 : 0;
+    dwOptFlagsTemp[OPTF_SRCH_MATCHCASE] = (dwFindAllFlags & QS_FAF_MATCHCASE) ? 1 : 0;
+    dwOptFlagsTemp[OPTF_SRCH_WHOLEWORD] = (dwFindAllFlags & QS_FAF_WHOLEWORD) ? 1 : 0;
 
-    qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, g_QSearchDlg.szFindAllFindTextW, dwOptFlagsTemp,
+    qsearchDoTryHighlightAll(g_QSearchDlg.hDlg, cszFindWhat, dwOptFlagsTemp,
         QHC_CHECKBOX_CHECKED | QHC_IGNORE_SELECTION | QHC_DONT_CUT_REGEXP | (bForceHighlight ? QHC_FORCE_HIGHLIGHT : 0)
     );
 }
@@ -6762,7 +6762,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
             aeftW.dwTextLen = lstrlenW(szFindAllW);
             aeftW.nNewLine = AELB_ASIS;
 
-            FindContext.cszFindWhat = pszFindTextW;
+            FindContext.cszFindWhat = cszFindWhat;
             FindContext.pFindTextW = &aeftW;
             FindContext.pFrame = NULL;
             FindContext.dwFindAllMode = g_Options.dwFindAllMode;
@@ -6817,7 +6817,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                         pFr = pFrameInitial;
                         for ( ; ; )
                         {
-                            if ( pFr == g_QSearchDlg.pSearchResultsFrame )
+                            if ( pFr == QSearchDlgState_GetSearchResultsFrame(&g_QSearchDlg) )
                             {
                                 --FindContext.nTotalFiles;
                                 break;
@@ -6862,9 +6862,9 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                 for ( ; ; )
                 {
-                    if ( bAllFiles && FindContext.pFrame == g_QSearchDlg.pSearchResultsFrame )
+                    if ( bAllFiles && FindContext.pFrame == QSearchDlgState_GetSearchResultsFrame(&g_QSearchDlg) )
                     {
-                        // skip the pSearchResultsFrame
+                        // skip the SearchResultsFrame
                         FindContext.pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_NEXT, (LPARAM) FindContext.pFrame);
                         if ( FindContext.pFrame != pFrameInitial )
                         {
@@ -6986,7 +6986,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                     bNeedsFindAllCountOnly = FALSE;
 
-                    if ( pFrameInitial != g_QSearchDlg.pSearchResultsFrame )
+                    if ( pFrameInitial != QSearchDlgState_GetSearchResultsFrame(&g_QSearchDlg) )
                     {
                         tDynamicBuffer_Swap(&g_QSearchDlg.currentMatchesBuf, &tempMatchesBuf);
                         qsSetInfoOccurrencesFound_Tracking(nCurrentMatches, 0, "qsearchDoSearchText, bAllFiles");
@@ -7031,7 +7031,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
                 if ( g_QSearchDlg.currentMatchesBuf.nBytesStored != 0 )
                 {
                     // there are matches in the current file
-                    qsUpdateHighlightForFindAll(FALSE);
+                    qsUpdateHighlightForFindAll(g_QSearchDlg.szFindAllFindTextW, g_QSearchDlg.dwFindAllFlags, FALSE);
                 }
             }
         }

@@ -1020,7 +1020,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             {
                 g_bFrameActivated = FALSE;
 
-                qsUpdateHighlightForFindAll(TRUE);
+                qsUpdateHighlightForFindAll(g_QSearchDlg.szFindAllFindTextW, g_QSearchDlg.dwFindAllFlags, TRUE);
             }
             return TRUE;
         }
@@ -1128,7 +1128,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     {
         g_bFrameActivated = FALSE;
 
-        qsUpdateHighlightForFindAll(TRUE);
+        qsUpdateHighlightForFindAll(g_QSearchDlg.szFindAllFindTextW, g_QSearchDlg.dwFindAllFlags, TRUE);
     }
 
     return TRUE;
@@ -1473,7 +1473,7 @@ HWND GetWndEdit(HWND hMainWnd)
 #define xbr_diff(a, b) (((a) > (b)) ? ((a) - (b)) : ((b) - (a)))
 
 static BOOL GetLineAtIndex(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf);
-static BOOL PatOpenLine(HWND hWndEdit);
+static BOOL PatOpenLine(HWND hWndEdit, int nSearchResultsItemIdx);
 static void updateFrameStateInFindAllFrames(const FRAMEDATA* pFrame, UINT uFrameItemState);
 
 LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1558,15 +1558,16 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_LBUTTONDBLCLK:
-            if ( g_QSearchDlg.pSearchResultsFrame &&
-                 SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) g_QSearchDlg.pSearchResultsFrame) )
+            if ( g_QSearchDlg.nResultsItemsCount != 0 )
             {
                 const FRAMEDATA* pFrame;
+                int nSearchResultsItemIdx;
 
                 pFrame = (FRAMEDATA *) SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEFIND, FWF_BYEDITWINDOW, (LPARAM) hWnd);
-                if ( QSearchDlgState_IsResultsFrame(&g_QSearchDlg, pFrame) )
+                nSearchResultsItemIdx = QSearchDlgState_FindResultsFrame(&g_QSearchDlg, pFrame);
+                if ( nSearchResultsItemIdx >= 0 )
                 {
-                    if ( PatOpenLine(hWnd) )
+                    if ( PatOpenLine(hWnd, nSearchResultsItemIdx) )
                         return 0;
                 }
             }
@@ -1610,7 +1611,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case IDM_FILE_NEW:
                     if ( g_Plugin.nMDI == WMD_SDI )
                     {
-                        g_QSearchDlg.pSearchResultsFrame = NULL;
+                        g_QSearchDlg.nResultsItemsCount = 0;
                     }
                     break;
                 case IDM_EDIT_FINDNEXTDOWN:
@@ -1724,7 +1725,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 if ( g_Plugin.nMDI == WMD_SDI )
                 {
-                    g_QSearchDlg.pSearchResultsFrame = NULL;
+                    g_QSearchDlg.nResultsItemsCount = 0;
                 }
                 if ( g_QSearchDlg.hDlg )
                 {
@@ -3885,7 +3886,7 @@ static unsigned int MatchRePattern(const wchar_t* wszPattern, const AETEXTRANGEW
     return nGroups;
 }
 //
-BOOL PatOpenLine(HWND hWndEdit)
+BOOL PatOpenLine(HWND hWndEdit, int nSearchResultsItemIdx)
 {
     tDynamicBuffer textBuf;
     AECHARINDEX    ciCaret;
@@ -3952,7 +3953,21 @@ BOOL PatOpenLine(HWND hWndEdit)
 
                     if ( SendMessage(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) textBuf.ptr) )
                     {
-                        qsUpdateHighlightForFindAll(bResult ? TRUE : FALSE);
+                        const wchar_t* cszFindWhat;
+                        DWORD dwFindAllFlags;
+
+                        if ( nSearchResultsItemIdx >= 0 && nSearchResultsItemIdx < g_QSearchDlg.nResultsItemsCount )
+                        {
+                            cszFindWhat = g_QSearchDlg.SearchResultsItems[nSearchResultsItemIdx].szFindTextW;
+                            dwFindAllFlags = g_QSearchDlg.SearchResultsItems[nSearchResultsItemIdx].dwFindAllFlags;
+                        }
+                        else
+                        {
+                            cszFindWhat = g_QSearchDlg.szFindAllFindTextW;
+                            dwFindAllFlags = g_QSearchDlg.dwFindAllFlags;
+                        }
+
+                        qsUpdateHighlightForFindAll(cszFindWhat, dwFindAllFlags, bResult ? TRUE : FALSE);
                         if ( bResult )
                         {
                             g_bFrameActivated = FALSE;

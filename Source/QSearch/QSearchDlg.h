@@ -143,6 +143,16 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
         INT_PTR nMatches;
     } tQSFindAllFrameItem;
 
+    typedef struct sQSSearchResultsItem {
+        const FRAMEDATA* pFrame;
+        DWORD            dwFindAllFlags; // see QS_FAF_*
+        wchar_t          szFindTextW[MAX_TEXT_SIZE];
+    } tQSSearchResultsItem;
+
+    void tQSSearchResultsItem_Init(tQSSearchResultsItem* pItem);
+    void tQSSearchResultsItem_Assign(tQSSearchResultsItem* pItem, const FRAMEDATA* pFrame, const wchar_t* cszFindWhat, DWORD dwFindAllFlags);
+    void tQSSearchResultsItem_Copy(tQSSearchResultsItem* pDstItem, const tQSSearchResultsItem* pSrcItem);
+
     typedef struct tQSearchDlgState {
         HWND             hDlg;
         HWND             hFindEdit;
@@ -161,9 +171,8 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
         BOOL             bIsQSearchingRightNow;
         BOOL             bMouseJustLeavedFindEdit;
         DOCK*            pDockData;
-        const FRAMEDATA* pSearchResultsFrame;
-        int              nFrameCount;
-        const FRAMEDATA* pSearchResultsFrames[MAX_RESULTS_FRAMES];
+        int              nResultsItemsCount;
+        tQSSearchResultsItem SearchResultsItems[MAX_RESULTS_FRAMES];
         wchar_t          szFindTextW[MAX_TEXT_SIZE];
         wchar_t          szFindAllFindTextW[MAX_TEXT_SIZE];
         wchar_t          szLastHighlightTextW[MAX_TEXT_SIZE];
@@ -182,9 +191,10 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
     } QSearchDlgState;
 
     void initializeQSearchDlgState(QSearchDlgState* pQSearchDlg);
-    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    void QSearchDlgState_AddResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame, const wchar_t* cszFindWhat, DWORD dwFindAllFlags);
     void QSearchDlgState_RemoveResultsFrame(QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
-    BOOL QSearchDlgState_IsResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    int  QSearchDlgState_FindResultsFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
+    const FRAMEDATA* QSearchDlgState_GetSearchResultsFrame(const QSearchDlgState* pQSearchDlg);
 
     void QSearchDlgState_addCurrentMatch(QSearchDlgState* pQSearchDlg, matchpos_t nMatchPos);
     void QSearchDlgState_clearCurrentMatches(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
@@ -220,7 +230,7 @@ BOOL qsearchIsSavingHistoryToStdLocation(void);
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
 void qsearchDlgApplyEditorColors(void);
 
-void qsUpdateHighlightForFindAll(BOOL bForceHighlight);
+void qsUpdateHighlightForFindAll(const wchar_t* cszFindWhat, DWORD dwFindAllFlags, BOOL bForceHighlight);
 
 #ifdef _DEBUG
   #define qsSetInfoOccurrencesFound_Tracking(nOccurrences, nFlags, comment) { Debug_OutputA(comment ## " -> qsSetInfoOccurrencesFound\n"); qsSetInfoOccurrencesFound(nOccurrences, nFlags); }
