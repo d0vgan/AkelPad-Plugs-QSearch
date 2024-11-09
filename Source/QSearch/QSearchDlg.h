@@ -218,7 +218,7 @@ BOOL qsearchIsSearchFlagsBeingSaved(void);
 BOOL qsearchIsSavingHistoryToStdLocation(void);
 
 INT_PTR qsearchDlgOnAltHotkey(HWND hDlg, WPARAM wParam);
-void qsearchDlgApplyEditorColors();
+void qsearchDlgApplyEditorColors(void);
 
 void qsUpdateHighlightForFindAll(BOOL bForceHighlight);
 
@@ -233,7 +233,7 @@ void qsUpdateHighlightForFindAll(BOOL bForceHighlight);
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 
-void qsSetInfoEmpty();
+void qsSetInfoEmpty(void);
 
 BOOL qsIsHotKeyPressed(DWORD dwHotKey);
 
@@ -249,6 +249,8 @@ void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams);
 #define DLLA_CODER_SETALIAS         6
 #define DLLA_CODER_GETALIAS         18
 #define MAX_CODERALIAS              MAX_PATH
+
+#define DLLA_CODER_GETVARIABLE      22
 
 #define MARKFLAG_MATCHCASE 0x01
 #define MARKFLAG_REGEXP    0x02
@@ -286,9 +288,22 @@ typedef struct sDLLECCODERSETTINGS_SETALIAS {
     const unsigned char* pszAlias;
 } DLLECCODERSETTINGS_SETALIAS;
 
+typedef struct sDLLCODERSETTINGS_GETVARIABLE {
+    UINT_PTR dwStructSize;
+    INT_PTR nAction;
+    HWND hEditWnd;
+    LPVOID hEditDoc;
+    LPCWSTR pszVarName;
+    LPWSTR pszVarValue;
+    INT_PTR* pnVarValueLen;
+} DLLCODERSETTINGS_GETVARIABLE;
+
 void CallHighlightMain(void* phlParams);
 void CallCoderSettings(void* pstParams);
 BOOL IsHighlightMainActive(void);
+void GetCoderAliasW(wchar_t* pszAliasBufW);
+void SetCoderAliasW(const wchar_t* cszAliasBufW);
+INT_PTR GetCoderVariableW(HWND hWndEdit, const wchar_t* cszVarName, wchar_t* pszVarValue);
 /* <<<<<<<<<<<<<<<<<<<<<<<< highlight plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> log plugin >>>>>>>>>>>>>>>>>>>>>>>> */
@@ -324,7 +339,7 @@ typedef struct sDLLECLOG_OUTPUT_4 {
 
 void CallLogOutput(void* ploParams);
 BOOL IsLogOutputActive(void);
-HWND LogOutput_GetEditHwnd();
+HWND LogOutput_GetEditHwnd(void);
 /* <<<<<<<<<<<<<<<<<<<<<<<< log plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
 //// Utils ////

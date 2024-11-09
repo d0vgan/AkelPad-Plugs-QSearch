@@ -1573,7 +1573,10 @@ LRESULT CALLBACK NewEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_PAINT:
-            qsearchDlgApplyEditorColors();
+            if ( !g_Plugin.bAkelPadOnFinish )
+            {
+                qsearchDlgApplyEditorColors();
+            }
             break;
     }
 
@@ -1757,10 +1760,10 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             LRESULT lResult = 0;
 
+            g_Plugin.bAkelPadOnFinish = TRUE;
+
             if ( g_Plugin.pMainProcData && g_Plugin.pMainProcData->NextProc )
                 lResult = g_Plugin.pMainProcData->NextProc(hWnd, uMsg, wParam, lParam);
-
-            g_Plugin.bAkelPadOnFinish = TRUE;
 
 #if TEST_UNINIT
             WriteLog("AKDN_MAIN_ONFINISH: Before dlgswtchUninitialize()\n");

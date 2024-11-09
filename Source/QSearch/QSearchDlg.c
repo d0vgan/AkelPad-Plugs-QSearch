@@ -237,7 +237,7 @@ BOOL IsHighlightMainActive(void)
     return FALSE;
 }
 
-static void getCoderAliasW(wchar_t* pszAliasBufW)
+void GetCoderAliasW(wchar_t* pszAliasBufW)
 {
     DLLECCODERSETTINGS_GETALIAS stParams;
 
@@ -253,15 +253,39 @@ static void getCoderAliasW(wchar_t* pszAliasBufW)
     CallCoderSettings( &stParams );
 }
 
-static void setCoderAliasW(const wchar_t* pszAliasBufW)
+void SetCoderAliasW(const wchar_t* cszAliasBufW)
 {
     DLLECCODERSETTINGS_SETALIAS stParams;
 
     stParams.dwStructSize = sizeof(DLLECCODERSETTINGS_SETALIAS);
     stParams.nAction = DLLA_CODER_SETALIAS;
-    stParams.pszAlias = (const unsigned char *) pszAliasBufW;
+    stParams.pszAlias = (const unsigned char *) cszAliasBufW;
 
     CallCoderSettings( &stParams );
+}
+
+INT_PTR GetCoderVariableW(HWND hWndEdit, const wchar_t* cszVarName, wchar_t* pszVarValue)
+{
+    INT_PTR nValueLen;
+    DLLCODERSETTINGS_GETVARIABLE stParams;
+
+    nValueLen = 0;
+    if ( pszVarValue )
+    {
+        pszVarValue[0] = 0;
+    }
+
+    stParams.dwStructSize = sizeof(DLLCODERSETTINGS_GETVARIABLE);
+    stParams.nAction = DLLA_CODER_GETVARIABLE;
+    stParams.hEditWnd = hWndEdit;
+    stParams.hEditDoc = NULL;
+    stParams.pszVarName = cszVarName;
+    stParams.pszVarValue = pszVarValue;
+    stParams.pnVarValueLen = &nValueLen;
+
+    CallPluginFuncW(cszCoderSettingsW, &stParams);
+
+    return nValueLen;
 }
 /* <<<<<<<<<<<<<<<<<<<<<<<< highlight plugin <<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -432,7 +456,7 @@ BOOL IsLogOutputActive(void)
         tDynamicBuffer_Init(&pQSearchDlg->findAllMatchesBuf);
     }
 
-    static BOOL isAnyMDIandFileOutput()
+    static BOOL isAnyMDIandFileOutput(void)
     {
         if ( g_Plugin.nMDI != WMD_SDI )
         {
@@ -781,7 +805,7 @@ static BOOL isCheckBoxChecked(HWND hDlg, int nItemId)
     return bChecked;
 }
 
-void qsSetInfoEmpty()
+void qsSetInfoEmpty(void)
 {
     if ( g_QSearchDlg.hStInfo )
     {
@@ -1140,7 +1164,7 @@ static void LogOutput_AddText(const wchar_t* cszText, UINT_PTR nLen)
     CallLogOutput( &loParams );
 }
 
-HWND LogOutput_GetEditHwnd()
+HWND LogOutput_GetEditHwnd(void)
 {
     HWND hEditWnd = NULL;
     DLLECLOG_OUTPUT_2 loParams;
@@ -1236,7 +1260,7 @@ static void initLogOutput(DWORD dwFindAllResult)
     if ( g_bHighlightPlugin )
     {
         if ( dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
-            getCoderAliasW(szCoderAlias);
+            GetCoderAliasW(szCoderAlias);
         else
             lstrcpyW(szCoderAlias, L".qsfndall_tolog");
     }
@@ -1499,7 +1523,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     if ( g_bHighlightPlugin )
     {
         if ( pFindContext->dwFindAllResult & QS_FINDALL_RSLT_CODERALIAS )
-            getCoderAliasW(szCoderAlias);
+            GetCoderAliasW(szCoderAlias);
         else
             lstrcpyW(szCoderAlias, L".qsfndall_tofile");
     }
@@ -1663,7 +1687,7 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
             if ( szCoderAlias[0] )
             {
-                setCoderAliasW(szCoderAlias);
+                SetCoderAliasW(szCoderAlias);
             }
 
             nStartPos = SendMessageW(hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hWndEdit, 0);
@@ -2891,7 +2915,7 @@ static void strAppendAltHotkeyA(char* strA, DWORD dwAltHotkey)
     lstrcatA(strA, szHotKeyA);
 }
 
-static void OnSrchModeChanged()
+static void OnSrchModeChanged(void)
 {
     qsdlgShowHideWholeWordCheckBox(g_QSearchDlg.hDlg, g_Options.dwFlags);
     qs_bForceFindFirst = TRUE;
@@ -2906,7 +2930,7 @@ static void OnSrchModeChanged()
     qsSetInfoEmpty_Tracking("OnSrchModeChanged");
 }
 
-static void OnChWholeWordSrchMode()
+static void OnChWholeWordSrchMode(void)
 {
     if ( g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] )
     {
@@ -3834,76 +3858,38 @@ static BOOL getEditorColors(COLORREF* pcrTextColor, COLORREF* pcrBkgndColor)
         return FALSE;
 
     nValuesRead = 0;
-    pf = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd, AKD_DLLFINDW, (WPARAM) L"Coder::HighLight", 0 );
+    pf = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd, AKD_DLLFINDW, (WPARAM) cszHighlightMainW, 0 );
 
     if ( pf && pf->bRunning )
     {
-        struct sCallParams
-        {
-            UINT_PTR dwStructSize;
-            INT_PTR nAction;
-            HWND hEditWnd;
-            LPVOID hEditDoc;
-            LPCWSTR pszVarName;
-            LPWSTR pszVarValue;
-            INT_PTR* pnVarValueLen;
-        };
-
-        PLUGINCALLSENDW pcs;
-        struct sCallParams callParams;
+        HWND hWndEdit;
         COLORREF crColor;
         INT_PTR nValueLen;
         WCHAR szValue[64];
 
-        nValueLen = 0;
-        szValue[0] = 0;
-        callParams.dwStructSize = sizeof(callParams);
-        callParams.nAction = 22; // DLLA_CODER_GETVARIABLE
-        callParams.hEditWnd = GetWndEdit(g_Plugin.hMainWnd);
-        callParams.hEditDoc = NULL;
-        callParams.pszVarName = L"HighLight_BasicTextColor";
-        callParams.pszVarValue = szValue;
-        callParams.pnVarValueLen = &nValueLen;
+        hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
 
-        x_zero_mem(&pcs, sizeof(PLUGINCALLSENDW));
-        pcs.pFunction = L"Coder::Settings";
-        pcs.lParam = (LPARAM) &callParams;
-
-        SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcs );
-        if ( nValueLen != 0 )
+        nValueLen = GetCoderVariableW(hWndEdit, L"HighLight_BasicTextColor", szValue);
+        if ( nValueLen >= 7 && szValue[0] == _T('#') )
         {
-            if ( szValue[0] == _T('#') && nValueLen >= 7 )
-            {
-                crColor = (COLORREF) xhextoiW(szValue + 1);
-                *pcrTextColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
-                ++nValuesRead;
-            }
+            crColor = (COLORREF) xhextoiW(szValue + 1);
+            *pcrTextColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
+            ++nValuesRead;
         }
 
-        nValueLen = 0;
-        szValue[0] = 0;
-        callParams.pszVarName = L"HighLight_BasicBkColor";
-
-        pcs.pFunction = L"Coder::Settings";
-        pcs.lParam = (LPARAM) &callParams;
-        pcs.dwSupport = 0;
-
-        SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcs );
-        if ( nValueLen != 0 )
+        nValueLen = GetCoderVariableW(hWndEdit, L"HighLight_BasicBkColor", szValue);
+        if ( nValueLen >= 7 && szValue[0] == _T('#') )
         {
-            if ( szValue[0] == _T('#') && nValueLen >= 7 )
-            {
-                crColor = (COLORREF) xhextoiW(szValue + 1);
-                *pcrBkgndColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
-                ++nValuesRead;
-            }
+            crColor = (COLORREF) xhextoiW(szValue + 1);
+            *pcrBkgndColor = RGB( GetBValue(crColor), GetGValue(crColor), GetRValue(crColor) );
+            ++nValuesRead;
         }
     }
 
     return (nValuesRead == 2);
 }
 
-void qsearchDlgApplyEditorColors()
+void qsearchDlgApplyEditorColors(void)
 {
     COLORREF crTextColor;
     COLORREF crBkgndColor;
