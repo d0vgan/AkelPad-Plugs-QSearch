@@ -1535,9 +1535,6 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
 
     if ( bSingleFileOutput && (g_Plugin.nMDI == WMD_SDI) )
     {
-        pSearchResultsFrame = (FRAMEDATA *) SendMessageW(hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0);
-        g_QSearchDlg.nResultsItemsCount = 0; // only one in SDI
-        QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pSearchResultsFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
         bOutputResult = TRUE;
     }
     else if ( bSingleFileOutput && (g_QSearchDlg.nResultsItemsCount != 0) &&
@@ -1673,12 +1670,12 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     {
         if ( pSearchResultsFrame == NULL && !bNewWindow )
         {
-            FRAMEDATA* pFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
+            pSearchResultsFrame = (FRAMEDATA *) SendMessageW( hMainWnd, AKD_FRAMEFIND, FWF_CURRENT, 0 );
             if ( g_Plugin.nMDI == WMD_SDI )
             {
                 g_QSearchDlg.nResultsItemsCount = 0; // only one in SDI
             }
-            QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
+            QSearchDlgState_AddResultsFrame(&g_QSearchDlg, pSearchResultsFrame, pFindContext->cszFindWhat, pFindContext->dwFindAllFlags);
         }
 
         if ( bNewWindow && hWndEdit )
