@@ -1612,6 +1612,16 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if ( g_Plugin.nMDI == WMD_SDI )
                     {
                         g_QSearchDlg.nResultsItemsCount = 0;
+                        QSearchDlgState_clearFindAllMatchesAndFrames(&g_QSearchDlg, FALSE);
+
+                        // for MDI, the following happens on WM_MDIACTIVATE:
+                        // for PMDI, the following happens on AKDN_FRAME_ACTIVATE:
+                        if ( g_QSearchDlg.hDlg )
+                        {
+                            g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
+                            SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                        }
+                        QSearchDlgState_clearLastHighlighted(&g_QSearchDlg);
                     }
                     break;
                 case IDM_EDIT_FINDNEXTDOWN:
@@ -1726,6 +1736,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 if ( g_Plugin.nMDI == WMD_SDI )
                 {
                     g_QSearchDlg.nResultsItemsCount = 0;
+                    QSearchDlgState_clearFindAllMatchesAndFrames(&g_QSearchDlg, FALSE);
                 }
                 if ( g_QSearchDlg.hDlg )
                 {
