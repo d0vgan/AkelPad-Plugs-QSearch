@@ -471,6 +471,7 @@ BOOL IsLogOutputActive(void)
         pQSearchDlg->crBkgndColor = GetSysColor(COLOR_WINDOW);
         pQSearchDlg->hBkgndBrush = NULL;
         pQSearchDlg->hCurrentMatchSetInfoEditWnd = NULL;
+        pQSearchDlg->nGoToNextFindAllPosToCompare = -1;
         pQSearchDlg->bFindAllWasUsingLogOutput = TRUE;
         tDynamicBuffer_Init(&pQSearchDlg->currentMatchesBuf);
         tDynamicBuffer_Init(&pQSearchDlg->findAllFramesBuf);
@@ -600,6 +601,7 @@ BOOL IsLogOutputActive(void)
     {
         pQSearchDlg->szFindAllFindTextW[0] = 0;
         pQSearchDlg->dwFindAllFlags = 0;
+        pQSearchDlg->nGoToNextFindAllPosToCompare = -1;
         pQSearchDlg->bFindAllWasUsingLogOutput = TRUE;
         if ( bFreeMemory )
         {
@@ -1536,6 +1538,8 @@ static void addResultsToFileOutput(tFindAllContext* pFindContext)
     if ( bSingleFileOutput && (g_Plugin.nMDI == WMD_SDI) )
     {
         bOutputResult = TRUE;
+        // in this mode, we are appending the search results to the current document
+        g_QSearchDlg.nGoToNextFindAllPosToCompare = (INT_PTR) SendMessageW(pFindContext->pFrame->ei.hWndEdit, AEM_GETRICHOFFSET, AEGI_LASTCHAR, 0);
     }
     else if ( bSingleFileOutput && (g_QSearchDlg.nResultsItemsCount != 0) &&
               SendMessageW(g_Plugin.hMainWnd, AKD_FRAMEISVALID, 0, (LPARAM) QSearchDlgState_GetSearchResultsFrame(&g_QSearchDlg)) )
@@ -6836,6 +6840,8 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
 
                 if ( (dwParams & QSEARCH_COUNTALL) == 0 )
                 {
+                    g_QSearchDlg.nGoToNextFindAllPosToCompare = -1;
+
                     if ( pFindAll->ShowFindResults.pfnInit == qsShowFindResults_LogOutput_Init )
                         g_QSearchDlg.bFindAllWasUsingLogOutput = TRUE;
                     else

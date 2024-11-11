@@ -1037,8 +1037,15 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     if ( pItem )
     {
         AECHARINDEX aeCi;
+        UINT nWhichIndex;
 
-        SendMessage( pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_FIRSTSELCHAR, (LPARAM) &aeCi );
+        if ( !(nFlags & GTFAM_PREV) && g_QSearchDlg.nGoToNextFindAllPosToCompare != -1 && 
+             g_QSearchDlg.nGoToNextFindAllPosToCompare <= (INT_PTR) SendMessageW(pFrame->ei.hWndEdit, AEM_GETRICHOFFSET, AEGI_CARETCHAR, 0) )
+            nWhichIndex = AEGI_FIRSTCHAR;
+        else
+            nWhichIndex = AEGI_FIRSTSELCHAR;
+
+        SendMessage( pFrame->ei.hWndEdit, AEM_GETINDEX, nWhichIndex, (LPARAM) &aeCi );
         nMatchPos = to_matchpos_ae(&aeCi, pFrame->ei.hWndEdit);
     }
     else
@@ -1064,6 +1071,8 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         }
         nMatchPos = MATCHPOS_INVALID;
     }
+
+    g_QSearchDlg.nGoToNextFindAllPosToCompare = -1;
 
     if ( !pItem || !QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
         return FALSE;
@@ -1722,7 +1731,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 if ( g_Plugin.nMDI == WMD_PMDI )
                 {
-                    if ( g_QSearchDlg.hDlg )
+                    if ( g_QSearchDlg.hDlg && !g_Plugin.bAkelPadOnFinish )
                     {
                         g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
                         SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
@@ -1825,7 +1834,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     switch ( uMsg )
     {
         case WM_MDIACTIVATE:
-            if ( g_QSearchDlg.hDlg )
+            if ( g_QSearchDlg.hDlg && !g_Plugin.bAkelPadOnFinish )
             {
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
@@ -1879,7 +1888,7 @@ void updateFrameStateInFindAllFrames(const FRAMEDATA* pFrame, UINT uFrameItemSta
 
 void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if ( (uMsg == WM_NOTIFY) && (wParam == ID_EDIT) )
+    if ( (uMsg == WM_NOTIFY) && (wParam == ID_EDIT) && !g_Plugin.bAkelPadOnFinish )
     {
         NMHDR* hdr = (NMHDR *) lParam;
         if ( g_Plugin.bAkelEdit )
