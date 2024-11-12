@@ -1131,25 +1131,31 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     // setting the match position
     nLine = get_matchpos_line(nMatchPos);
     nPosInLine = get_matchpos_pos_in_line(nMatchPos);
-    nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, (LPARAM) &aeCi);
-    if ( nWrapLine >= 0 && AEC_WrapLineEnd(&aeCi) <= nPosInLine ) // line length <= nPosInLine
+    if ( pItem->nItemState & QS_FIS_TEXTCHANGED )
     {
-        nPosInLine = 0;
-        if ( !(nFlags & GTFAM_PREV) )
+        nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, (LPARAM) &aeCi);
+        if ( nWrapLine >= 0 && AEC_WrapLineEnd(&aeCi) <= nPosInLine ) // line length <= nPosInLine
         {
-            ++nLine;
-            nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, 0);
+            nPosInLine = 0;
+            if ( !(nFlags & GTFAM_PREV) )
+            {
+                ++nLine;
+                nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, 0);
+            }
         }
     }
     wsprintfW(szGoToW, L"%d:%d", nLine + 1, nPosInLine + 1);
     SendMessageW(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) szGoToW);
-    if ( !(nFlags & GTFAM_PREV) )
+    if ( pItem->nItemState & QS_FIS_TEXTCHANGED )
     {
-        if ( nWrapLine < 0 ||
-             nWrapLine >= (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETLINENUMBER, AEGL_LINECOUNT, 0) )
+        if ( !(nFlags & GTFAM_PREV) )
         {
-            SendMessageW(pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeCi);
-            SendMessageW(pFrame->ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeCi, (LPARAM) &aeCi);
+            if ( nWrapLine < 0 ||
+                 nWrapLine >= (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETLINENUMBER, AEGL_LINECOUNT, 0) )
+            {
+                SendMessageW(pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeCi);
+                SendMessageW(pFrame->ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeCi, (LPARAM) &aeCi);
+            }
         }
     }
 
