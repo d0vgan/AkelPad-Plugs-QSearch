@@ -985,10 +985,12 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     const tQSFindAllFrameItem* pItem;
     matchpos_t nMatchPos;
     int nLine;
+    int nWrapLine;
     int nPosInLine;
     int n;
     BOOL bExactMatch;
     BOOL bSearchTextChanged;
+    AECHARINDEX aeCi;
     wchar_t szGoToW[64];
 
     bSearchTextChanged = FALSE;
@@ -1036,7 +1038,6 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
     if ( pItem )
     {
-        AECHARINDEX aeCi;
         UINT nWhichIndex;
 
         if ( !(nFlags & GTFAM_PREV) && g_QSearchDlg.nGoToNextFindAllPosToCompare != -1 && 
@@ -1045,7 +1046,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         else
             nWhichIndex = AEGI_FIRSTSELCHAR;
 
-        SendMessage( pFrame->ei.hWndEdit, AEM_GETINDEX, nWhichIndex, (LPARAM) &aeCi );
+        SendMessageW( pFrame->ei.hWndEdit, AEM_GETINDEX, nWhichIndex, (LPARAM) &aeCi );
         nMatchPos = to_matchpos_ae(&aeCi, pFrame->ei.hWndEdit);
     }
     else
@@ -1130,8 +1131,27 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     // setting the match position
     nLine = get_matchpos_line(nMatchPos);
     nPosInLine = get_matchpos_pos_in_line(nMatchPos);
+    nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, (LPARAM) &aeCi);
+    if ( nWrapLine >= 0 && AEC_WrapLineEnd(&aeCi) <= nPosInLine ) // line length <= nPosInLine
+    {
+        nPosInLine = 0;
+        if ( !(nFlags & GTFAM_PREV) )
+        {
+            ++nLine;
+            nWrapLine = (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETWRAPLINE, nLine, 0);
+        }
+    }
     wsprintfW(szGoToW, L"%d:%d", nLine + 1, nPosInLine + 1);
     SendMessageW(g_Plugin.hMainWnd, AKD_GOTOW, GT_LINE, (LPARAM) szGoToW);
+    if ( !(nFlags & GTFAM_PREV) )
+    {
+        if ( nWrapLine < 0 ||
+             nWrapLine >= (int) SendMessageW(pFrame->ei.hWndEdit, AEM_GETLINENUMBER, AEGL_LINECOUNT, 0) )
+        {
+            SendMessageW(pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeCi);
+            SendMessageW(pFrame->ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeCi, (LPARAM) &aeCi);
+        }
+    }
 
     if ( bSearchTextChanged || g_bFrameActivated )
     {
