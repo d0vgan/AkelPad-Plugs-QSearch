@@ -19,7 +19,7 @@
 
 // extern vars
 extern QSearchDlgState g_QSearchDlg;
-extern wchar_t         g_szFunctionQSearchW[128];
+extern wchar_t         g_szFunctionQSearchAW[128];
 
 
 // static (local) vars
@@ -43,7 +43,7 @@ LRESULT CALLBACK dlgswtchHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 static DWORD getQSearchHotKey(const PLUGINDATA* pd)
 {
-    if ( !g_szFunctionQSearchW[0] )
+    if ( !g_szFunctionQSearchAW[0] )
     {
         if ( pd->bOldWindows )
         {
@@ -58,9 +58,9 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
                         int i = 0;
                         for ( ; i < n + 1; i++ )
                         {
-                            ((char *) g_szFunctionQSearchW)[i] = pszFunc[i];
+                            ((char *) g_szFunctionQSearchAW)[i] = pszFunc[i];
                         }
-                        lstrcpyA( ((char *) g_szFunctionQSearchW) + i, "QSearch" );
+                        lstrcpyA( ((char *) g_szFunctionQSearchAW) + i, "QSearch" );
                         break;
                     }
                 }
@@ -79,9 +79,9 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
                         int i = 0;
                         for ( ; i < n + 1; i++ )
                         {
-                            g_szFunctionQSearchW[i] = pszFunc[i];
+                            g_szFunctionQSearchAW[i] = pszFunc[i];
                         }
-                        lstrcpyW( g_szFunctionQSearchW + i, L"QSearch" );
+                        lstrcpyW( g_szFunctionQSearchAW + i, L"QSearch" );
                         break;
                     }
                 }
@@ -89,14 +89,14 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
         }
     }
 
-    if ( g_szFunctionQSearchW[0] )
+    if ( g_szFunctionQSearchAW[0] )
     {
         if ( pd->bOldWindows )
         {
             PLUGINFUNCTION* pfA;
 
             pfA = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd, 
-              AKD_DLLFINDA, (WPARAM) g_szFunctionQSearchW, 0 );
+              AKD_DLLFINDA, (WPARAM) g_szFunctionQSearchAW, 0 );
             if ( pfA )
             {
                 return pfA->wHotkey;
@@ -107,7 +107,7 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
             PLUGINFUNCTION* pfW;
 
             pfW = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd, 
-              AKD_DLLFINDW, (WPARAM) g_szFunctionQSearchW, 0 );
+              AKD_DLLFINDW, (WPARAM) g_szFunctionQSearchAW, 0 );
             if ( pfW )
             {
                 return pfW->wHotkey;
@@ -732,7 +732,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     PLUGINCALLSENDA pcsA;
 
                     x_zero_mem(&pcsA, sizeof(PLUGINCALLSENDA));
-                    pcsA.pFunction = (char *) g_szFunctionQSearchW;
+                    pcsA.pFunction = (char *) g_szFunctionQSearchAW;
 
                     SendMessageA( ds_hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
                 }
@@ -741,7 +741,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     PLUGINCALLSENDW pcsW;
 
                     x_zero_mem(&pcsW, sizeof(PLUGINCALLSENDW));
-                    pcsW.pFunction = g_szFunctionQSearchW;
+                    pcsW.pFunction = g_szFunctionQSearchAW;
 
                     SendMessageW( ds_hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
                 }

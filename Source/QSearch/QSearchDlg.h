@@ -173,7 +173,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
         DOCK*            pDockData;
         int              nResultsItemsCount;
         tQSSearchResultsItem SearchResultsItems[MAX_RESULTS_FRAMES];
-        wchar_t          szFindTextW[MAX_TEXT_SIZE];
+        wchar_t          szFindTextAW[MAX_TEXT_SIZE];
         wchar_t          szFindAllFindTextW[MAX_TEXT_SIZE];
         wchar_t          szLastHighlightTextW[MAX_TEXT_SIZE];
         DWORD            dwFindAllFlags; // see QS_FAF_*

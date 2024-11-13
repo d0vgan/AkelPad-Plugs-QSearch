@@ -193,10 +193,10 @@ void CloseLog(void)
         pOptions->nLenStatusEofCrossedUp = WRONG_INT_VALUE;
         pOptions->nLenStatusNotFound = WRONG_INT_VALUE;
         pOptions->nLenStatusNotRegExp = WRONG_INT_VALUE;
-        x_zero_mem(pOptions->szStatusEofCrossedDown, sizeof(pOptions->szStatusEofCrossedDown));
-        x_zero_mem(pOptions->szStatusEofCrossedUp, sizeof(pOptions->szStatusEofCrossedUp));
-        x_zero_mem(pOptions->szStatusNotFound, sizeof(pOptions->szStatusNotFound));
-        x_zero_mem(pOptions->szStatusNotRegExp, sizeof(pOptions->szStatusNotRegExp));
+        x_zero_mem(pOptions->szStatusEofCrossedDownAW, sizeof(pOptions->szStatusEofCrossedDownAW));
+        x_zero_mem(pOptions->szStatusEofCrossedUpAW, sizeof(pOptions->szStatusEofCrossedUpAW));
+        x_zero_mem(pOptions->szStatusNotFoundAW, sizeof(pOptions->szStatusNotFoundAW));
+        x_zero_mem(pOptions->szStatusNotRegExpAW, sizeof(pOptions->szStatusNotRegExpAW));
         initializeFRP(&pOptions->LogOutputFRP);
         initializeFRP(&pOptions->FileOutputFRP);
     }
@@ -342,7 +342,7 @@ PluginState     g_Plugin;
 QSearchDlgState g_QSearchDlg;
 QSearchOpt      g_Options;
 QSearchOpt      g_Options0;
-wchar_t         g_szFunctionQSearchW[128] = { 0 };
+wchar_t         g_szFunctionQSearchAW[128] = { 0 };
 BOOL            g_bHighlightPlugin = FALSE;
 BOOL            g_bLogPlugin = FALSE;
 BOOL            g_bFrameActivated = FALSE;
@@ -506,13 +506,13 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 
     if ( !bInternalCall )
     {
-        if ( pd->bOldWindows && (0 == ((LPSTR) g_szFunctionQSearchW)[0]) )
+        if ( pd->bOldWindows && (0 == ((LPSTR) g_szFunctionQSearchAW)[0]) )
         {
-            lstrcpyA( (LPSTR) g_szFunctionQSearchW, (LPCSTR) pd->pFunction );
+            lstrcpyA( (LPSTR) g_szFunctionQSearchAW, (LPCSTR) pd->pFunction );
         }
-        else if ( 0 == ((LPWSTR) g_szFunctionQSearchW)[0] )
+        else if ( 0 == g_szFunctionQSearchAW[0] )
         {
-            lstrcpyW( (LPWSTR) g_szFunctionQSearchW, (LPCWSTR) pd->pFunction );
+            lstrcpyW( g_szFunctionQSearchAW, (LPCWSTR) pd->pFunction );
         }
     }
 
@@ -1230,7 +1230,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID lpReserved)
     switch ( dwReason )
     {
         case DLL_PROCESS_ATTACH:
-            g_szFunctionQSearchW[0] = 0;
+            g_szFunctionQSearchAW[0] = 0;
             initializePluginState( &g_Plugin );
             initializeQSearchDlgState( &g_QSearchDlg );
             initializeOptions( &g_Options );
@@ -1350,14 +1350,14 @@ static BOOL findLogPlugin(PLUGINDATA* pd)
 
     if ( pd->bOldWindows )
     {
-        char             szPluginPath[2*MAX_PATH + 1];
+        char             szPluginPathA[2*MAX_PATH + 1];
         HANDLE           hFind;
         WIN32_FIND_DATAA findData;
 
-        lstrcpyA( szPluginPath, (const char *) pd->pAkelDir );
-        lstrcatA( szPluginPath, "\\AkelFiles\\Plugs\\Log.dll" );
+        lstrcpyA( szPluginPathA, (const char *) pd->pAkelDir );
+        lstrcatA( szPluginPathA, "\\AkelFiles\\Plugs\\Log.dll" );
 
-        hFind = FindFirstFileA(szPluginPath, &findData);
+        hFind = FindFirstFileA(szPluginPathA, &findData);
         if ( hFind && (hFind != INVALID_HANDLE_VALUE) )
         {
             if ( !(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
@@ -1369,14 +1369,14 @@ static BOOL findLogPlugin(PLUGINDATA* pd)
     }
     else
     {
-        wchar_t          szPluginPath[2*MAX_PATH + 1];
+        wchar_t          szPluginPathW[2*MAX_PATH + 1];
         HANDLE           hFind;
         WIN32_FIND_DATAW findData;
 
-        lstrcpyW( szPluginPath, (const wchar_t *) pd->pAkelDir );
-        lstrcatW( szPluginPath, L"\\AkelFiles\\Plugs\\Log.dll" );
+        lstrcpyW( szPluginPathW, (const wchar_t *) pd->pAkelDir );
+        lstrcatW( szPluginPathW, L"\\AkelFiles\\Plugs\\Log.dll" );
 
-        hFind = FindFirstFileW(szPluginPath, &findData);
+        hFind = FindFirstFileW(szPluginPathW, &findData);
         if ( hFind && (hFind != INVALID_HANDLE_VALUE) )
         {
             if ( !(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
@@ -2136,27 +2136,27 @@ void ReadOptions(void)
               CSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
 
             if ( readStringA(hOptions, CSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_DOWN],
-                  (char *) g_Options.szStatusEofCrossedDown, sizeof(g_Options.szStatusEofCrossedDown)/sizeof(wchar_t) - 1) >= 0 )
+                  (char *) g_Options.szStatusEofCrossedDownAW, sizeof(g_Options.szStatusEofCrossedDownAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusEofCrossedDown = lstrlenA( (const char *) g_Options.szStatusEofCrossedDown );
+                g_Options.nLenStatusEofCrossedDown = lstrlenA( (const char *) g_Options.szStatusEofCrossedDownAW );
             }
 
             if ( readStringA(hOptions, CSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_UP],
-                  (char *) g_Options.szStatusEofCrossedUp, sizeof(g_Options.szStatusEofCrossedUp)/sizeof(wchar_t) - 1) >= 0 )
+                  (char *) g_Options.szStatusEofCrossedUpAW, sizeof(g_Options.szStatusEofCrossedUpAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusEofCrossedUp = lstrlenA( (const char *) g_Options.szStatusEofCrossedUp );
+                g_Options.nLenStatusEofCrossedUp = lstrlenA( (const char *) g_Options.szStatusEofCrossedUpAW );
             }
 
             if ( readStringA(hOptions, CSZ_OPTIONS[OPT_STATUS_NOTFOUND],
-                  (char *) g_Options.szStatusNotFound, sizeof(g_Options.szStatusNotFound)/sizeof(wchar_t) - 1) >= 0 )
+                  (char *) g_Options.szStatusNotFoundAW, sizeof(g_Options.szStatusNotFoundAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusNotFound = lstrlenA( (const char *) g_Options.szStatusNotFound );
+                g_Options.nLenStatusNotFound = lstrlenA( (const char *) g_Options.szStatusNotFoundAW );
             }
 
             if ( readStringA(hOptions, CSZ_OPTIONS[OPT_STATUS_NOTREGEXP],
-                  (char *) g_Options.szStatusNotRegExp, sizeof(g_Options.szStatusNotRegExp)/sizeof(wchar_t) - 1) >= 0 )
+                  (char *) g_Options.szStatusNotRegExpAW, sizeof(g_Options.szStatusNotRegExpAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusNotRegExp = lstrlenA( (const char *) g_Options.szStatusNotRegExp );
+                g_Options.nLenStatusNotRegExp = lstrlenA( (const char *) g_Options.szStatusNotRegExpAW );
             }
 
             // all options have been read
@@ -2278,27 +2278,27 @@ void ReadOptions(void)
               CWSZ_OPTIONS[OPT_USE_EDITOR_COLORS], WRONG_DWORD_VALUE );
 
             if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_DOWN],
-                  g_Options.szStatusEofCrossedDown, sizeof(g_Options.szStatusEofCrossedDown)/sizeof(wchar_t) - 1) >= 0 )
+                  g_Options.szStatusEofCrossedDownAW, sizeof(g_Options.szStatusEofCrossedDownAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusEofCrossedDown = lstrlenW(g_Options.szStatusEofCrossedDown);
+                g_Options.nLenStatusEofCrossedDown = lstrlenW(g_Options.szStatusEofCrossedDownAW);
             }
 
             if ( readStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_UP],
-                  g_Options.szStatusEofCrossedUp, sizeof(g_Options.szStatusEofCrossedUp)/sizeof(wchar_t) - 1) >= 0 )
+                  g_Options.szStatusEofCrossedUpAW, sizeof(g_Options.szStatusEofCrossedUpAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusEofCrossedUp = lstrlenW(g_Options.szStatusEofCrossedUp);
+                g_Options.nLenStatusEofCrossedUp = lstrlenW(g_Options.szStatusEofCrossedUpAW);
             }
 
             if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_STATUS_NOTFOUND],
-                  g_Options.szStatusNotFound, sizeof(g_Options.szStatusNotFound)/sizeof(wchar_t) - 1) >= 0 )
+                  g_Options.szStatusNotFoundAW, sizeof(g_Options.szStatusNotFoundAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusNotFound = lstrlenW(g_Options.szStatusNotFound);
+                g_Options.nLenStatusNotFound = lstrlenW(g_Options.szStatusNotFoundAW);
             }
 
             if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_STATUS_NOTREGEXP],
-                  g_Options.szStatusNotRegExp, sizeof(g_Options.szStatusNotRegExp)/sizeof(wchar_t) - 1) >= 0 )
+                  g_Options.szStatusNotRegExpAW, sizeof(g_Options.szStatusNotRegExpAW)/sizeof(wchar_t) - 1) >= 0 )
             {
-                g_Options.nLenStatusNotRegExp = lstrlenW(g_Options.szStatusNotRegExp);
+                g_Options.nLenStatusNotRegExp = lstrlenW(g_Options.szStatusNotRegExpAW);
             }
 
             // all options have been read
@@ -2476,12 +2476,12 @@ void ReadOptions(void)
     {
         if ( g_Plugin.bOldWindows )
         {
-            lstrcpyA( (char *) g_Options.szStatusEofCrossedDown, DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
-            g_Options.nLenStatusEofCrossedDown = lstrlenA( (const char *) DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
+            lstrcpyA( (char *) g_Options.szStatusEofCrossedDownAW, DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
+            g_Options.nLenStatusEofCrossedDown = lstrlenA( DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
         }
         else
         {
-            lstrcpyW(g_Options.szStatusEofCrossedDown, DEFAULT_STATUS_EOF_CROSSED_DOWN_W);
+            lstrcpyW(g_Options.szStatusEofCrossedDownAW, DEFAULT_STATUS_EOF_CROSSED_DOWN_W);
             g_Options.nLenStatusEofCrossedDown = lstrlenW(DEFAULT_STATUS_EOF_CROSSED_DOWN_W);
         }
     }
@@ -2490,12 +2490,12 @@ void ReadOptions(void)
     {
         if ( g_Plugin.bOldWindows )
         {
-            lstrcpyA( (char *) g_Options.szStatusEofCrossedUp, DEFAULT_STATUS_EOF_CROSSED_UP_A );
-            g_Options.nLenStatusEofCrossedUp = lstrlenA( (const char *) DEFAULT_STATUS_EOF_CROSSED_UP_A );
+            lstrcpyA( (char *) g_Options.szStatusEofCrossedUpAW, DEFAULT_STATUS_EOF_CROSSED_UP_A );
+            g_Options.nLenStatusEofCrossedUp = lstrlenA( DEFAULT_STATUS_EOF_CROSSED_UP_A );
         }
         else
         {
-            lstrcpyW(g_Options.szStatusEofCrossedUp, DEFAULT_STATUS_EOF_CROSSED_UP_W);
+            lstrcpyW(g_Options.szStatusEofCrossedUpAW, DEFAULT_STATUS_EOF_CROSSED_UP_W);
             g_Options.nLenStatusEofCrossedUp = lstrlenW(DEFAULT_STATUS_EOF_CROSSED_UP_W);
         }
     }
@@ -2504,12 +2504,12 @@ void ReadOptions(void)
     {
         if ( g_Plugin.bOldWindows )
         {
-            lstrcpyA( (char *) g_Options.szStatusNotFound, DEFAULT_STATUS_NOTFOUND_A );
-            g_Options.nLenStatusNotFound = lstrlenA( (const char *) DEFAULT_STATUS_NOTFOUND_A );
+            lstrcpyA( (char *) g_Options.szStatusNotFoundAW, DEFAULT_STATUS_NOTFOUND_A );
+            g_Options.nLenStatusNotFound = lstrlenA( DEFAULT_STATUS_NOTFOUND_A );
         }
         else
         {
-            lstrcpyW(g_Options.szStatusNotFound, DEFAULT_STATUS_NOTFOUND_W);
+            lstrcpyW(g_Options.szStatusNotFoundAW, DEFAULT_STATUS_NOTFOUND_W);
             g_Options.nLenStatusNotFound = lstrlenW(DEFAULT_STATUS_NOTFOUND_W);
         }
     }
@@ -2518,12 +2518,12 @@ void ReadOptions(void)
     {
         if ( g_Plugin.bOldWindows )
         {
-            lstrcpyA( (char *) g_Options.szStatusNotRegExp, DEFAULT_STATUS_NOTREGEXP_A );
-            g_Options.nLenStatusNotRegExp = lstrlenA( (const char *) DEFAULT_STATUS_NOTREGEXP_A );
+            lstrcpyA( (char *) g_Options.szStatusNotRegExpAW, DEFAULT_STATUS_NOTREGEXP_A );
+            g_Options.nLenStatusNotRegExp = lstrlenA( DEFAULT_STATUS_NOTREGEXP_A );
         }
         else
         {
-            lstrcpyW(g_Options.szStatusNotRegExp, DEFAULT_STATUS_NOTREGEXP_W);
+            lstrcpyW(g_Options.szStatusNotRegExpAW, DEFAULT_STATUS_NOTREGEXP_W);
             g_Options.nLenStatusNotRegExp = lstrlenW(DEFAULT_STATUS_NOTREGEXP_W);
         }
     }
@@ -2791,31 +2791,31 @@ void SaveOptions(void)
                 }
 
                 if ( g_Options0.nLenStatusEofCrossedDown != g_Options.nLenStatusEofCrossedDown ||
-                     lstrcmpA((const char *) g_Options0.szStatusEofCrossedDown, (const char *) g_Options.szStatusEofCrossedDown) != 0 )
+                     lstrcmpA((const char *) g_Options0.szStatusEofCrossedDownAW, (const char *) g_Options.szStatusEofCrossedDownAW) != 0 )
                 {
                     writeStringA( hOptions, CSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_DOWN],
-                      (const char *) g_Options.szStatusEofCrossedDown );
+                      (const char *) g_Options.szStatusEofCrossedDownAW );
                 }
 
                 if ( g_Options0.nLenStatusEofCrossedUp != g_Options.nLenStatusEofCrossedUp ||
-                     lstrcmpA((const char *) g_Options0.szStatusEofCrossedUp, (const char *) g_Options.szStatusEofCrossedUp) != 0 )
+                     lstrcmpA((const char *) g_Options0.szStatusEofCrossedUpAW, (const char *) g_Options.szStatusEofCrossedUpAW) != 0 )
                 {
                     writeStringA( hOptions, CSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_UP],
-                      (const char *) g_Options.szStatusEofCrossedUp );
+                      (const char *) g_Options.szStatusEofCrossedUpAW );
                 }
 
                 if ( g_Options0.nLenStatusNotFound != g_Options.nLenStatusNotFound ||
-                     lstrcmpA((const char *) g_Options0.szStatusNotFound, (const char *) g_Options.szStatusNotFound) != 0 )
+                     lstrcmpA((const char *) g_Options0.szStatusNotFoundAW, (const char *) g_Options.szStatusNotFoundAW) != 0 )
                 {
                     writeStringA( hOptions, CSZ_OPTIONS[OPT_STATUS_NOTFOUND],
-                      (const char *) g_Options.szStatusNotFound );
+                      (const char *) g_Options.szStatusNotFoundAW );
                 }
 
                 if ( g_Options0.nLenStatusNotRegExp != g_Options.nLenStatusNotRegExp ||
-                     lstrcmpA((const char *) g_Options0.szStatusNotRegExp, (const char *) g_Options.szStatusNotRegExp) != 0 )
+                     lstrcmpA((const char *) g_Options0.szStatusNotRegExpAW, (const char *) g_Options.szStatusNotRegExpAW) != 0 )
                 {
                     writeStringA( hOptions, CSZ_OPTIONS[OPT_STATUS_NOTREGEXP],
-                      (const char *) g_Options.szStatusNotRegExp );
+                      (const char *) g_Options.szStatusNotRegExpAW );
                 }
 
                 // all options have been saved
@@ -3051,31 +3051,31 @@ void SaveOptions(void)
                 }
 
                 if ( g_Options0.nLenStatusEofCrossedDown != g_Options.nLenStatusEofCrossedDown ||
-                     lstrcmpW(g_Options0.szStatusEofCrossedDown, g_Options.szStatusEofCrossedDown) != 0 )
+                     lstrcmpW(g_Options0.szStatusEofCrossedDownAW, g_Options.szStatusEofCrossedDownAW) != 0 )
                 {
                     writeStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_DOWN],
-                      g_Options.szStatusEofCrossedDown );
+                      g_Options.szStatusEofCrossedDownAW );
                 }
 
                 if ( g_Options0.nLenStatusEofCrossedUp != g_Options.nLenStatusEofCrossedUp ||
-                     lstrcmpW(g_Options0.szStatusEofCrossedUp, g_Options.szStatusEofCrossedUp) != 0 )
+                     lstrcmpW(g_Options0.szStatusEofCrossedUpAW, g_Options.szStatusEofCrossedUpAW) != 0 )
                 {
                     writeStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_EOF_CROSSED_UP],
-                      g_Options.szStatusEofCrossedUp );
+                      g_Options.szStatusEofCrossedUpAW );
                 }
 
                 if ( g_Options0.nLenStatusNotFound != g_Options.nLenStatusNotFound ||
-                     lstrcmpW(g_Options0.szStatusNotFound, g_Options.szStatusNotFound) != 0 )
+                     lstrcmpW(g_Options0.szStatusNotFoundAW, g_Options.szStatusNotFoundAW) != 0 )
                 {
                     writeStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_NOTFOUND],
-                      g_Options.szStatusNotFound );
+                      g_Options.szStatusNotFoundAW );
                 }
 
                 if ( g_Options0.nLenStatusNotRegExp != g_Options.nLenStatusNotRegExp ||
-                     lstrcmpW(g_Options0.szStatusNotRegExp, g_Options.szStatusNotRegExp) != 0 )
+                     lstrcmpW(g_Options0.szStatusNotRegExpAW, g_Options.szStatusNotRegExpAW) != 0 )
                 {
                     writeStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_NOTREGEXP],
-                      g_Options.szStatusNotRegExp );
+                      g_Options.szStatusNotRegExpAW );
                 }
 
                 // all options have been saved
