@@ -626,8 +626,14 @@ BOOL IsLogOutputActive(void)
         );
     }
 
+    int QSearchDlgState_getFindAllFramesCount(const QSearchDlgState* pQSearchDlg)
+    {
+        return (pQSearchDlg->findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem));
+    }
+
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)
     {
+        // note: it may return an invalid item (QS_FIS_INVALID)!
         const tQSFindAllFrameItem* pItem;
         const tQSFindAllFrameItem* pEndItem;
         BOOL bFound;
@@ -640,11 +646,8 @@ BOOL IsLogOutputActive(void)
         {
             if ( pFrame == pItem->pFrame )
             {
-                if ( !(pItem->nItemState & QS_FIS_INVALID) )
-                {
-                    bFound = TRUE;
-                }
-                break; // for invalid item, bFound remains FALSE
+                bFound = TRUE;
+                break;
             }
         }
 
@@ -7110,7 +7113,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhat, DWORD dwParams,
             if ( pFrame && pFrame->ei.hWndEdit == hWndEdit )
             {
                 pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
-                if ( pItem && !(pItem->nItemState & QS_FIS_TEXTCHANGED) &&
+                if ( pItem && !(pItem->nItemState & (QS_FIS_INVALID | QS_FIS_TEXTCHANGED)) &&
                      QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
                 {
                     pItemMatches = QSearchDlgState_getFindAllFrameItemMatches(&g_QSearchDlg, pItem);

@@ -1036,7 +1036,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
         return FALSE;
 
     pItem = QSearchDlgState_getFindAllFrameItemByFrame(&g_QSearchDlg, pFrame);
-    if ( pItem )
+    if ( pItem && !(pItem->nItemState & QS_FIS_INVALID) )
     {
         UINT nWhichIndex;
 
@@ -1053,12 +1053,18 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     {
         if ( nFlags & GTFAM_PREV )
         {
-            pItem = ((const tQSFindAllFrameItem *) g_QSearchDlg.findAllFramesBuf.ptr) + g_QSearchDlg.findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem) - 1;
+            if ( !pItem )
+            {
+                pItem = ((const tQSFindAllFrameItem *) g_QSearchDlg.findAllFramesBuf.ptr) + g_QSearchDlg.findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem) - 1;
+            }
             pItem = QSearchDlgState_getFindAllValidFrameItemBackward(&g_QSearchDlg, pItem);
         }
         else
         {
-            pItem = (const tQSFindAllFrameItem *) g_QSearchDlg.findAllFramesBuf.ptr;
+            if ( !pItem )
+            {
+                pItem = (const tQSFindAllFrameItem *) g_QSearchDlg.findAllFramesBuf.ptr;
+            }
             pItem = QSearchDlgState_getFindAllValidFrameItemForward(&g_QSearchDlg, pItem);
         }
 
@@ -1083,7 +1089,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     else
         n = -1;
 
-    if ( n == -1 )
+    if ( n == -1 && (nMatchPos == MATCHPOS_INVALID || !(nFlags & GTFAM_PREV)) )
     {
         if ( nFlags & GTFAM_PREV )
             n = (int) pItem->nMatches - 1;
@@ -1155,6 +1161,11 @@ BOOL doGoToFindAllMatch(UINT nFlags)
             {
                 SendMessageW(pFrame->ei.hWndEdit, AEM_GETINDEX, AEGI_LASTCHAR, (LPARAM) &aeCi);
                 SendMessageW(pFrame->ei.hWndEdit, AEM_EXSETSEL, (WPARAM) &aeCi, (LPARAM) &aeCi);
+                if ( QSearchDlgState_getFindAllFramesCount(&g_QSearchDlg) > 1 )
+                {
+                    // excluding this item from GoToFindAllMatch
+                    ((tQSFindAllFrameItem *) pItem)->nItemState |= QS_FIS_INVALID;
+                }
             }
         }
     }
