@@ -626,9 +626,9 @@ BOOL IsLogOutputActive(void)
         );
     }
 
-    int QSearchDlgState_getFindAllFramesCount(const QSearchDlgState* pQSearchDlg)
+    unsigned int QSearchDlgState_getFindAllFramesCount(const QSearchDlgState* pQSearchDlg)
     {
-        return (pQSearchDlg->findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem));
+        return (unsigned int) (pQSearchDlg->findAllFramesBuf.nBytesStored/sizeof(tQSFindAllFrameItem));
     }
 
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame)

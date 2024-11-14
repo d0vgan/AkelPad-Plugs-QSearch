@@ -206,7 +206,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[]);
     void QSearchDlgState_addFindAllFrameItem(QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     void QSearchDlgState_clearFindAllMatchesAndFrames(QSearchDlgState* pQSearchDlg, BOOL bFreeMemory);
     int  QSearchDlgState_findInFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, matchpos_t nMatchPos, BOOL* pbExactMatch);
-    int  QSearchDlgState_getFindAllFramesCount(const QSearchDlgState* pQSearchDlg);
+    unsigned int QSearchDlgState_getFindAllFramesCount(const QSearchDlgState* pQSearchDlg);
     const tQSFindAllFrameItem* QSearchDlgState_getFindAllFrameItemByFrame(const QSearchDlgState* pQSearchDlg, const FRAMEDATA* pFrame);
     const matchpos_t* QSearchDlgState_getFindAllFrameItemMatches(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem);
     matchpos_t QSearchDlgState_getFindAllFrameItemMatchAt(const QSearchDlgState* pQSearchDlg, const tQSFindAllFrameItem* pItem, int idx);
