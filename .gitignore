@@ -1,4 +1,7 @@
 .git/**
+Source/*.ncb
+Source/*.suo
+Source/*.vcproj.*user
 Source/*.vcxproj.user
 Source/.vs/**
 Source/Debug/**
