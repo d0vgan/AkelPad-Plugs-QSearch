@@ -7121,6 +7121,9 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                 if ( pItem && !(pItem->nItemState & (QS_FIS_INVALID | QS_FIS_TEXTCHANGED)) &&
                      QSearchDlgState_isFindAllFrameItemInternallyValid(&g_QSearchDlg, pItem) )
                 {
+                    #ifdef _DEBUG
+                      Debug_OutputA("qsearchDoSearchText: copying the matches from findAllMatchesBuf to currentMatchesBuf\n");
+                    #endif
                     pItemMatches = QSearchDlgState_getFindAllFrameItemMatches(&g_QSearchDlg, pItem);
                     tDynamicBuffer_Clear(&g_QSearchDlg.currentMatchesBuf);
                     tDynamicBuffer_Append(&g_QSearchDlg.currentMatchesBuf, pItemMatches, pItem->nMatches*sizeof(matchpos_t));
