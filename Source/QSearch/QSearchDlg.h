@@ -248,7 +248,7 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 
 void qsSetInfoEmpty(void);
 
-BOOL qsIsHotKeyPressed(DWORD dwHotKey);
+BOOL qsIsHotKeyPressed(DWORD dwHotKey, UINT uMsg, LPARAM lParam);
 
 // plugin call helpers
 void CallPluginFuncA(const char* cszFuncA, void* pParams);

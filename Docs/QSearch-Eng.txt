@@ -630,6 +630,7 @@ v.8.2 (November 2024)
  + added: showing "%u of %u matches" when "Auto Count All" is on
  + added: functions GoToNextFindAllMatch and GoToPrevFindAllMatch
  - fixed: "Search: Always from beginning" was broken long time ago
+ * better handling of AltGr (right Alt) in the QSearch panel
  * various corrections and improvements around search results highlighting
  * various internal improvements
  * some unit tests added

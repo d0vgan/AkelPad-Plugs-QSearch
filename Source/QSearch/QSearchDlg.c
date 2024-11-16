@@ -2309,49 +2309,54 @@ static void qsdlgShowHideWholeWordCheckBox(HWND hDlg, const DWORD dwOptFlags[])
     }
 }
 
-BOOL qsIsHotKeyPressed(DWORD dwHotKey)
+BOOL qsIsHotKeyPressed(DWORD dwHotKey, UINT uMsg, LPARAM lParam)
 {
-    if ( dwHotKey )
+    BOOL isAltPressed;
+    BOOL isAltGrPressed;
+    BOOL isCtrlPressed;
+
+    if ( dwHotKey == 0 || (GetKeyState(LOBYTE(dwHotKey)) & 0x80) == 0 )
+        return FALSE;
+
+    isAltPressed = (GetKeyState(VK_MENU) & 0x80) != 0;
+    isAltGrPressed = isAltPressed && (uMsg != WM_SYSKEYDOWN || (lParam & 0x01000000) != 0); // AltGr emulates Alt+Ctrl
+
+    if ( isAltPressed )
     {
-        if ( GetKeyState(LOBYTE(dwHotKey)) & 0x80 )
-        {
-            if ( GetKeyState(VK_MENU) & 0x80 )
-            {
-                if ( (HIBYTE(dwHotKey) & HOTKEYF_ALT) != HOTKEYF_ALT )
-                    return FALSE;
-            }
-            else
-            {
-                if ( HIBYTE(dwHotKey) & HOTKEYF_ALT )
-                    return FALSE;
-            }
-
-            if ( GetKeyState(VK_CONTROL) & 0x80 )
-            {
-                if ( (HIBYTE(dwHotKey) & HOTKEYF_CONTROL) != HOTKEYF_CONTROL )
-                    return FALSE;
-            }
-            else
-            {
-                if ( HIBYTE(dwHotKey) & HOTKEYF_CONTROL )
-                    return FALSE;
-            }
-
-            if ( GetKeyState(VK_SHIFT) & 0x80 )
-            {
-                if ( (HIBYTE(dwHotKey) & HOTKEYF_SHIFT) != HOTKEYF_SHIFT )
-                    return FALSE;
-            }
-            else
-            {
-                if ( HIBYTE(dwHotKey) & HOTKEYF_SHIFT )
-                    return FALSE;
-            }
-
-            return TRUE;
-        }
+        if ( (HIBYTE(dwHotKey) & HOTKEYF_ALT) != HOTKEYF_ALT )
+            return FALSE;
     }
-    return FALSE;
+    else
+    {
+        if ( HIBYTE(dwHotKey) & HOTKEYF_ALT )
+            return FALSE;
+    }
+
+    isCtrlPressed = !isAltGrPressed && (GetKeyState(VK_CONTROL) & 0x80) != 0;
+
+    if ( isCtrlPressed )
+    {
+        if ( (HIBYTE(dwHotKey) & HOTKEYF_CONTROL) != HOTKEYF_CONTROL )
+            return FALSE;
+    }
+    else
+    {
+        if ( HIBYTE(dwHotKey) & HOTKEYF_CONTROL )
+            return FALSE;
+    }
+
+    if ( GetKeyState(VK_SHIFT) & 0x80 )
+    {
+        if ( (HIBYTE(dwHotKey) & HOTKEYF_SHIFT) != HOTKEYF_SHIFT )
+            return FALSE;
+    }
+    else
+    {
+        if ( HIBYTE(dwHotKey) & HOTKEYF_SHIFT )
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 static void getEditFindText(HWND hEdit, wchar_t szTextAW[MAX_TEXT_SIZE])
@@ -3112,15 +3117,17 @@ void qsChangeCkeckBoxState(WORD idCheckBox)
     SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, wp | idCheckBox, (LPARAM) hCh );
 }
 
-static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD dwOptFlags[])
+static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lParam, const DWORD dwOptFlags[])
 {
-    BOOL isPickupText;
     BOOL isFindBegin;
     BOOL isFindUp;
+    BOOL isAltGrPressed;
+    BOOL isPickupText;
 
-    isPickupText = GetKeyState(VK_QS_PICKUPTEXT) & 0x80; // Ctrl
-    isFindBegin = GetKeyState(VK_QS_FINDBEGIN) & 0x80; // Alt
-    isFindUp = GetKeyState(VK_QS_FINDUP) & 0x80; // Shift
+    isFindBegin = (GetKeyState(VK_QS_FINDBEGIN) & 0x80) != 0; // Alt
+    isFindUp = (GetKeyState(VK_QS_FINDUP) & 0x80) != 0; // Shift
+    isAltGrPressed = isFindBegin && (uMsg != WM_SYSKEYDOWN || (lParam & 0x01000000) != 0); // AltGr emulates Alt+Ctrl
+    isPickupText = !isAltGrPressed && (GetKeyState(VK_QS_PICKUPTEXT) & 0x80) != 0; // Ctrl
 
     if ( isPickupText && !isFindBegin && !isFindUp )
     {
@@ -3185,7 +3192,7 @@ static LRESULT OnEditKeyDown_Enter_or_F3(HWND hEdit, WPARAM wParam, const DWORD 
         }
         else if ( !isPickupText )
         {
-            SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, IDOK, 0 );
+            SendMessage( g_QSearchDlg.hDlg, WM_COMMAND, IDOK, isAltGrPressed ? 0xFFFFFFFF : 0 );
         }
     }
 
@@ -3250,7 +3257,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             else if ( wParam == VK_RETURN )
             {
-                return OnEditKeyDown_Enter_or_F3(hEdit, wParam, g_Options.dwFlags);
+                return OnEditKeyDown_Enter_or_F3(hEdit, uMsg, wParam, lParam, g_Options.dwFlags);
             }
             else if ( (wParam == VK_DELETE) || (wParam == VK_BACK) )
             {
@@ -3361,7 +3368,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyQSearch) )
             {
-                bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch);
+                bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch, uMsg, lParam);
                 if ( bHotKeyQSearchPressed )
                 {
                     return 0;
@@ -3369,7 +3376,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyFindAll) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3377,7 +3384,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3385,7 +3392,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3399,7 +3406,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             // (Alt+key do not come as WM_KEYDOWN)
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyQSearch) )
             {
-                bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch);
+                bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch, uMsg, lParam);
                 if ( bHotKeyQSearchPressed )
                 {
                     return 0;
@@ -3407,7 +3414,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyFindAll) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3415,7 +3422,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3423,7 +3430,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     return 0;
@@ -3437,7 +3444,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             if ( wParam == VK_RETURN  )
             {
                 // Alt+Enter pressed
-                OnEditKeyDown_Enter_or_F3(hEdit, wParam, g_Options.dwFlags);
+                OnEditKeyDown_Enter_or_F3(hEdit, uMsg, wParam, lParam, g_Options.dwFlags);
                 return 0;
             }
             /*
@@ -4076,11 +4083,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 unsigned int uSearch;
                 BOOL bPrevNotFound;
 
-                if ( id == IDOK )
+                if ( id == IDOK && lParam != 0xFFFFFFFF )
                 {
                     if ( GetKeyState(VK_QS_PICKUPTEXT) & 0x80 )
                     {
-                        OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, VK_RETURN, g_Options.dwFlags);
+                        OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, uMsg, VK_RETURN, 0, g_Options.dwFlags);
                         return 1;
                     }
                 }
@@ -4142,7 +4149,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_IF_NOT_QSBTN)
                     uFindFlags |= QS_FF_NOPICKUPSEL;
                 PostMessage( hDlg, QSM_FINDNEXT, FALSE, uFindFlags );
-                //PostMessage( hDlg, WM_COMMAND, IDOK, 0 );
                 return 1;
             }
             else if ( id == IDC_BT_FINDPREV )
@@ -4151,7 +4157,6 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 if (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] == PICKUP_SEL_IF_NOT_QSBTN)
                     uFindFlags |= QS_FF_NOPICKUPSEL;
                 PostMessage( hDlg, QSM_FINDNEXT, TRUE, uFindFlags );
-                //PostMessage( hDlg, WM_COMMAND, IDOK_FINDPREV, 0 );
                 return 1;
             }
             else if ( id == IDC_BT_FINDALL )
@@ -4424,11 +4429,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             if ( wParam == VK_F3 )
             {
-                return OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, wParam, g_Options.dwFlags);
+                return OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, uMsg, wParam, lParam, g_Options.dwFlags);
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyFindAll) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( !g_Plugin.bOldWindows )
@@ -4440,7 +4445,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( doGoToFindAllMatch(GTFAM_NEXT) )
@@ -4452,7 +4457,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( doGoToFindAllMatch(GTFAM_PREV) )
@@ -4487,7 +4492,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         //    bHotKeyQSearchPressed = FALSE;
         //    if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyQSearch) )
         //    {
-        //        bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch);
+        //        bHotKeyQSearchPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch, uMsg, lParam);
         //        return 0;
         //    }
         //    break;
@@ -4531,11 +4536,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
         {
             if ( wParam == VK_F3 ) // Alt+F3
             {
-                return OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, wParam, g_Options.dwFlags);
+                return OnEditKeyDown_Enter_or_F3(g_QSearchDlg.hFindEdit, uMsg, wParam, lParam, g_Options.dwFlags);
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyFindAll) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( !g_Plugin.bOldWindows )
@@ -4547,7 +4552,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToNextFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( doGoToFindAllMatch(GTFAM_NEXT) )
@@ -4559,7 +4564,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             if ( LOBYTE(wParam) == LOBYTE(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch) )
             {
-                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch);
+                bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
                     if ( doGoToFindAllMatch(GTFAM_PREV) )
@@ -4725,7 +4730,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 g_QSearchDlg.dwHotKeyFindAll = getFindAllHotKey();
                 g_QSearchDlg.dwHotKeyGoToNextFindAllMatch = getGoToNextFindAllMatchHotKey();
                 g_QSearchDlg.dwHotKeyGoToPrevFindAllMatch = getGoToPrevFindAllMatchHotKey();
-                qs_bHotKeyQSearchPressedOnShow = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch);
+                qs_bHotKeyQSearchPressedOnShow = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch, uMsg, 0);
 
                 if ( g_QSearchDlg.uWmShowFlags & QS_SF_CANPICKUPSELTEXT )
                 {
@@ -5640,7 +5645,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
         // the hot key is re-read on WM_SHOWWINDOW.
         g_QSearchDlg.dwHotKeyQSearch = getQSearchHotKey();
         */
-        qs_bHotKeyQSearchPressedOnShow = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch);
+        qs_bHotKeyQSearchPressedOnShow = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyQSearch, WM_SHOWWINDOW, 0);
     }
     else
     {
