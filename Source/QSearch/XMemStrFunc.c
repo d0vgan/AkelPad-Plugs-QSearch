@@ -173,7 +173,7 @@ void x_zero_mem(void* pDest, UINT_PTR nBytes)
     }
 }
 
-void* x_mem_alloc(unsigned int nSizeInBytes)
+void* x_mem_alloc(UINT_PTR nSizeInBytes)
 {
     return SysMemAlloc(nSizeInBytes);
 }
@@ -255,16 +255,13 @@ int x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen)
 
 int x_wstr_cmp(const WCHAR* str1, const WCHAR* str2)
 {
-    while ( *str1 != 0 )
+    while ( *str1 != 0 && *str1 == *str2 )
     {
-        if ( *str1 != *str2 )
-            return ((WORD) *str1) > ((WORD) *str2) ? 1 : -1;
-
         ++str1;
         ++str2;
     }
 
-    return (*str2 == 0) ? 0 : -1;
+    return ( ((WORD) *str1) - ((WORD) *str2) );
 }
 
 void x_wstr_cpy(WCHAR* dst, const WCHAR* src)

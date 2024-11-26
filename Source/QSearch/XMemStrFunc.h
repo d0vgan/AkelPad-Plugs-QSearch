@@ -19,7 +19,7 @@ void x_mem_set(void *pDest, unsigned int c, UINT_PTR nBytes);
 void x_zero_mem(void* pDest, UINT_PTR nBytes);
 
 // allocates a memory block; to be freed with x_mem_free
-void* x_mem_alloc(unsigned int nSizeInBytes);
+void* x_mem_alloc(UINT_PTR nSizeInBytes);
 
 // deallocates a memory block allocated with x_mem_alloc
 void  x_mem_free(void* ptr);
