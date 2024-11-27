@@ -4,12 +4,18 @@
 #include "XMemStrFunc.h"
 
 
+#ifndef QS_OLD_WINDOWS
+#undef SendMessage
+#define SendMessage SendMessageW
+#endif
+
+
 #define  MAX_MASK_SIZE         MAX_TEXT_SIZE
 #define  MAX_LINE_SIZE         0x10000
 #define  MAX_LINES_TO_CHECK    16
 #define  STACK_LINES_TO_CHECK  4 // pre-allocated on stack
 
-// progress bar will not be 
+// progress bar will not be
 // shown and updated before:
 #define  LINES_TO_SKIP       50
 
@@ -20,7 +26,7 @@ extern QSearchDlgState g_QSearchDlg;
 
 
 /*
-  Original code of match_mask: 
+  Original code of match_mask:
     c_base/MatchMask.c v.1.1 (Jul 2007).
   Adapted for the QSearch plugin.
 
@@ -182,7 +188,7 @@ int match_mask(const char* mask, const char* str, char** last_pos, int whole_wor
                     {
                         if ( whole_word == QSF_WW_SPACE )
                         {
-                            while ( (*str != 0) && 
+                            while ( (*str != 0) &&
                                     (!is_wordbreak(QSF_WW_SPACE, *str)) &&
                                     (!is_wordbreak(QSF_WW_DELIM, *str)) )
                             {
@@ -191,7 +197,7 @@ int match_mask(const char* mask, const char* str, char** last_pos, int whole_wor
                         }
                         else
                         {
-                            if ( (*str != 0) && 
+                            if ( (*str != 0) &&
                                  (!is_wordbreak(QSF_WW_SPACE, *str)) &&
                                  (!is_wordbreak(QSF_WW_DELIM, *str)) )
                             {
@@ -309,7 +315,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
                     {
                         if ( whole_word == QSF_WW_SPACE )
                         {
-                            while ( (*strw != 0) && 
+                            while ( (*strw != 0) &&
                                     (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
                                     (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
                             {
@@ -318,7 +324,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
                         }
                         else
                         {
-                            if ( (*strw != 0) && 
+                            if ( (*strw != 0) &&
                                  (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
                                  (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
                             {
@@ -406,6 +412,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
     return 0;
 }
 
+#ifdef QS_OLD_WINDOWS
 int findSpecialCharA(LPCSTR cszTextA)
 {
     int i;
@@ -426,6 +433,7 @@ int findSpecialCharA(LPCSTR cszTextA)
 
     return -1; // not found
 }
+#endif
 
 int findSpecialCharW(LPCWSTR cszTextW)
 {
@@ -448,6 +456,7 @@ int findSpecialCharW(LPCWSTR cszTextW)
     return -1; // not found
 }
 
+#ifdef QS_OLD_WINDOWS
 void getTextToSearchA(LPCSTR cszTextA, BOOL* pbSearchEx, const DWORD dwOptFlags[], CHAR out_pszSearchTextA[])
 {
     *pbSearchEx = FALSE;
@@ -527,9 +536,10 @@ void getTextToSearchA(LPCSTR cszTextA, BOOL* pbSearchEx, const DWORD dwOptFlags[
             }
         }
     }
-    
+
     lstrcpyA( out_pszSearchTextA, cszTextA );
 }
+#endif
 
 void getTextToSearchW(LPCWSTR cszTextW, BOOL* pbSearchEx, const DWORD dwOptFlags[], WCHAR out_pszSearchTextW[])
 {
@@ -642,6 +652,7 @@ static void updateSearchProgressBar(void)
     SendMessage( hProgressBar, PBM_STEPIT, 0, 0 );
 }
 
+#ifdef QS_OLD_WINDOWS
 static BOOL hasLastAsteriskA(const char* maskA, int len)
 {
     if ( maskA[--len] == '*' )
@@ -659,8 +670,8 @@ static BOOL hasLastAsteriskA(const char* maskA, int len)
 }
 
 static int prepareFindMasksA(
-  LPCSTR cszMaskEx, 
-  char*  outMasksA[MAX_LINES_TO_CHECK], 
+  LPCSTR cszMaskEx,
+  char*  outMasksA[MAX_LINES_TO_CHECK],
   /*int    outMasksLen[MAX_LINES_TO_CHECK],*/
   int    nWholeWord,
   BOOL*  lpbWholeLastLine,
@@ -699,13 +710,13 @@ static int prepareFindMasksA(
                 {
                     char szMessageA[100];
 
-                    wsprintfA( 
-                      szMessageA, 
+                    wsprintfA(
+                      szMessageA,
                       "Can not search for more than %u text lines",
                       MAX_LINES_TO_CHECK
                     );
                     MessageBoxA(
-                      g_Plugin.hMainWnd, 
+                      g_Plugin.hMainWnd,
                       szMessageA,
                       "QSearch Error",
                       MB_OK | MB_ICONERROR
@@ -805,7 +816,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
     //}
     x_zero_mem(pszMasksA + STACK_LINES_TO_CHECK, (MAX_LINES_TO_CHECK - STACK_LINES_TO_CHECK)*sizeof(char*));
 
-    nLinesToCheck = prepareFindMasksA(ptfA->pFindIt, 
+    nLinesToCheck = prepareFindMasksA(ptfA->pFindIt,
       pszMasksA, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
     {
@@ -848,7 +859,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
             else
                 ++cr.cpMin;
         }
-        nLine = (int) SendMessage(hEd, EM_EXLINEFROMCHAR, 
+        nLine = (int) SendMessage(hEd, EM_EXLINEFROMCHAR,
                         0, bSearchUp ? cr.cpMax : cr.cpMin);
     }
     nEditStartLine = nLine;
@@ -862,11 +873,11 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
         for ( n = 0; n < nLinesToCheck; n++ )
         {
             *((WORD *) pszLineA) = MAX_LINE_SIZE - 1;
-            len = (int) SendMessageA( 
-              hEd, 
-              EM_GETLINE, 
-              bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n), 
-              (LPARAM) pszLineA 
+            len = (int) SendMessageA(
+              hEd,
+              EM_GETLINE,
+              bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n),
+              (LPARAM) pszLineA
             );
             pszLineA[len] = 0;
             if ( (len - 1 >= 0) && (pszLineA[len - 1] == '\n') )
@@ -882,7 +893,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 
             pos2 = 0;
             bBack = FALSE;
-            if ( (!pszLineA[0]) && pszMasksA[n][0] && 
+            if ( (!pszLineA[0]) && pszMasksA[n][0] &&
                  ((nLinesToCheck == 1) || (pszMasksA[n][0] != '*')) )
             {
                 break;
@@ -930,7 +941,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                     }
                     else
                     {
-                        if ( n == 0 ) 
+                        if ( n == 0 )
                         {
                             if ( !bExactBeginning )
                             {
@@ -945,7 +956,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                 }
                 else
                 {
-                    if ( (/*bExactEnding ||*/ bSearchUp) && 
+                    if ( (/*bExactEnding ||*/ bSearchUp) &&
                          (n == nLinesToCheck - 1) )
                     {
                         if ( !bExactBeginning )
@@ -988,7 +999,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                     {
                         if ( pos1 < 0 )
                         {
-                            pos1 = (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                            pos1 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
                               bSearchUp ? (nLine - nLinesToCheck + 1) : nLine, 0);
                             pos1 += pos2;
                         }
@@ -1003,11 +1014,11 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                         }
                         else if ( (n == 0) && !bExactBeginning )
                         {
-                            // When (n == 0), pszMasksA[n][0] is the same as 
+                            // When (n == 0), pszMasksA[n][0] is the same as
                             // pszMasksA[0][0];
                             // if pszMasksA[n] is started with "*" or "?*",
                             // it matches ANY beginning part of a string.
-                            if ( nWholeWord || 
+                            if ( nWholeWord ||
                                 ((pszMasksA[0][0] != '*') &&
                                  ((pszMasksA[0][0] != '?') || (pszMasksA[0][1] != '*'))) )
                                 ++pos2;
@@ -1031,7 +1042,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
         {
             if ( bWholeLastLine )
             {
-                pos2 = (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                pos2 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
                 pos2 += (int) SendMessageA(hEd, EM_LINELENGTH, pos2, 0);
                 if ( bSearchUp && (pos2 > cr.cpMax) )
@@ -1041,7 +1052,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
             }
             else
             {
-                pos2 += (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                pos2 += (INT_X) SendMessage(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
             }
             cr.cpMin = pos1;
@@ -1059,7 +1070,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
 
         if ( bIsProgressBarVisible )
         {
-            if ( bSearchUp ? 
+            if ( bSearchUp ?
                    (((nEditStartLine - nLine) % LINES_TO_SKIP) == 0) :
                      (((nLine - nEditStartLine) % LINES_TO_SKIP) == 0) )
             {
@@ -1074,9 +1085,9 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                      (nLine > 2*LINES_TO_SKIP) )
                 {
                     bIsProgressBarVisible = TRUE;
-                    setSearchProgressBarState( 
-                      TRUE, 
-                      nEditStartLine/LINES_TO_SKIP 
+                    setSearchProgressBarState(
+                      TRUE,
+                      nEditStartLine/LINES_TO_SKIP
                     );
                     updateSearchProgressBar();
                 }
@@ -1087,9 +1098,9 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
                      (nEditMaxLine - nLine > 2*LINES_TO_SKIP) )
                 {
                     bIsProgressBarVisible = TRUE;
-                    setSearchProgressBarState( 
-                      TRUE, 
-                      (nEditMaxLine - nEditStartLine)/LINES_TO_SKIP 
+                    setSearchProgressBarState(
+                      TRUE,
+                      (nEditMaxLine - nEditStartLine)/LINES_TO_SKIP
                     );
                     updateSearchProgressBar();
                 }
@@ -1110,6 +1121,7 @@ INT_X doFindTextExA(HWND hEd, TEXTFINDA* ptfA)
     cleanupFindTextExA(pszLineA, pszMasksA);
     return (-1); // not found
 }
+#endif
 
 static BOOL hasLastAsteriskW(const wchar_t* maskW, int len)
 {
@@ -1128,8 +1140,8 @@ static BOOL hasLastAsteriskW(const wchar_t* maskW, int len)
 }
 
 static int prepareFindMasksW(
-  LPCWSTR cszMaskEx, 
-  wchar_t* outMasksW[MAX_LINES_TO_CHECK], 
+  LPCWSTR cszMaskEx,
+  wchar_t* outMasksW[MAX_LINES_TO_CHECK],
   /*int     outMasksLen[MAX_LINES_TO_CHECK],*/
   int     nWholeWord,
   BOOL*   lpbWholeLastLine,
@@ -1168,13 +1180,13 @@ static int prepareFindMasksW(
                 {
                     wchar_t szMessageW[100];
 
-                    wsprintfW( 
-                      szMessageW, 
+                    wsprintfW(
+                      szMessageW,
                       L"Can not search for more than %u text lines",
                       MAX_LINES_TO_CHECK
                     );
                     MessageBoxW(
-                      g_Plugin.hMainWnd, 
+                      g_Plugin.hMainWnd,
                       szMessageW,
                       L"QSearch Error",
                       MB_OK | MB_ICONERROR
@@ -1274,7 +1286,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     //}
     x_zero_mem(pszMasksW + STACK_LINES_TO_CHECK, (MAX_LINES_TO_CHECK - STACK_LINES_TO_CHECK)*sizeof(wchar_t*));
 
-    nLinesToCheck = prepareFindMasksW(ptfW->pFindIt, 
+    nLinesToCheck = prepareFindMasksW(ptfW->pFindIt,
       pszMasksW, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
     {
@@ -1317,7 +1329,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
             else
                 ++cr.cpMin;
         }
-        nLine = (int) SendMessage(hEd, EM_EXLINEFROMCHAR, 
+        nLine = (int) SendMessage(hEd, EM_EXLINEFROMCHAR,
                         0, bSearchUp ? cr.cpMax : cr.cpMin);
     }
     nEditStartLine = nLine;
@@ -1331,11 +1343,11 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         for ( n = 0; n < nLinesToCheck; n++ )
         {
             *((WORD *) pszLineW) = MAX_LINE_SIZE - 1;
-            len = (int) SendMessageW( 
-              hEd, 
-              EM_GETLINE, 
-              bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n), 
-              (LPARAM) pszLineW 
+            len = (int) SendMessageW(
+              hEd,
+              EM_GETLINE,
+              bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n),
+              (LPARAM) pszLineW
             );
             pszLineW[len] = 0;
             if ( (len - 1 >= 0) && (pszLineW[len - 1] == L'\n') )
@@ -1351,7 +1363,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
             pos2 = 0;
             bBack = FALSE;
-            if ( (!pszLineW[0]) && pszMasksW[n][0] && 
+            if ( (!pszLineW[0]) && pszMasksW[n][0] &&
                  ((nLinesToCheck == 1) || (pszMasksW[n][0] != L'*')) )
             {
                 break;
@@ -1414,7 +1426,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                 }
                 else
                 {
-                    if ( (/*bExactEnding ||*/ bSearchUp) && 
+                    if ( (/*bExactEnding ||*/ bSearchUp) &&
                          (n == nLinesToCheck - 1) )
                     {
                         if ( !bExactBeginning )
@@ -1457,7 +1469,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                     {
                         if ( pos1 < 0 )
                         {
-                            pos1 = (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                            pos1 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
                               bSearchUp ? (nLine - nLinesToCheck + 1) : nLine, 0);
                             pos1 += pos2;
                         }
@@ -1472,11 +1484,11 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                         }
                         else if ( (n == 0) && !bExactBeginning )
                         {
-                            // When (n == 0), pszMasksW[n][0] is the same as 
+                            // When (n == 0), pszMasksW[n][0] is the same as
                             // pszMasksW[0][0];
                             // if pszMasksW[n] is started with L"*" or L"?*",
                             // it matches ANY beginning part of a string.
-                            if ( nWholeWord || 
+                            if ( nWholeWord ||
                                 ((pszMasksW[0][0] != L'*') &&
                                  ((pszMasksW[0][0] != L'?') || (pszMasksW[0][1] != L'*'))) )
                                 ++pos2;
@@ -1500,7 +1512,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         {
             if ( bWholeLastLine )
             {
-                pos2 = (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                pos2 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
                 pos2 += (int) SendMessageW(hEd, EM_LINELENGTH, pos2, 0);
                 if ( bSearchUp && (pos2 > cr.cpMax) )
@@ -1510,7 +1522,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
             }
             else
             {
-                pos2 += (INT_X) SendMessage(hEd, EM_LINEINDEX, 
+                pos2 += (INT_X) SendMessage(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
             }
             cr.cpMin = pos1;
@@ -1528,7 +1540,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
         if ( bIsProgressBarVisible )
         {
-            if ( bSearchUp ? 
+            if ( bSearchUp ?
                    (((nEditStartLine - nLine) % LINES_TO_SKIP) == 0) :
                      (((nLine - nEditStartLine) % LINES_TO_SKIP) == 0) )
             {
@@ -1543,9 +1555,9 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                      (nLine > 2*LINES_TO_SKIP) )
                 {
                     bIsProgressBarVisible = TRUE;
-                    setSearchProgressBarState( 
-                      TRUE, 
-                      nEditStartLine/LINES_TO_SKIP 
+                    setSearchProgressBarState(
+                      TRUE,
+                      nEditStartLine/LINES_TO_SKIP
                     );
                     updateSearchProgressBar();
                 }
@@ -1556,9 +1568,9 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                      (nEditMaxLine - nLine > 2*LINES_TO_SKIP) )
                 {
                     bIsProgressBarVisible = TRUE;
-                    setSearchProgressBarState( 
-                      TRUE, 
-                      (nEditMaxLine - nEditStartLine)/LINES_TO_SKIP 
+                    setSearchProgressBarState(
+                      TRUE,
+                      (nEditMaxLine - nEditStartLine)/LINES_TO_SKIP
                     );
                     updateSearchProgressBar();
                 }

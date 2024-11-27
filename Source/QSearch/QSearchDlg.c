@@ -7,6 +7,12 @@
 #include "XMemStrFunc.h"
 
 
+#ifndef QS_OLD_WINDOWS
+#undef SendMessage
+#define SendMessage SendMessageW
+#endif
+
+
 #define  QSEARCH_FIRST          0x000001
 #define  QSEARCH_NEXT           0x000002
 #define  QSEARCH_FINDALL        0x000010
@@ -81,6 +87,7 @@ DWORD getFindAllFlags(const DWORD dwOptFlags[])
 }
 
 // plugin call helpers
+#ifdef QS_OLD_WINDOWS
 void CallPluginFuncA(const char* cszFuncA, void* pParams)
 {
     PLUGINCALLSENDA pcsA;
@@ -91,6 +98,8 @@ void CallPluginFuncA(const char* cszFuncA, void* pParams)
 
     SendMessageA( g_Plugin.hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
 }
+#endif
+
 void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams)
 {
     PLUGINCALLSENDW pcsW;
@@ -102,6 +111,7 @@ void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams)
     SendMessageW( g_Plugin.hMainWnd, AKD_DLLCALLW, 0, (LPARAM) &pcsW );
 }
 
+#ifdef QS_OLD_WINDOWS
 static DWORD getPluginHotKeyA(const char* cszPluginFuncA)
 {
     PLUGINFUNCTION* pfA;
@@ -110,6 +120,7 @@ static DWORD getPluginHotKeyA(const char* cszPluginFuncA)
 
     return pfA ? pfA->wHotkey : 0;
 }
+#endif
 
 static DWORD getPluginHotKeyW(const wchar_t* cszPluginFuncW)
 {
@@ -123,24 +134,27 @@ static DWORD getPluginHotKeyW(const wchar_t* cszPluginFuncW)
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> qsearch plugin >>>>>>>>>>>>>>>>>>>>>>>> */
-const char* cszQSearchFindAllA = "QSearch::FindAll";
 const wchar_t* cszQSearchFindAllW = L"QSearch::FindAll";
-
-const char* cszGoToNextFindAllMatchA = "QSearch::GoToNextFindAllMatch";
 const wchar_t* cszGoToNextFindAllMatchW = L"QSearch::GoToNextFindAllMatch";
-
-const char* cszGoToPrevFindAllMatchA = "QSearch::GoToPrevFindAllMatch";
 const wchar_t* cszGoToPrevFindAllMatchW = L"QSearch::GoToPrevFindAllMatch";
+
+#ifdef QS_OLD_WINDOWS
+const char* cszQSearchFindAllA = "QSearch::FindAll";
+const char* cszGoToNextFindAllMatchA = "QSearch::GoToNextFindAllMatch";
+const char* cszGoToPrevFindAllMatchA = "QSearch::GoToPrevFindAllMatch";
+#endif
 
 static DWORD getQSearchHotKey(void)
 {
     if ( g_szFunctionQSearchAW[0] )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             return getPluginHotKeyA((const char *) g_szFunctionQSearchAW);
         }
         else
+#endif
         {
             return getPluginHotKeyW(g_szFunctionQSearchAW);
         }
@@ -150,30 +164,36 @@ static DWORD getQSearchHotKey(void)
 
 static DWORD getFindAllHotKey(void)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         return getPluginHotKeyA(cszQSearchFindAllA);
     }
+#endif
 
     return getPluginHotKeyW(cszQSearchFindAllW);
 }
 
 static DWORD getGoToNextFindAllMatchHotKey(void)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         return getPluginHotKeyA(cszGoToNextFindAllMatchA);
     }
+#endif
 
     return getPluginHotKeyW(cszGoToNextFindAllMatchW);
 }
 
 static DWORD getGoToPrevFindAllMatchHotKey(void)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         return getPluginHotKeyA(cszGoToPrevFindAllMatchA);
     }
+#endif
 
     return getPluginHotKeyW(cszGoToPrevFindAllMatchW);
 }
@@ -181,19 +201,23 @@ static DWORD getGoToPrevFindAllMatchHotKey(void)
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> highlight plugin >>>>>>>>>>>>>>>>>>>>>>>> */
-const char*    cszHighlightMainA = "Coder::HighLight";
 const wchar_t* cszHighlightMainW = L"Coder::HighLight";
-
-const char*    cszCoderSettingsA = "Coder::Settings";
 const wchar_t* cszCoderSettingsW = L"Coder::Settings";
+
+#ifdef QS_OLD_WINDOWS
+const char*    cszHighlightMainA = "Coder::HighLight";
+const char*    cszCoderSettingsA = "Coder::Settings";
+#endif
 
 void CallHighlightMain(void* phlParams)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         CallPluginFuncA(cszHighlightMainA, phlParams);
     }
     else
+#endif
     {
         CallPluginFuncW(cszHighlightMainW, phlParams);
     }
@@ -201,11 +225,13 @@ void CallHighlightMain(void* phlParams)
 
 void CallCoderSettings(void* pstParams)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         CallPluginFuncA(cszCoderSettingsA, pstParams);
     }
     else
+#endif
     {
         CallPluginFuncW(cszCoderSettingsW, pstParams);
     }
@@ -213,6 +239,7 @@ void CallCoderSettings(void* pstParams)
 
 BOOL IsHighlightMainActive(void)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         PLUGINFUNCTION *pfA = (PLUGINFUNCTION *) SendMessageA( g_Plugin.hMainWnd,
@@ -224,6 +251,7 @@ BOOL IsHighlightMainActive(void)
         }
     }
     else
+#endif
     {
         PLUGINFUNCTION *pfW = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd,
             AKD_DLLFINDW, (WPARAM) cszHighlightMainW, 0 );
@@ -291,16 +319,21 @@ INT_PTR GetCoderVariableW(HWND hWndEdit, const wchar_t* cszVarName, wchar_t* psz
 
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> log plugin >>>>>>>>>>>>>>>>>>>>>>>> */
-const char*    cszLogOutputA = "Log::Output";
 const wchar_t* cszLogOutputW = L"Log::Output";
+
+#ifdef QS_OLD_WINDOWS
+const char*    cszLogOutputA = "Log::Output";
+#endif
 
 void CallLogOutput(void* ploParams)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         CallPluginFuncA(cszLogOutputA, ploParams);
     }
     else
+#endif
     {
         CallPluginFuncW(cszLogOutputW, ploParams);
     }
@@ -308,6 +341,7 @@ void CallLogOutput(void* ploParams)
 
 BOOL IsLogOutputActive(void)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         PLUGINFUNCTION *pfA = (PLUGINFUNCTION *) SendMessageA( g_Plugin.hMainWnd,
@@ -319,6 +353,7 @@ BOOL IsLogOutputActive(void)
         }
     }
     else
+#endif
     {
         PLUGINFUNCTION *pfW = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd,
             AKD_DLLFINDW, (WPARAM) cszLogOutputW, 0 );
@@ -737,14 +772,16 @@ BOOL IsLogOutputActive(void)
 
     BOOL QSearchDlgState_isLastHighlightedEqualToTheSearch(const QSearchDlgState* pQSearchDlg, const wchar_t* cszFindWhat, DWORD dwFindAllFlags)
     {
-        wchar_t szFindWhatW[MAX_TEXT_SIZE];
+#ifdef QS_OLD_WINDOWS
+        wchar_t szFindWhatAtoW[MAX_TEXT_SIZE];
 
         if ( g_Plugin.bOldWindows )
         {
-            szFindWhatW[0] = 0;
-            MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhat, -1, szFindWhatW, MAX_TEXT_SIZE - 1 );
-            cszFindWhat = szFindWhatW;
+            szFindWhatAtoW[0] = 0;
+            MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhat, -1, szFindWhatAtoW, MAX_TEXT_SIZE - 1 );
+            cszFindWhat = szFindWhatAtoW;
         }
+#endif
 
         return QSearchDlgState_isLastHighlightedEqualToTheSearchW(pQSearchDlg, cszFindWhat, dwFindAllFlags);
     }
@@ -754,7 +791,11 @@ BOOL IsLogOutputActive(void)
         if ( dwFindAllFlags != g_QSearchDlg.dwLastHighlightFlags )
             return FALSE;
 
-        if ( !g_Plugin.bOldWindows && !(dwFindAllFlags & QS_FAF_MATCHCASE) )
+        if (
+#ifdef QS_OLD_WINDOWS
+             !g_Plugin.bOldWindows &&
+#endif
+             !(dwFindAllFlags & QS_FAF_MATCHCASE) )
             return (lstrcmpiW(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
 
         return (x_wstr_cmp(cszFindWhatW, g_QSearchDlg.szLastHighlightTextW) == 0);
@@ -807,9 +848,11 @@ void qsSetInfoEmpty(void)
 {
     if ( g_QSearchDlg.hStInfo )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
             SetWindowTextA(g_QSearchDlg.hStInfo, "");
         else
+#endif
             SetWindowTextW(g_QSearchDlg.hStInfo, L"");
 
         #ifdef _DEBUG
@@ -820,16 +863,19 @@ void qsSetInfoEmpty(void)
     QSearchDlgState_clearCurrentMatches(&g_QSearchDlg, FALSE);
 }
 
+#ifdef QS_OLD_WINDOWS
 static BOOL endsWithSubStrA(const char* szStrA, int nLen, const char* szSubA, int nSubLen)
 {
     return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpA(szStrA + nLen - nSubLen, szSubA) == 0 );
 }
+#endif
 
 static BOOL endsWithSubStrW(const wchar_t* szStrW, int nLen, const wchar_t* szSubW, int nSubLen)
 {
     return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpW(szStrW + nLen - nSubLen, szSubW) == 0 );
 }
 
+#ifdef QS_OLD_WINDOWS
 static int appendToInfoTextA(char szInfoTextA[], int nInfoLen, const char* szTextAppendA, int nLenAppend)
 {
     if ( nLenAppend != 0 )
@@ -844,6 +890,7 @@ static int appendToInfoTextA(char szInfoTextA[], int nInfoLen, const char* szTex
     }
     return nInfoLen;
 }
+#endif
 
 static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t* szTextAppendW, int nLenAppend)
 {
@@ -941,6 +988,7 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
 {
     int nEofLen = 0;
@@ -964,6 +1012,7 @@ static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
 
     return nLen;
 }
+#endif
 
 static int removeEofOrNotFoundFromInfoTextW(wchar_t szInfoTextW[], int nLen)
 {
@@ -994,6 +1043,7 @@ static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
     if ( !g_QSearchDlg.hStInfo )
         return;
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         char szInfoTextA[128];
@@ -1042,6 +1092,7 @@ static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)
         }
     }
     else
+#endif
     {
         wchar_t szInfoTextW[128];
         wchar_t szInfoTextW_0[128];
@@ -2289,6 +2340,7 @@ static void qsdlgShowHideWholeWordCheckBox(HWND hDlg, const DWORD dwOptFlags[])
 
     hChWholeWord = GetDlgItem(hDlg, IDC_CH_WHOLEWORD);
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         lstrcpyA( (char *) wszTextAW, qsearchGetTextA(IDC_CH_WHOLEWORD) );
@@ -2299,6 +2351,7 @@ static void qsdlgShowHideWholeWordCheckBox(HWND hDlg, const DWORD dwOptFlags[])
         SetWindowTextA(hChWholeWord, (const char *) wszTextAW);
     }
     else
+#endif
     {
         lstrcpyW( wszTextAW, qsearchGetTextW(IDC_CH_WHOLEWORD) );
         if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
@@ -2362,19 +2415,23 @@ BOOL qsIsHotKeyPressed(DWORD dwHotKey, UINT uMsg, LPARAM lParam)
 static void getEditFindText(HWND hEdit, wchar_t szTextAW[MAX_TEXT_SIZE])
 {
     szTextAW[0] = 0;
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         GetWindowTextA( hEdit, (LPSTR) szTextAW, MAX_TEXT_SIZE - 1 );
     else
+#endif
         GetWindowTextW( hEdit, szTextAW, MAX_TEXT_SIZE - 1 );
 }
 
 static void setEditFindText(HWND hEdit, const wchar_t* pszTextAW)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         SetWindowTextA( hEdit, (LPCSTR) pszTextAW );
     }
     else
+#endif
     {
         SetWindowTextW( hEdit, pszTextAW );
     }
@@ -2388,9 +2445,11 @@ static void cutEditText(HWND hEdit, BOOL bCutAfterCaret)
 
     SendMessage( hEdit, EM_GETSEL, (WPARAM) &dwSelPos1, (LPARAM) &dwSelPos2 );
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         len = (UINT) GetWindowTextLengthA(hEdit);
     else
+#endif
         len = (UINT) GetWindowTextLengthW(hEdit);
 
     if ( bCutAfterCaret )
@@ -2404,11 +2463,13 @@ static void cutEditText(HWND hEdit, BOOL bCutAfterCaret)
             SendMessage( hEdit, EM_SETSEL, dwSelPos1, -1 );
             //SendMessage( hEdit, WM_SETREDRAW, TRUE, 0 );
 
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 SendMessageA( hEdit, EM_REPLACESEL, TRUE, (LPARAM) "" );
             }
             else
+#endif
             {
                 SendMessageW( hEdit, EM_REPLACESEL, TRUE, (LPARAM) L"" );
             }
@@ -2427,11 +2488,13 @@ static void cutEditText(HWND hEdit, BOOL bCutAfterCaret)
             SendMessage( hEdit, EM_SETSEL, 0, dwSelPos2 );
             //SendMessage( hEdit, WM_SETREDRAW, TRUE, 0 );
 
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 SendMessageA( hEdit, EM_REPLACESEL, TRUE, (LPARAM) "" );
             }
             else
+#endif
             {
                 SendMessageW( hEdit, EM_REPLACESEL, TRUE, (LPARAM) L"" );
             }
@@ -2458,6 +2521,7 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
             if ( cr.cpMax >= cr.cpMin + MAX_TEXT_SIZE )
                 cr.cpMax = cr.cpMin + MAX_TEXT_SIZE - 1;
 
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 TEXTRANGEA_X trA;
@@ -2533,6 +2597,7 @@ static BOOL getAkelPadSelectedText(wchar_t szTextAW[MAX_TEXT_SIZE], const DWORD 
                 }
             }
             else
+#endif
             {
                 TEXTRANGEW_X trW;
 
@@ -2621,18 +2686,22 @@ static BOOL EnableDlgItem(HWND hDlg, int itemID, BOOL bEnable)
 
 static WNDPROC setWndProc(HWND hWnd, WNDPROC newWndProc)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         return (WNDPROC) SetWindowLongPtrA( hWnd, GWLP_WNDPROC, (LONG_PTR) newWndProc );
     else
+#endif
         return (WNDPROC) SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (LONG_PTR) newWndProc );
 }
 
 static LRESULT callWndProc(WNDPROC prevWndProc,
   HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         return CallWindowProcA(prevWndProc, hWnd, uMsg, wParam, lParam);
     else
+#endif
         return CallWindowProcW(prevWndProc, hWnd, uMsg, wParam, lParam);
 }
 
@@ -2697,6 +2766,7 @@ static LRESULT CALLBACK btnFindWndProc(HWND hBtn,
         {
             if ( hBtn == g_QSearchDlg.hBtnFindAll )
             {
+#ifdef QS_OLD_WINDOWS
                 if ( g_Plugin.bOldWindows )
                 {
                     if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
@@ -2710,6 +2780,7 @@ static LRESULT CALLBACK btnFindWndProc(HWND hBtn,
                     }
                 }
                 else
+#endif
                 {
                     if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
                     {
@@ -2867,12 +2938,14 @@ static wchar_t virtKeyToCharW(DWORD dwKey)
     return wch;
 }
 
+#ifdef QS_OLD_WINDOWS
 static char virtKeyToCharA(DWORD dwKey)
 {
     UINT uCh = MapVirtualKeyA(dwKey, 2 /*MAPVK_VK_TO_CHAR*/);
     char ch = (char) (uCh & 0xFF);
     return ch;
 }
+#endif
 
 #define AHKF_PARENTHESES 0x01
 #define AHKF_INDENT      0x02
@@ -2895,6 +2968,7 @@ static void strFormatAltHotkeyW(wchar_t* szHotkeyW, DWORD dwAltHotkey, UINT uFla
     *p = 0;
 }
 
+#ifdef QS_OLD_WINDOWS
 static void strFormatAltHotkeyA(char* szHotkeyA, DWORD dwAltHotkey, UINT uFlags)
 {
     char* p;
@@ -2913,6 +2987,7 @@ static void strFormatAltHotkeyA(char* szHotkeyA, DWORD dwAltHotkey, UINT uFlags)
         *(p++) = ')';
     *p = 0;
 }
+#endif
 
 static void strAppendAltHotkeyW(wchar_t* strW, DWORD dwAltHotkey)
 {
@@ -2922,6 +2997,7 @@ static void strAppendAltHotkeyW(wchar_t* strW, DWORD dwAltHotkey)
     lstrcatW(strW, szHotKeyW);
 }
 
+#ifdef QS_OLD_WINDOWS
 static void strAppendAltHotkeyA(char* strA, DWORD dwAltHotkey)
 {
     char szHotKeyA[32];
@@ -2929,6 +3005,7 @@ static void strAppendAltHotkeyA(char* strA, DWORD dwAltHotkey)
     strFormatAltHotkeyA(szHotKeyA, dwAltHotkey, AHKF_INDENT | AHKF_PARENTHESES);
     lstrcatA(strA, szHotKeyA);
 }
+#endif
 
 static void OnSrchModeChanged(void)
 {
@@ -2995,6 +3072,7 @@ static LRESULT CALLBACK chWholeWordWndProc(HWND hCh,
             return 0;
 
         case WM_NOTIFY:
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
@@ -3021,6 +3099,7 @@ static LRESULT CALLBACK chWholeWordWndProc(HWND hCh,
                 }
             }
             else
+#endif
             {
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
                 {
@@ -3696,6 +3775,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
         }
         case WM_NOTIFY:
         {
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOA )
@@ -3707,6 +3787,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 }
             }
             else
+#endif
             {
                 if ( ((LPNMHDR) lParam)->code == TTN_GETDISPINFOW )
                 {
@@ -3761,6 +3842,7 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
             else
             {
                 // case-insensitive, needed for match_mask and match_maskw
+#ifdef QS_OLD_WINDOWS
                 if ( g_Plugin.bOldWindows )
                 {
                     lstrcpyA( (LPSTR) szFindTextBufAW, (LPCSTR) g_QSearchDlg.szFindTextAW );
@@ -3769,6 +3851,7 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
                     CharUpperA( (LPSTR) szSelTextBufAW );
                 }
                 else
+#endif
                 {
                     lstrcpyW( szFindTextBufAW, g_QSearchDlg.szFindTextAW );
                     CharUpperW( szFindTextBufAW );
@@ -3781,9 +3864,11 @@ static void qsUpdateHighlight(HWND hDlg, HWND hEdit, const DWORD dwOptFlags[])
 
             if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] )
             {
+#ifdef QS_OLD_WINDOWS
                 if ( g_Plugin.bOldWindows )
                     bEqual = (match_mask((LPCSTR)pszFindTextAW, (LPCSTR)pszSelTextAW, 0, 0) > 0);
                 else
+#endif
                     bEqual = (match_maskw(pszFindTextAW, pszSelTextAW, 0, 0) > 0);
             }
             else
@@ -3822,7 +3907,11 @@ void qsUpdateHighlightForFindAll(const wchar_t* cszFindWhat, DWORD dwFindAllFlag
 {
     DWORD dwOptFlagsTemp[OPTF_COUNT_TOTAL];
 
-    if ( !g_QSearchDlg.hDlg || !g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL] || g_Plugin.bOldWindows )
+    if ( !g_QSearchDlg.hDlg || !g_Options.dwFlags[OPTF_SRCH_HIGHLIGHTALL]
+#ifdef QS_OLD_WINDOWS
+         || g_Plugin.bOldWindows
+#endif
+       )
         return;
 
     copyOptionsFlags(dwOptFlagsTemp, g_Options.dwFlags);
@@ -3872,8 +3961,10 @@ static BOOL getEditorColors(COLORREF* pcrTextColor, COLORREF* pcrBkgndColor)
     PLUGINFUNCTION* pf;
     int nValuesRead;
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         return FALSE;
+#endif
 
     nValuesRead = 0;
     pf = (PLUGINFUNCTION *) SendMessageW( g_Plugin.hMainWnd, AKD_DLLFINDW, (WPARAM) cszHighlightMainW, 0 );
@@ -3989,6 +4080,7 @@ static void OnChMatchCaseOrWholeWordClicked(HWND hDlg)
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 static void fillToolInfoA(
     TOOLINFOA* lptiA,
     LPSTR      lpToolTipText,
@@ -4012,6 +4104,7 @@ static void fillToolInfoA(
     lptiA->rect.bottom = rect.bottom;
     lptiA->lParam = 0;
 }
+#endif
 
 static void fillToolInfoW(
     TOOLINFOW* lptiW,
@@ -4404,6 +4497,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             }
             else if ( id == IDM_FINDALL_SETTINGSDLG )
             {
+#ifdef QS_OLD_WINDOWS
                 if ( g_Plugin.bOldWindows )
                 {
                     /*
@@ -4414,6 +4508,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     */
                 }
                 else
+#endif
                 {
                     DialogBoxW(g_Plugin.hInstanceDLL,
                                MAKEINTRESOURCEW(IDD_FINDALL_SETTINGS),
@@ -4436,7 +4531,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
+#ifdef QS_OLD_WINDOWS
                     if ( !g_Plugin.bOldWindows )
+#endif
                     {
                         CallPluginFuncW(cszQSearchFindAllW, NULL);
                     }
@@ -4477,9 +4574,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                     if ( hWndEdit )
                     {
                         SetFocus(hWndEdit);
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                             PostMessageA(hWndEdit, WM_KEYDOWN, wParam, lParam);
                         else
+#endif
                             PostMessageW(hWndEdit, WM_KEYDOWN, wParam, lParam);
                         return 1;
                     }
@@ -4543,7 +4642,9 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                 bHotKeyFindAllPressed = qsIsHotKeyPressed(g_QSearchDlg.dwHotKeyFindAll, uMsg, lParam);
                 if ( bHotKeyFindAllPressed )
                 {
+#ifdef QS_OLD_WINDOWS
                     if ( !g_Plugin.bOldWindows )
+#endif
                     {
                         CallPluginFuncW(cszQSearchFindAllW, NULL);
                     }
@@ -4774,7 +4875,11 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             // pt.y = (int) (short) HIWORD(lParam);
             GetCursorPos(&pt);
 
-            if ( (g_QSearchDlg.hBtnFindAll == (HWND) wParam) && !g_Plugin.bOldWindows )
+            if ( (g_QSearchDlg.hBtnFindAll == (HWND) wParam)
+#ifdef QS_OLD_WINDOWS
+                 && !g_Plugin.bOldWindows
+#endif
+               )
             {
                 uCheck = (g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) ? MF_CHECKED : MF_UNCHECKED;
                 CheckMenuItem( g_QSearchDlg.hFindAllPopupMenu, IDM_FINDALL_START, MF_BYCOMMAND | uCheck );
@@ -5220,12 +5325,14 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             g_QSearchDlg.hStInfo = hStInfo;
 
             hToolTip = qsearchDoInitToolTip(hDlg, g_QSearchDlg.hFindEdit);
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 hPopupMenuLoaded = LoadMenuA( g_Plugin.hInstanceDLL,
                   MAKEINTRESOURCEA(IDR_MENU_OPTIONS) );
             }
             else
+#endif
             {
                 hPopupMenuLoaded = LoadMenuW( g_Plugin.hInstanceDLL,
                   MAKEINTRESOURCEW(IDR_MENU_OPTIONS) );
@@ -5238,11 +5345,13 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
             qsdlgShowHideWholeWordCheckBox(hDlg, g_Options.dwFlags);
 
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 ReadFindHistoryA();
             }
             else
+#endif
             {
                 ReadFindHistoryW();
             }
@@ -5345,6 +5454,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
 
                 if ( g_QSearchDlg.hFindEdit )
                 {
+#ifdef QS_OLD_WINDOWS
                     if ( g_Plugin.bOldWindows )
                     {
                         TOOLINFOA tiA;
@@ -5354,6 +5464,7 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
                         SendMessage( hToolTip, TTM_NEWTOOLRECTA, 0, (LPARAM) &tiA );
                     }
                     else
+#endif
                     {
                         TOOLINFOW tiW;
 
@@ -5379,6 +5490,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
     iccex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     InitCommonControlsEx( &iccex );
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         hToolTip = CreateWindowExA( WS_EX_TOPMOST, TOOLTIPS_CLASSA,
@@ -5387,6 +5499,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
           hDlg, 0, g_Plugin.hInstanceDLL, 0 );
     }
     else
+#endif
     {
         hToolTip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW,
           0, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
@@ -5400,6 +5513,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
         SetWindowPos( hToolTip, HWND_TOPMOST,
           0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             TOOLINFOA tiA;
@@ -5453,6 +5567,7 @@ HWND qsearchDoInitToolTip(HWND hDlg, HWND hEdit)
             }
         }
         else
+#endif
         {
             TOOLINFOW tiW;
             wchar_t szHintW[128];
@@ -5513,11 +5628,13 @@ void qsearchDoQuit(HWND hEdit, HWND hToolTip, HMENU hPopupMenuLoaded, HBRUSH hBr
 {
     HWND hDlgItm;
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         SaveFindHistoryA();
     }
     else
+#endif
     {
         SaveFindHistoryW();
     }
@@ -5662,6 +5779,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
     // Change AkelPad's plugin status (running/not running)
     if ( g_szFunctionQSearchAW[0] )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             PLUGINFUNCTION* pfA;
@@ -5674,6 +5792,7 @@ void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOpt
             }
         }
         else
+#endif
         {
             PLUGINFUNCTION* pfW;
 
@@ -5802,6 +5921,7 @@ void qsearchDoSelFind(HWND hEdit, BOOL bFindPrev, const DWORD dwOptFlags[])
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[], BOOL bCutTrailingSequence)
 {
     int n1, n2;
@@ -5884,6 +6004,7 @@ static void adjustIncompleteRegExA(char* szTextA, const DWORD dwOptFlags[], BOOL
         szTextA[n1 + 2] = 0;
     }
 }
+#endif
 
 static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[], BOOL bCutTrailingSequence)
 {
@@ -5968,6 +6089,7 @@ static void adjustIncompleteRegExW(wchar_t* szTextW, const DWORD dwOptFlags[], B
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 // pszRegExA may require doubled length of cszFindExA
 static void convertFindExToRegExA(const char* cszFindExA, char* pszRegExA)
 {
@@ -6033,6 +6155,7 @@ static void convertFindExToRegExA(const char* cszFindExA, char* pszRegExA)
 
     *pszRegExA = 0;
 }
+#endif
 
 // pszRegExW may require doubled length of cszFindExW
 static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
@@ -6113,6 +6236,7 @@ static void CALLBACK CountAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, D
     PostMessage( g_QSearchDlg.hDlg, QSM_FINDALL, QS_FINDALL_COUNTONLY, 0 );
 }
 
+#ifdef QS_OLD_WINDOWS
 // important: pszRegExpA must point to (szSomeTextBufA + 2)
 static char* surroundRegExpWithWordBoundariesA(char* pszRegExpA)
 {
@@ -6133,6 +6257,7 @@ static char* surroundRegExpWithWordBoundariesA(char* pszRegExpA)
     }
     return pszRegExpA;
 }
+#endif
 
 // important: pszRegExpW must point to (szSomeTextBufW + 2)
 static wchar_t* surroundRegExpWithWordBoundariesW(wchar_t* pszRegExpW)
@@ -6202,6 +6327,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
         }
     }
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         if ( g_QSearchDlg.hStInfo )
@@ -6255,6 +6381,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
         }
     }
     else
+#endif
     {
         if ( g_QSearchDlg.hStInfo )
         {
@@ -6384,6 +6511,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
 
     srchEOF = (dwSearchFlags & FR_UP) ? QSEARCH_EOF_UP : QSEARCH_EOF_DOWN;
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         TEXTFINDA tfA;
@@ -6565,6 +6693,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
         }
     }
     else // !g_Plugin.bOldWindows
+#endif
     {
         TEXTFINDW tfW;
         BOOL      bSearchEx = FALSE;
@@ -7112,7 +7241,9 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
         BOOL bGotCountAllResults = FALSE;
 
         if ( !QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) &&
+#ifdef QS_OLD_WINDOWS
              !g_Plugin.bOldWindows &&
+#endif
              QSearchDlgState_isFindAllSearchEqualToTheCurrentSearch(&g_QSearchDlg, cszFindWhatAW, getFindAllFlags(dwOptFlags)) )
         {
             const FRAMEDATA* pFrame;
@@ -7172,6 +7303,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
 
 void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWORD dwOptFlags[], DWORD dwHighlightConditionFlags)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         if ( 0 == ((LPCSTR) cszFindWhatAW)[0] )
@@ -7182,6 +7314,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
         }
     }
     else
+#endif
     {
         if ( 0 == cszFindWhatAW[0] )
         {
@@ -7224,12 +7357,14 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
 
                     if ( dwOptFlags[OPTF_SRCH_USE_SPECIALCHARS] && !dwOptFlags[OPTF_SRCH_USE_REGEXP] )
                     {
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                         {
                             if ( findSpecialCharA((LPCSTR) cszFindWhatAW) != -1 )
                                 bFindExAsRegExp = TRUE;
                         }
                         else
+#endif
                         {
                             if ( findSpecialCharW(cszFindWhatAW) != -1 )
                                 bFindExAsRegExp = TRUE;
@@ -7245,6 +7380,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                         pszMarkTextW = szMarkTextBufW + 2; // preserving 2 chars for the leading "\b", if needed
                         pszMarkTextW[0] = 0;
 
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                         {
                             const char* cszFindTextA;
@@ -7261,6 +7397,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                             MultiByteToWideChar( CP_ACP, 0, cszFindTextA, -1, pszMarkTextW, 2*MAX_TEXT_SIZE - 1 );
                         }
                         else
+#endif
                         {
                             if ( bFindExAsRegExp )
                                 convertFindExToRegExW( cszFindWhatAW, pszMarkTextW );
@@ -7289,9 +7426,11 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                     }
                     else if ( dwHighlightConditionFlags & QHC_IGNORE_SELECTION )
                     {
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                             MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhatAW, -1, szMarkTextBufW, 2*MAX_TEXT_SIZE - 1 );
                         else
+#endif
                             lstrcpyW(szMarkTextBufW, cszFindWhatAW);
 
                         hlParams.wszMarkText = szMarkTextBufW;
@@ -7306,6 +7445,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                         wchar_t szTextColorAW[16];
                         wchar_t szBkgndColorAW[16];
 
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                         {
                             wsprintfA( (char *) szTextColorAW, "0" );
@@ -7316,6 +7456,7 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                             );
                         }
                         else
+#endif
                         {
                             wsprintfW( szTextColorAW, L"0" );
                             wsprintfW( szBkgndColorAW, L"#%02X%02X%02X",
@@ -7335,9 +7476,11 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                         CallHighlightMain( &hlParams );
 
                         g_QSearchDlg.dwLastHighlightFlags = dwFindAllFlags;
+#ifdef QS_OLD_WINDOWS
                         if ( g_Plugin.bOldWindows )
                             MultiByteToWideChar( CP_ACP, 0, (LPCSTR) cszFindWhatAW, -1, g_QSearchDlg.szLastHighlightTextW, MAX_TEXT_SIZE );
                         else
+#endif
                             lstrcpyW(g_QSearchDlg.szLastHighlightTextW, cszFindWhatAW);
                     }
                 }
@@ -7383,7 +7526,11 @@ HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox)
         pt.y = 5;
         hEdit = ChildWindowFromPoint(hCombo, pt);
 
-        if ( phListBox && !g_Plugin.bOldWindows )
+        if ( phListBox
+#ifdef QS_OLD_WINDOWS
+             && !g_Plugin.bOldWindows
+#endif
+           )
         {
 #ifndef CB_GETCOMBOBOXINFO
     #define CB_GETCOMBOBOXINFO          0x0164
@@ -7406,14 +7553,21 @@ HWND qsearchGetFindEdit(HWND hDlg, HWND* phListBox)
 
 BOOL qsearchFindHistoryAdd(HWND hEdit, const wchar_t* cszTextAW, UINT uUpdFlags)
 {
-    if ( qsearchIsFindHistoryEnabled() && cszTextAW && 
-         (g_Plugin.bOldWindows ? (((const char *)cszTextAW)[0] != 0) : (cszTextAW[0] != 0)) )
+    if ( qsearchIsFindHistoryEnabled() && cszTextAW &&
+         (
+#ifdef QS_OLD_WINDOWS
+          g_Plugin.bOldWindows ?
+            (((const char *)cszTextAW)[0] != 0) :
+#endif
+               (cszTextAW[0] != 0)
+         ) )
     {
         int   iItem;
         DWORD dwEditSel;
         HWND  hCombo;
 
         hCombo = GetDlgItem(g_QSearchDlg.hDlg, IDC_CB_FINDTEXT);
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             dwEditSel = (DWORD) SendMessageA(hCombo, CB_GETEDITSEL, 0, 0);
@@ -7461,7 +7615,9 @@ BOOL qsearchFindHistoryAdd(HWND hEdit, const wchar_t* cszTextAW, UINT uUpdFlags)
                 }*/
             }
         }
-        else if ( cszTextAW[0] )
+        else
+#endif
+        if ( cszTextAW[0] )
         {
             dwEditSel = (DWORD) SendMessageW(hCombo, CB_GETEDITSEL, 0, 0);
             iItem = (int) SendMessageW(hCombo, CB_FINDSTRINGEXACT, (WPARAM) (-1), (LPARAM) cszTextAW);
@@ -7515,15 +7671,21 @@ BOOL qsearchFindHistoryAdd(HWND hEdit, const wchar_t* cszTextAW, UINT uUpdFlags)
 
 void strcpyAorW(LPWSTR lpDst, LPCWSTR lpSrc)
 {
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
         lstrcpyA( (LPSTR) lpDst, (LPCSTR) lpSrc );
     else
+#endif
         lstrcpyW( lpDst, lpSrc );
 }
 
 int strcmpAorW(LPCWSTR lpStr1, LPCWSTR lpStr2, BOOL bMatchCase)
 {
-    return ( g_Plugin.bOldWindows ?
-        (bMatchCase ? lstrcmpA : lstrcmpiA)((LPCSTR) lpStr1, (LPCSTR) lpStr2) :
-            (bMatchCase ? lstrcmpW : lstrcmpiW)(lpStr1, lpStr2) );
+    return (
+#ifdef QS_OLD_WINDOWS
+        g_Plugin.bOldWindows ?
+          (bMatchCase ? lstrcmpA : lstrcmpiA)((LPCSTR) lpStr1, (LPCSTR) lpStr2) :
+#endif
+            (bMatchCase ? lstrcmpW : lstrcmpiW)(lpStr1, lpStr2)
+           );
 }

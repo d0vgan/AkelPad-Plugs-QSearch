@@ -251,7 +251,9 @@ void qsSetInfoEmpty(void);
 BOOL qsIsHotKeyPressed(DWORD dwHotKey, UINT uMsg, LPARAM lParam);
 
 // plugin call helpers
+#ifdef QS_OLD_WINDOWS
 void CallPluginFuncA(const char* cszFuncA, void* pParams);
+#endif
 void CallPluginFuncW(const wchar_t* cszFuncW, void* pParams);
 
 /* >>>>>>>>>>>>>>>>>>>>>>>> highlight plugin >>>>>>>>>>>>>>>>>>>>>>>> */

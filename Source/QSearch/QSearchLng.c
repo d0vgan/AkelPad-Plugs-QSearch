@@ -10,6 +10,7 @@
 #define  INLNG_UKR    2
 #define  INLNG_COUNT  3
 
+#ifdef QS_OLD_WINDOWS
 const char* szHintBtCancelA[INLNG_COUNT] = {
     /* eng */
     ( "Close" ),
@@ -52,7 +53,7 @@ const char* szHintBtFindAllA[INLNG_COUNT] = {
 
 const char* szHintChMatchCaseA[INLNG_COUNT][2] = {
     /* eng */
-    { 
+    {
         "Match case",
         "Match case"
     },
@@ -197,7 +198,7 @@ const char* szPopupMenuA[INLNG_COUNT][OPTF_COUNT - 1] = {
           "\xEE\xE3\xEE\x20\xEE\xEA\xED\xE0" ),
         ( "\xCE\xEA\xED\xEE\x3A\x20\x20\xCE\xE1\xF0\xE0\xE1\xE0\xF2\xFB\xE2" \
           "\xE0\xF2\xFC Esc \xEE\xF2\x20\xE3\xEB\xE0\xE2\xED" \
-          "\xEE\xE3\xEE\x20\xEE\xEA\xED\xE0" ),  
+          "\xEE\xE3\xEE\x20\xEE\xEA\xED\xE0" ),
         ( "\xCE\xEA\xED\xEE\x3A\x20 Hotkey \xF1\xEA\xF0\xFB\xE2\xE0\xE5\xF2" \
           "\x20\xEF\xE0\xED\xE5\xEB\xFC" ),
         ( "\xCE\xEA\xED\xEE\x3A\x20\x20\xC0\xE2\xF2\xEE\x2D\xF4\xEE\xEA\xF3" \
@@ -241,7 +242,7 @@ const char* szPopupMenuA[INLNG_COUNT][OPTF_COUNT - 1] = {
           "\xE3\xEE\x20\xE2\x69\xEA\xED\xE0" ),
         ( "\xC2\x69\xEA\xED\xEE\x3A\x20\xCE\xE1\xF0\xEE\xE1\xEB\xFF\xF2\xE8" \
           " Esc \xE2\x69\xE4\x20\xE3\xEE\xEB\xEE\xE2\xED\xEE" \
-          "\xE3\xEE\x20\xE2\x69\xEA\xED\xE0" ),  
+          "\xE3\xEE\x20\xE2\x69\xEA\xED\xE0" ),
         ( "\xC2\x69\xEA\xED\xEE\x3A Hotkey \xF5\xEE\xE2\xE0\xBA\x20\xEF\xE0" \
           "\xED\xE5\xEB\xFC" ),
         ( "\xC2\xB3\xEA\xED\xEE\x3A\x20\xC0\xE2\xF2\xEE\x2D\xF4\xEE\xEA\xF3" \
@@ -294,6 +295,7 @@ const char* szFindAllPopupMenuA[INLNG_COUNT][QS_FINDALL_TOTAL] = {
         "\xCD\xE0\xF1\xF2\xF0\xEE\xE9\xEA\xE8\x20\xE2\xE8\xE2\xEE\xE4\xF3..."
     }
 };
+#endif
 
 const wchar_t* szHintBtCancelW[INLNG_COUNT] = {
     /* eng */
@@ -501,7 +503,7 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
         ( L"\x041F\x043E\x0438\x0441\x043A\x003A SelFind \x043F\x043E\x0434" \
           L"\x0445\x0432\x0430\x0442\x044B\x0432\x0430\x0435\x0442\x0020" \
           L"\x0432\x044B\x0434\x0435\x043B\x0435\x043D\x043D\x044B\x0439" \
-          L"\x0020\x0442\x0435\x043A\x0441\x0442" ), 
+          L"\x0020\x0442\x0435\x043A\x0441\x0442" ),
         ( L"\x041F\x043E\x0438\x0441\x043A\x003A\x0020\x041E\x0441\x0442" \
           L"\x0430\x043D\x0430\x0432\x043B\x0438\x0432\x0430\x0442\x044C" \
           L"\x0441\x044F\x0020\x0432\x0020\x043A\x043E\x043D\x0446\x0435" \
@@ -520,7 +522,7 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
         ( L"\x041E\x043A\x043D\x043E\x003A\x0020\x0020\x041E\x0431\x0440" \
           L"\x0430\x0431\x0430\x0442\x044B\x0432\x0430\x0442\x044C" \
           L" Esc \x043E\x0442\x0020\x0433\x043B\x0430" \
-          L"\x0432\x043D\x043E\x0433\x043E\x0020\x043E\x043A\x043D\x0430" ),  
+          L"\x0432\x043D\x043E\x0433\x043E\x0020\x043E\x043A\x043D\x0430" ),
         ( L"\x041E\x043A\x043D\x043E\x003A\x0020 Hotkey \x0441\x043A\x0440" \
           L"\x044B\x0432\x0430\x0435\x0442\x0020\x043F\x0430\x043D\x0435" \
           L"\x043B\x044C" ),
@@ -561,7 +563,7 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
         ( L"\x041F\x043E\x0448\x0443\x043A\x003A SelFind \x043F\x0069\x0434" \
           L"\x0445\x043E\x043F\x043B\x044E\x0454\x0020\x0432\x0438\x0434" \
           L"\x0069\x043B\x0435\x043D\x0438\x0439\x0020\x0442\x0435\x043A" \
-          L"\x0441\x0442" ), 
+          L"\x0441\x0442" ),
         ( L"\x041F\x043E\x0448\x0443\x043A\x003A\x0020\x0417\x0443\x043F" \
           L"\x0438\x043D\x044F\x0442\x0438\x0441\x044C\x0020\x0443\x0020" \
           L"\x043A\x0069\x043D\x0446\x0069\x0020\x0444\x0430\x0439\x043B" \
@@ -579,7 +581,7 @@ const wchar_t* szPopupMenuW[INLNG_COUNT][OPTF_COUNT - 1] = {
         ( L"\x0412\x0069\x043A\x043D\x043E\x003A\x0020\x041E\x0431\x0440" \
           L"\x043E\x0431\x043B\x044F\x0442\x0438 Esc " \
           L"\x0432\x0069\x0434\x0020\x0433\x043E\x043B\x043E\x0432" \
-          L"\x043D\x043E\x0433\x043E\x0020\x0432\x0069\x043A\x043D\x0430" ),  
+          L"\x043D\x043E\x0433\x043E\x0020\x0432\x0069\x043A\x043D\x0430" ),
         ( L"\x0412\x0069\x043A\x043D\x043E\x003A Hotkey \x0445\x043E\x0432" \
           L"\x0430\x0454\x0020\x043F\x0430\x043D\x0435\x043B\x044C" ),
         ( L"\x0412\x0456\x043A\x043D\x043E\x003A\x0020\x0410\x0432\x0442" \
@@ -659,34 +661,36 @@ void qsearchSetMainDlgLang(HWND hDlg)
     // no changes for English dialog
     if ( uInternalLng != INLNG_ENG )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
-            SetWindowTextA( 
+            SetWindowTextA(
               GetDlgItem(hDlg, IDC_CH_MATCHCASE),
-              szHintChMatchCaseA[uInternalLng][1] 
+              szHintChMatchCaseA[uInternalLng][1]
             );
-            SetWindowTextA( 
+            SetWindowTextA(
               GetDlgItem(hDlg, IDC_CH_WHOLEWORD),
-              szHintChWholeWordA[uInternalLng][1] 
+              szHintChWholeWordA[uInternalLng][1]
             );
-            SetWindowTextA( 
+            SetWindowTextA(
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL),
-              szHintChHighlightAllA[uInternalLng][1] 
+              szHintChHighlightAllA[uInternalLng][1]
             );
         }
         else
+#endif
         {
-            SetWindowTextW( 
+            SetWindowTextW(
               GetDlgItem(hDlg, IDC_CH_MATCHCASE),
-              szHintChMatchCaseW[uInternalLng][1] 
+              szHintChMatchCaseW[uInternalLng][1]
             );
-            SetWindowTextW( 
+            SetWindowTextW(
               GetDlgItem(hDlg, IDC_CH_WHOLEWORD),
-              szHintChWholeWordW[uInternalLng][1] 
+              szHintChWholeWordW[uInternalLng][1]
             );
-            SetWindowTextW( 
+            SetWindowTextW(
               GetDlgItem(hDlg, IDC_CH_HIGHLIGHTALL),
-              szHintChHighlightAllW[uInternalLng][1] 
+              szHintChHighlightAllW[uInternalLng][1]
             );
         }
     }
@@ -854,6 +858,7 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
     // no changes for English menu
     if ( uInternalLng != INLNG_ENG )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             MENUITEMINFOA miiA;
@@ -872,6 +877,7 @@ void qsearchSetPopupMenuLang(HMENU hPopupMenu)
             }
         }
         else
+#endif
         {
             MENUITEMINFOW miiW;
             unsigned int  i;
@@ -901,6 +907,7 @@ void qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu)
     // no changes for English menu
     if ( uInternalLng != INLNG_ENG )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             MENUITEMINFOA miiA;
@@ -919,6 +926,7 @@ void qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu)
             }
         }
         else
+#endif
         {
             MENUITEMINFOW miiW;
             unsigned int  i;
@@ -942,6 +950,7 @@ void qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu)
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 const char* qsearchGetHintA(unsigned int uDlgItemID)
 {
     unsigned int uInternalLng = getInternalLng();
@@ -987,6 +996,7 @@ const char* qsearchGetTextA(unsigned int uDlgItemID)
 
     return qsearchGetHintA(uDlgItemID);
 }
+#endif
 
 const wchar_t* qsearchGetHintW(unsigned int uDlgItemID)
 {

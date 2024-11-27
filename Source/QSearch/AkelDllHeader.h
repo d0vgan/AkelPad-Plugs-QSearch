@@ -7,6 +7,11 @@
   #endif
 #endif
 
+// QS_OLD_WINDOWS specifies whether the old (non-Unicode) Windows is supported
+#ifndef _WIN64
+#define QS_OLD_WINDOWS
+#endif
+
 #ifdef AKELPAD_X64
   // types and structs
   #define INT_X INT_PTR

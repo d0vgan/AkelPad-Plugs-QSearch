@@ -204,7 +204,7 @@ BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSu
 {
     if ( nSubstrLen > nStrLen )
         return FALSE;
-    
+
     str += (nStrLen - nSubstrLen);
     for ( ; ; )
     {
@@ -385,7 +385,7 @@ BOOL tDynamicBuffer_Allocate(tDynamicBuffer* pBuf, UINT_PTR nBytesToAllocate)
             return FALSE; // failed to allocate the memory
 
         newBuf.nBytesAllocated = nBytesToAllocate;
-        
+
         // free the previously allocated memory
         if ( pBuf->ptr )
             SysMemFree( pBuf->ptr );

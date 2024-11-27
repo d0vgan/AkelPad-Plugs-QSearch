@@ -2,6 +2,7 @@
 #define _qsearch_lng_h_
 //---------------------------------------------------------------------------
 #include <windows.h>
+#include "AkelDllHeader.h"
 
 
 // lng funcs
@@ -9,10 +10,13 @@ void           qsearchSetMainDlgLang(HWND hDlg);
 void           qsearchSetFindAllSettDlgLang(HWND hDlg);
 void           qsearchSetPopupMenuLang(HMENU hPopupMenu);
 void           qsearchSetFindAllPopupMenuLang(HMENU hFindAllPopupMenu);
-const char*    qsearchGetHintA(unsigned int uDlgItemID);
 const wchar_t* qsearchGetHintW(unsigned int uDlgItemID);
-const char*    qsearchGetTextA(unsigned int uDlgItemID);
 const wchar_t* qsearchGetTextW(unsigned int uDlgItemID);
+
+#ifdef QS_OLD_WINDOWS
+const char*    qsearchGetHintA(unsigned int uDlgItemID);
+const char*    qsearchGetTextA(unsigned int uDlgItemID);
+#endif
 
 #define QS_STRID_FINDALL_SEARCHINGFOR            101
 #define QS_STRID_FINDALL_OCCURRENCESFOUND        102

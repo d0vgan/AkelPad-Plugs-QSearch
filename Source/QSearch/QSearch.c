@@ -5,6 +5,12 @@
 #include "AkelPad/RegExpFunc.h"
 
 
+#ifndef QS_OLD_WINDOWS
+#undef SendMessage
+#define SendMessage SendMessageW
+#endif
+
+
 #define TEST_UNINIT 0
 
 
@@ -352,18 +358,23 @@ BOOL            g_bWordJustSelectedByFnd = FALSE;
 // funcs
 void  ReadOptions(void);
 void  SaveOptions(void);
-void  readBinaryA(HANDLE, const char*, void*, DWORD);
+
 void  readBinaryW(HANDLE, const wchar_t*, void*, DWORD);
-int   readStringA(HANDLE, const char*, char*, DWORD);
 int   readStringW(HANDLE, const wchar_t*, wchar_t*, DWORD);
-DWORD readDwordA(HANDLE, const char*, DWORD);
 DWORD readDwordW(HANDLE, const wchar_t*, DWORD);
-void  writeBinaryA(HANDLE, const char*, const void*, DWORD);
 void  writeBinaryW(HANDLE, const wchar_t*, const void*, DWORD);
-void  writeStringA(HANDLE, const char*, const char*);
 void  writeStringW(HANDLE, const wchar_t*, const wchar_t*);
-void  writeDwordA(HANDLE, const char*, DWORD);
 void  writeDwordW(HANDLE, const wchar_t*, DWORD);
+
+#ifdef QS_OLD_WINDOWS
+void  readBinaryA(HANDLE, const char*, void*, DWORD);
+int   readStringA(HANDLE, const char*, char*, DWORD);
+DWORD readDwordA(HANDLE, const char*, DWORD);
+void  writeBinaryA(HANDLE, const char*, const void*, DWORD);
+void  writeStringA(HANDLE, const char*, const char*);
+void  writeDwordA(HANDLE, const char*, DWORD);
+#endif
+
 LRESULT CALLBACK NewEditProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewMainProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK NewFrameProc(HWND, UINT, WPARAM, LPARAM);
@@ -449,6 +460,7 @@ static HWND createDlgExW(const PLUGINDATA* pd, int iddQSearch)
     return hDlg;
 }
 
+#ifdef QS_OLD_WINDOWS
 static HWND createDlgExA(const PLUGINDATA* pd, int iddQSearch)
 {
     // all this code is needed with the only purpose to add the DS_FIXEDSYS style...
@@ -496,6 +508,7 @@ static HWND createDlgExA(const PLUGINDATA* pd, int iddQSearch)
     }
     return hDlg;
 }
+#endif
 
 static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 {
@@ -506,11 +519,14 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 
     if ( !bInternalCall )
     {
+#ifdef QS_OLD_WINDOWS
         if ( pd->bOldWindows && (0 == ((LPSTR) g_szFunctionQSearchAW)[0]) )
         {
             lstrcpyA( (LPSTR) g_szFunctionQSearchAW, (LPCSTR) pd->pFunction );
         }
-        else if ( 0 == g_szFunctionQSearchAW[0] )
+        else
+#endif
+        if ( 0 == g_szFunctionQSearchAW[0] )
         {
             lstrcpyW( g_szFunctionQSearchAW, (LPCWSTR) pd->pFunction );
         }
@@ -535,14 +551,17 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 
         if ( g_Options.dwUseEditorColors )
         {
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
                 g_QSearchDlg.hDlg = createDlgExA(pd, iddQSearch);
             else
+#endif
                 g_QSearchDlg.hDlg = createDlgExW(pd, iddQSearch);
         }
 
         if ( !g_QSearchDlg.hDlg )
         {
+#ifdef QS_OLD_WINDOWS
             if ( g_Plugin.bOldWindows )
             {
                 g_QSearchDlg.hDlg = CreateDialogA(
@@ -552,6 +571,7 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
                     qsearchDlgProc );
             }
             else
+#endif
             {
                 g_QSearchDlg.hDlg = CreateDialogW(
                     g_Plugin.hInstanceDLL,
@@ -1040,7 +1060,7 @@ BOOL doGoToFindAllMatch(UINT nFlags)
     {
         UINT nWhichIndex;
 
-        if ( !(nFlags & GTFAM_PREV) && g_QSearchDlg.nGoToNextFindAllPosToCompare != -1 && 
+        if ( !(nFlags & GTFAM_PREV) && g_QSearchDlg.nGoToNextFindAllPosToCompare != -1 &&
              g_QSearchDlg.nGoToNextFindAllPosToCompare <= (INT_PTR) SendMessageW(pFrame->ei.hWndEdit, AEM_GETRICHOFFSET, AEGI_CARETCHAR, 0) )
             nWhichIndex = AEGI_FIRSTCHAR;
         else
@@ -1348,6 +1368,7 @@ static BOOL findLogPlugin(PLUGINDATA* pd)
 {
     BOOL bExists = FALSE;
 
+#ifdef QS_OLD_WINDOWS
     if ( pd->bOldWindows )
     {
         char             szPluginPathA[2*MAX_PATH + 1];
@@ -1368,6 +1389,7 @@ static BOOL findLogPlugin(PLUGINDATA* pd)
         }
     }
     else
+#endif
     {
         wchar_t          szPluginPathW[2*MAX_PATH + 1];
         HANDLE           hFind;
@@ -2021,6 +2043,7 @@ void ReadOptions(void)
 {
     HANDLE hOptions;
 
+#ifdef QS_OLD_WINDOWS
     if ( g_Plugin.bOldWindows )
     {
         if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
@@ -2164,6 +2187,7 @@ void ReadOptions(void)
         }
     }
     else
+#endif
     {
         if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
                AKD_BEGINOPTIONS, POB_READ, (LPARAM) CWSZ_QSEARCH) )
@@ -2474,12 +2498,14 @@ void ReadOptions(void)
 
     if ( g_Options.nLenStatusEofCrossedDown == WRONG_INT_VALUE )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             lstrcpyA( (char *) g_Options.szStatusEofCrossedDownAW, DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
             g_Options.nLenStatusEofCrossedDown = lstrlenA( DEFAULT_STATUS_EOF_CROSSED_DOWN_A );
         }
         else
+#endif
         {
             lstrcpyW(g_Options.szStatusEofCrossedDownAW, DEFAULT_STATUS_EOF_CROSSED_DOWN_W);
             g_Options.nLenStatusEofCrossedDown = lstrlenW(DEFAULT_STATUS_EOF_CROSSED_DOWN_W);
@@ -2488,12 +2514,14 @@ void ReadOptions(void)
 
     if ( g_Options.nLenStatusEofCrossedUp == WRONG_INT_VALUE )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             lstrcpyA( (char *) g_Options.szStatusEofCrossedUpAW, DEFAULT_STATUS_EOF_CROSSED_UP_A );
             g_Options.nLenStatusEofCrossedUp = lstrlenA( DEFAULT_STATUS_EOF_CROSSED_UP_A );
         }
         else
+#endif
         {
             lstrcpyW(g_Options.szStatusEofCrossedUpAW, DEFAULT_STATUS_EOF_CROSSED_UP_W);
             g_Options.nLenStatusEofCrossedUp = lstrlenW(DEFAULT_STATUS_EOF_CROSSED_UP_W);
@@ -2502,12 +2530,14 @@ void ReadOptions(void)
 
     if ( g_Options.nLenStatusNotFound == WRONG_INT_VALUE )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             lstrcpyA( (char *) g_Options.szStatusNotFoundAW, DEFAULT_STATUS_NOTFOUND_A );
             g_Options.nLenStatusNotFound = lstrlenA( DEFAULT_STATUS_NOTFOUND_A );
         }
         else
+#endif
         {
             lstrcpyW(g_Options.szStatusNotFoundAW, DEFAULT_STATUS_NOTFOUND_W);
             g_Options.nLenStatusNotFound = lstrlenW(DEFAULT_STATUS_NOTFOUND_W);
@@ -2516,12 +2546,14 @@ void ReadOptions(void)
 
     if ( g_Options.nLenStatusNotRegExp == WRONG_INT_VALUE )
     {
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             lstrcpyA( (char *) g_Options.szStatusNotRegExpAW, DEFAULT_STATUS_NOTREGEXP_A );
             g_Options.nLenStatusNotRegExp = lstrlenA( DEFAULT_STATUS_NOTREGEXP_A );
         }
         else
+#endif
         {
             lstrcpyW(g_Options.szStatusNotRegExpAW, DEFAULT_STATUS_NOTREGEXP_W);
             g_Options.nLenStatusNotRegExp = lstrlenW(DEFAULT_STATUS_NOTREGEXP_W);
@@ -2566,6 +2598,7 @@ void SaveOptions(void)
         WriteLog(str);
 #endif
 
+#ifdef QS_OLD_WINDOWS
         if ( g_Plugin.bOldWindows )
         {
             if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
@@ -2827,6 +2860,7 @@ void SaveOptions(void)
 #endif
         }
         else
+#endif // QS_OLD_WINDOWS
         {
             if ( hOptions = (HANDLE) SendMessage(g_Plugin.hMainWnd,
                    AKD_BEGINOPTIONS, POB_SAVE, (LPARAM) CWSZ_QSEARCH) )
@@ -3093,6 +3127,7 @@ void SaveOptions(void)
 #endif
 }
 
+#ifdef QS_OLD_WINDOWS
 void readBinaryA(HANDLE hOptions, const char* szOptionNameA,
                  void* pData, DWORD dwDataSize)
 {
@@ -3104,6 +3139,7 @@ void readBinaryA(HANDLE hOptions, const char* szOptionNameA,
     poA.dwData = dwDataSize;
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
+#endif
 
 void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
                  void* pData, DWORD dwDataSize)
@@ -3117,6 +3153,7 @@ void readBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
+#ifdef QS_OLD_WINDOWS
 int readStringA(HANDLE hOptions, const char* szOptionNameA,
                  char* pStr, DWORD dwStrMaxSize)
 {
@@ -3128,6 +3165,7 @@ int readStringA(HANDLE hOptions, const char* szOptionNameA,
     poA.dwData = dwStrMaxSize * sizeof(char);
     return (int) SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
+#endif
 
 int readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
                  wchar_t* pStr, DWORD dwStrMaxSize)
@@ -3141,6 +3179,7 @@ int readStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
     return (int) SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
+#ifdef QS_OLD_WINDOWS
 DWORD readDwordA(HANDLE hOptions, const char* szOptionNameA, DWORD dwDefaultVal)
 {
     PLUGINOPTIONA poA;
@@ -3152,6 +3191,7 @@ DWORD readDwordA(HANDLE hOptions, const char* szOptionNameA, DWORD dwDefaultVal)
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
     return dwDefaultVal;
 }
+#endif
 
 DWORD readDwordW(HANDLE hOptions, const wchar_t* szOptionNameW, DWORD dwDefaultVal)
 {
@@ -3165,6 +3205,7 @@ DWORD readDwordW(HANDLE hOptions, const wchar_t* szOptionNameW, DWORD dwDefaultV
     return dwDefaultVal;
 }
 
+#ifdef QS_OLD_WINDOWS
 void writeBinaryA(HANDLE hOptions, const char* szOptionNameA,
                    const void* pData, DWORD dwDataSize)
 {
@@ -3176,6 +3217,7 @@ void writeBinaryA(HANDLE hOptions, const char* szOptionNameA,
     poA.dwData = dwDataSize;
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
+#endif
 
 void writeBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
                    const void* pData, DWORD dwDataSize)
@@ -3189,6 +3231,7 @@ void writeBinaryW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
+#ifdef QS_OLD_WINDOWS
 void writeStringA(HANDLE hOptions, const char* szOptionNameA,
                    const char* pStr)
 {
@@ -3200,6 +3243,7 @@ void writeStringA(HANDLE hOptions, const char* szOptionNameA,
     poA.dwData = (lstrlenA(pStr) + 1) * sizeof(char);
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
+#endif
 
 void writeStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
                    const wchar_t* pStr)
@@ -3213,6 +3257,7 @@ void writeStringW(HANDLE hOptions, const wchar_t* szOptionNameW,
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poW );
 }
 
+#ifdef QS_OLD_WINDOWS
 void writeDwordA(HANDLE hOptions, const char* szOptionNameA, DWORD dwVal)
 {
     PLUGINOPTIONA poA;
@@ -3223,6 +3268,7 @@ void writeDwordA(HANDLE hOptions, const char* szOptionNameA, DWORD dwVal)
     poA.dwData = sizeof(DWORD);
     SendMessage( g_Plugin.hMainWnd, AKD_OPTION, (WPARAM) hOptions, (LPARAM) &poA );
 }
+#endif
 
 void writeDwordW(HANDLE hOptions, const wchar_t* szOptionNameW, DWORD dwVal)
 {
@@ -3237,11 +3283,13 @@ void writeDwordW(HANDLE hOptions, const wchar_t* szOptionNameW, DWORD dwVal)
 
 //-----------------------------------------------------------------------------
 
+#ifdef QS_OLD_WINDOWS
 const char* QSEARCH_REG_HOMEA        = "Software\\Akelsoft\\AkelPad\\Plugs\\QSearch";
 const char* QSEARCH_REG_SEARCHFLAGSA = "srch_flags";
 const char* QSEARCH_REG_FINDHISTORYA = "FindHistory";
 const char* QSEARCH_REG_COUNTA       = "count";
 const char* QSEARCH_REG_ITEMFMTA     = "%02d";
+#endif
 
 const wchar_t* QSEARCH_REG_HOMEW        = L"Software\\Akelsoft\\AkelPad\\Plugs\\QSearch";
 const wchar_t* QSEARCH_REG_SEARCHFLAGSW = L"srch_flags";
@@ -3252,6 +3300,7 @@ const wchar_t* QSEARCH_REG_ITEMFMTW     = L"%02d";
 #define QSF_MATCHCASE 0x01
 #define QSF_WHOLEWORD 0x02
 
+#ifdef QS_OLD_WINDOWS
 void ReadFindHistoryA(void)
 {
     if ( g_QSearchDlg.hDlg )
@@ -3407,6 +3456,7 @@ void ReadFindHistoryA(void)
         }
     }
 }
+#endif
 
 void ReadFindHistoryW(void)
 {
@@ -3564,6 +3614,7 @@ void ReadFindHistoryW(void)
     }
 }
 
+#ifdef QS_OLD_WINDOWS
 void SaveFindHistoryA(void)
 {
     if ( g_QSearchDlg.hDlg )
@@ -3689,6 +3740,7 @@ void SaveFindHistoryA(void)
         }
     }
 }
+#endif
 
 void SaveFindHistoryW(void)
 {

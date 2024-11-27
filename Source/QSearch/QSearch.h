@@ -98,10 +98,13 @@ void  Uninitialize(void);
 
 HWND  GetWndEdit(HWND hMainWnd);
 
-void  ReadFindHistoryA(void);
 void  ReadFindHistoryW(void);
-void  SaveFindHistoryA(void);
 void  SaveFindHistoryW(void);
+
+#ifdef QS_OLD_WINDOWS
+void  ReadFindHistoryA(void);
+void  SaveFindHistoryA(void);
+#endif
 
 #define GTFAM_NEXT 0x01
 #define GTFAM_PREV 0x02

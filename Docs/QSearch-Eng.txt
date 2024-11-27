@@ -625,6 +625,11 @@ or file "AkelFiles\Plugs\QSearch.ini"):
 --------
 History:
 --------
+v.8.3 (2024)
+ * Glory to Ukraine! Glory to the heroes!
+ * the size of the 64-bit QSearch.dll has been reduced
+ * some internal improvements
+
 v.8.2 (November 2024)
  * Glory to Ukraine! Glory to the heroes!
  + added: showing "%u of %u matches" when "Auto Count All" is on

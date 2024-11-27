@@ -4,6 +4,12 @@
 #include "XMemStrFunc.h"
 
 
+#ifndef QS_OLD_WINDOWS
+#undef SendMessage
+#define SendMessage SendMessageW
+#endif
+
+
 #define  ACCEL_FVIRT_MASK        (FALT | FCONTROL | FSHIFT)
 #define  DLG_ACCELKEYS_MAX       10
 #define  DLG_ACCELKEYS_REQUIRED  3
@@ -24,7 +30,11 @@ extern wchar_t         g_szFunctionQSearchAW[128];
 
 // static (local) vars
 static HWND  ds_hMainWnd = NULL;
+
+#ifdef QS_OLD_WINDOWS
 static BOOL  ds_bOldWindows = FALSE;
+#endif
+
 static HHOOK ds_hDialogSwitcherHook = NULL;
 static ACCEL ds_qsdlgAccelKey;
 static ACCEL ds_dlgAccelKeys[DLG_ACCELKEYS_MAX];
@@ -45,6 +55,7 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
 {
     if ( !g_szFunctionQSearchAW[0] )
     {
+#ifdef QS_OLD_WINDOWS
         if ( pd->bOldWindows )
         {
             const char* pszFunc = (const char *) pd->pFunction;
@@ -67,6 +78,7 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
             }
         }
         else
+#endif
         {
             const wchar_t* pszFunc = (const wchar_t *) pd->pFunction;
             if ( pszFunc )
@@ -91,11 +103,12 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
 
     if ( g_szFunctionQSearchAW[0] )
     {
+#ifdef QS_OLD_WINDOWS
         if ( pd->bOldWindows )
         {
             PLUGINFUNCTION* pfA;
 
-            pfA = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd, 
+            pfA = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd,
               AKD_DLLFINDA, (WPARAM) g_szFunctionQSearchAW, 0 );
             if ( pfA )
             {
@@ -103,10 +116,11 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
             }
         }
         else
+#endif
         {
             PLUGINFUNCTION* pfW;
 
-            pfW = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd, 
+            pfW = (PLUGINFUNCTION *) SendMessage( pd->hMainWnd,
               AKD_DLLFINDW, (WPARAM) g_szFunctionQSearchAW, 0 );
             if ( pfW )
             {
@@ -159,7 +173,10 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
     /*HMODULE hLangLib = NULL;*/
 
     ds_hMainWnd = pd->hMainWnd;
+
+#ifdef QS_OLD_WINDOWS
     ds_bOldWindows = pd->bOldWindows;
+#endif
 
     /*if ( pd->bOldWindows )
     {
@@ -193,6 +210,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
     if ( !hLangLib )
         hLangLib = pd->hInstanceEXE;*/
 
+#ifdef QS_OLD_WINDOWS
     if ( pd->bOldWindows )
     {
         HACCEL hAccelTable = pd->hMainAccel; /*LoadAcceleratorsA(hLangLib, MAKEINTRESOURCEA(IDA_ACCEL_MAIN));*/
@@ -230,6 +248,7 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
         }
     }
     else
+#endif
     {
         HACCEL hAccelTable = pd->hMainAccel; /*LoadAcceleratorsW(hLangLib, MAKEINTRESOURCEW(IDA_ACCEL_MAIN));*/
         if ( hAccelTable )
@@ -284,9 +303,9 @@ void dlgswtchInitialize(const PLUGINDATA* pd)
         ds_nDlgAccelKeys = 0;
 
         MessageBoxA(
-          pd->hMainWnd, 
+          pd->hMainWnd,
           "Can not initialize the Dialog Switcher",
-          "QSearch ERROR", 
+          "QSearch ERROR",
           MB_OK | MB_ICONERROR
         );
     }
@@ -307,14 +326,16 @@ void dlgswtchSetHookProc(const PLUGINDATA* pd)
 {
     if ( !ds_hDialogSwitcherHook )
     {
+#ifdef QS_OLD_WINDOWS
         if ( pd->bOldWindows )
         {
-            ds_hDialogSwitcherHook = SetWindowsHookExA(WH_GETMESSAGE, 
+            ds_hDialogSwitcherHook = SetWindowsHookExA(WH_GETMESSAGE,
                 dlgswtchHookProc, pd->hInstanceDLL, GetCurrentThreadId());
         }
         else
+#endif
         {
-            ds_hDialogSwitcherHook = SetWindowsHookExW(WH_GETMESSAGE, 
+            ds_hDialogSwitcherHook = SetWindowsHookExW(WH_GETMESSAGE,
                 dlgswtchHookProc, pd->hInstanceDLL, GetCurrentThreadId());
         }
     }
@@ -347,7 +368,7 @@ static BOOL isFindTextPickedUpFromMainEdit(HWND hFindTextWnd, HWND hMainEditWnd)
             cr.cpMin = cr.cpMax;
             cr.cpMax = x;
         }
-        
+
         nSelTextLen = cr.cpMax - cr.cpMin;
         if ( nSelTextLen > MAX_FIND_TEXT_TO_CHECK - 1 )
         {
@@ -355,6 +376,7 @@ static BOOL isFindTextPickedUpFromMainEdit(HWND hFindTextWnd, HWND hMainEditWnd)
             cr.cpMax = cr.cpMin + nSelTextLen;
         }
 
+#ifdef QS_OLD_WINDOWS
         if ( ds_bOldWindows )
         {
             x = (INT_X) SendMessageA( hFindTextWnd, WM_GETTEXTLENGTH, 0, 0 );
@@ -389,6 +411,7 @@ static BOOL isFindTextPickedUpFromMainEdit(HWND hFindTextWnd, HWND hMainEditWnd)
             }
         }
         else
+#endif
         {
             x = (INT_X) SendMessageW( hFindTextWnd, WM_GETTEXTLENGTH, 0, 0 );
             if ( x == nSelTextLen )
@@ -523,13 +546,13 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             nFocusedWndType = WNDTYPE_MAINEDIT;
     }
 
-    if ( (nCurrentDlgType == DLGTYPE_NONE) ||  
+    if ( (nCurrentDlgType == DLGTYPE_NONE) ||
          ((!bQSearchDlgIsFocused) && (!hModelessDlg)) ||
          ((!bModelessDlgIsFocused) && (nSwitchDlgType == DLGTYPE_QSEARCH)) ||
          ((nSwitchDlgType == nCurrentDlgType) && (!bQSearchDlgIsFocused)) )
     {
-        if ( hModelessDlg && 
-             (!bModelessDlgIsFocused) && 
+        if ( hModelessDlg &&
+             (!bModelessDlgIsFocused) &&
              (nCurrentDlgType == nSwitchDlgType) )
         {
             HWND hItem;
@@ -569,12 +592,14 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
          (nCurrentDlgType == DLGTYPE_QSEARCH) )
     {
         nTextLen = MAX_TEXT_SIZE - 1;
+#ifdef QS_OLD_WINDOWS
         if ( ds_bOldWindows )
         {
             pszTextW = NULL;
             pszTextA = (char *) SysMemAlloc( nTextLen + 1 );
         }
         else
+#endif
         {
             pszTextA = NULL;
             pszTextW = (wchar_t *) SysMemAlloc( (nTextLen + 1)*sizeof(wchar_t) );
@@ -596,6 +621,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                 HWND hFindTextWnd = GetDlgItem(hModelessDlg, IDC_SEARCH_FIND);
 
                 bSetText = TRUE;
+#ifdef QS_OLD_WINDOWS
                 if ( ds_bOldWindows )
                 {
                     if ( !pszTextA )
@@ -614,6 +640,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     }
                 }
                 else
+#endif
                 {
                     if ( !pszTextW )
                     {
@@ -661,6 +688,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                 HWND hFindTextWnd = g_QSearchDlg.hFindEdit;
 
                 bSetText = TRUE;
+#ifdef QS_OLD_WINDOWS
                 if ( ds_bOldWindows )
                 {
                     if ( pszTextA )
@@ -670,6 +698,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     }
                 }
                 else
+#endif
                 {
                     if ( pszTextW )
                     {
@@ -694,9 +723,10 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             if ( bSetText && (nSwitchDlgType != DLGTYPE_GOTO) )
             {
                 HWND hFindTextWnd = GetDlgItem(hModelessDlg, IDC_SEARCH_FIND);
+#ifdef QS_OLD_WINDOWS
                 if ( ds_bOldWindows )
                 {
-                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) || 
+                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) ||
                          (!isFindTextPickedUpFromMainEdit(hFindTextWnd, ei.hWndEdit)) )
                     {
                         if ( pszTextA && pszTextA[0] )
@@ -705,8 +735,9 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     }
                 }
                 else
+#endif
                 {
-                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) || 
+                    if ( (nFocusedWndType != WNDTYPE_MAINEDIT) ||
                          (!isFindTextPickedUpFromMainEdit(hFindTextWnd, ei.hWndEdit)) )
                     {
                         if ( pszTextW && pszTextW[0] )
@@ -727,6 +758,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             {
                 g_QSearchDlg.uWmShowFlags = QS_SF_DLGSWITCH;
 
+#ifdef QS_OLD_WINDOWS
                 if ( ds_bOldWindows )
                 {
                     PLUGINCALLSENDA pcsA;
@@ -737,6 +769,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     SendMessageA( ds_hMainWnd, AKD_DLLCALLA, 0, (LPARAM) &pcsA );
                 }
                 else
+#endif
                 {
                     PLUGINCALLSENDW pcsW;
 
@@ -751,6 +784,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             if ( bSetText && g_QSearchDlg.hDlg )
             {
                 HWND hFindTextWnd = g_QSearchDlg.hFindEdit;
+#ifdef QS_OLD_WINDOWS
                 if ( ds_bOldWindows )
                 {
                     if ( pszTextA && pszTextA[0] )
@@ -758,6 +792,7 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
                     SendMessageA( hFindTextWnd, EM_SETSEL, 0, -1 );
                 }
                 else
+#endif
                 {
                     if ( pszTextW && pszTextW[0] )
                         SendMessageW( hFindTextWnd, WM_SETTEXT, 0, (LPARAM) pszTextW );
@@ -768,12 +803,14 @@ BOOL dlgswtchDoSwitch(int nAccelIndex)
             break;
     }
 
+#ifdef QS_OLD_WINDOWS
     if ( ds_bOldWindows )
     {
         if ( pszTextA )
             SysMemFree( pszTextA );
     }
     else
+#endif
     {
         if ( pszTextW )
             SysMemFree( pszTextW );

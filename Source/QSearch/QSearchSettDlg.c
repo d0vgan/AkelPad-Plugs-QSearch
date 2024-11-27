@@ -386,7 +386,7 @@ static void updateExampleData(HWND hDlg)
             tDynamicBuffer_Append(&infoBuf, szTempText, nLen*sizeof(wchar_t));
         }
     }
-    EnableWindow( GetDlgItem(hDlg, IDC_CH_FA_FILTERCONTEXT), 
+    EnableWindow( GetDlgItem(hDlg, IDC_CH_FA_FILTERCONTEXT),
       (dwFindAllResultFlags & QS_FINDALL_RSLT_FILTERMODE) != 0 ? TRUE : FALSE );
 
     tDynamicBuffer_Append(&infoBuf, L"\0", 1*sizeof(wchar_t));
@@ -477,7 +477,7 @@ void FndAllSettDlg_OnCbOutputDestChanged(HWND hDlg)
         {
             SetWindowTextW(hEdBefore, L"0");
         }
-        
+
         if ( nAfter >= 0 && nAfter <= 999 )
         {
             wsprintfW(szNum, L"%d", nAfter);
