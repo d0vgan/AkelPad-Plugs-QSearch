@@ -650,7 +650,7 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 --------
 История:
 --------
-v.8.3 (2024)
+v.8.3 (Декабрь 2024)
  * Слава Україні! Героям слава!
  * уменьшен размер 64-битной версии QSearch.dll
  * некоторые внутренние улучшения
@@ -1009,7 +1009,7 @@ Instructor за текстовый редактор AkelPad  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Nov 2024, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Dec 2024, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 Этот плагин является бесплатным (бесплатным как для частного, так и для
