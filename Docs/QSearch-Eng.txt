@@ -628,6 +628,7 @@ History:
 v.8.3 (December 2024)
  * Glory to Ukraine! Glory to the heroes!
  * the size of the 64-bit QSearch.dll has been reduced
+ * improved: the syntax files "qsfndall_*.coder" were slightly updated
  * some internal improvements
 
 v.8.2 (November 2024)
