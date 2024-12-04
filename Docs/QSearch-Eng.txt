@@ -88,6 +88,11 @@ Recommended hot-key - F4.
 (When the Find All results are shown by the Log::Output panel,
 GoToNextFindAllMatch actually calls Log::Output::NextMatch.
 If the Log::Output panel is closed, GoToNextFindAllMatch works independently).
+Note: QSearch remembers its Find All matches until the next Find All search has
+been started or until some searched file has been modified. Correspondingly,
+it is possible to search for another string by means of F3/FindNext/FindPrev
+and, in the same time, to use GoToNextFindAllMatch/GoToPrevFindAllMatch to go
+to the match from the last Find All results.
 
 GoToPrevFindAllMatch - jumps to the previous match of the Find All results.
 Recommended hot-key - Shift+F4.

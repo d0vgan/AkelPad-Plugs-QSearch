@@ -6984,7 +6984,8 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                 {
                     g_QSearchDlg.nGoToNextFindAllPosToCompare = -1;
 
-                    if ( pFindAll->ShowFindResults.pfnInit == qsShowFindResults_LogOutput_Init )
+                    if ( pFindAll->ShowFindResults.pfnInit == qsShowFindResults_LogOutput_Init && 
+                         (FindContext.dwFindAllResult & (QS_FINDALL_RSLT_POS | QS_FINDALL_FILTERMODE)) == QS_FINDALL_RSLT_POS )
                         g_QSearchDlg.bFindAllWasUsingLogOutput = TRUE;
                     else
                         g_QSearchDlg.bFindAllWasUsingLogOutput = FALSE;
