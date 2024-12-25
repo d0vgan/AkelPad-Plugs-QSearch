@@ -332,7 +332,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
             sp = strw;
             continue;
         }
-        
+
         if ( *maskw == L'\\' )
         {
             ++maskw;
@@ -354,7 +354,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
             }
             continue;
         }
-        
+
         if ( *maskw == L'?' && *strw )
         {
             if ( is_wordbreakw(whole_word, *strw) )
@@ -364,7 +364,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
             ++strw;
             continue;
         }
-        
+
         if ( *maskw == *strw )
         {
             ++maskw;
