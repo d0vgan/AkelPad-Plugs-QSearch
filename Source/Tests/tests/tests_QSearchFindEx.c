@@ -51,12 +51,12 @@ static void test_question_mark_wildcard()
     str = L"hello world";
     result = match_maskw(L"h?llo", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L" wo"));
 
     str = L"hello world";
     result = match_maskw(L"?llo*", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L"ell"));
 
     // With asterisk can match partial
     str = L"hello world";
@@ -79,16 +79,21 @@ static void test_question_mark_wildcard()
     assert(result > 0);
     assert(last_pos == str + wcslen(str));
 
+    str = L"logoutput_frp_mode";
+    result = match_maskw(L"logoutput_*_mode", str, &last_pos, 1);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
+
     // No match
     str = L"hello";
     result = match_maskw(L"?hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L"ell"));
 
     str = L"hello";
     result = match_maskw(L"hello?", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 }
 
 static void test_asterisk_wildcard()
@@ -133,12 +138,12 @@ static void test_asterisk_wildcard()
     str = L"hello world";
     result = match_maskw(L"hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L" wo"));
 
     str = L"hello world";
     result = match_maskw(L"world", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str);
 }
 
 static void test_double_asterisk()
@@ -166,21 +171,31 @@ static void test_double_asterisk()
     assert(result > 0);
     assert(last_pos == str + wcslen(str));
 
+    str = L"logoutput_frp_mode";
+    result = match_maskw(L"logoutput_**_mode", str, &last_pos, 1);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
+
+    str = L"logoutput_frp_mode";
+    result = match_maskw(L"log**frp**mode", str, &last_pos, 1);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
+
     // Should not match across spaces when whole_word is set
     str = L"hello world";
     result = match_maskw(L"h**d", str, &last_pos, 1);
     assert(result < 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L" wo"));
 
     str = L"hello ";
     result = match_maskw(L"hel**", str, &last_pos, 1);
-    assert(result < 0);
-    assert(last_pos == NULL);
+    assert(result > 0);
+    assert(last_pos == wcsstr(str, L" "));
 
     str = L" hello";
     result = match_maskw(L"**llo", str, &last_pos, 1);
     assert(result < 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str);
 
     // Should match across non-spaces when whole_word is set
     str = L"hello.world";
@@ -234,15 +249,26 @@ static void test_double_asterisk()
     assert(result > 0);
     assert(last_pos == wcsstr(str, L"ld"));
 
+    // whole_word cases
     str = L"hello world";
     result = match_maskw(L"**h** **r**", str, &last_pos, 1);
     assert(result > 0);
-    assert(last_pos == wcsstr(str, L"ld"));
+    assert(last_pos == str + wcslen(str));
 
     str = L"hello world ";
     result = match_maskw(L"**h** **r**", str, &last_pos, 1);
-    assert(result < 0);
-    assert(last_pos == NULL);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str) - 1);
+
+    str = L"hello world,?. ";
+    result = match_maskw(L"**h** **r**", str, &last_pos, 1);
+    assert(result > 0);
+    assert(last_pos == wcsstr(str, L",?."));
+
+    str = L"hello world,?. ";
+    result = match_maskw(L"**h** **r*", str, &last_pos, 1);
+    assert(result == 0);
+    assert(last_pos == wcsstr(str, L"ld"));
 }
 
 static void test_escaped_characters()
@@ -346,28 +372,28 @@ static void test_edge_cases()
     str = L"abc";
     result = match_maskw(L"abcd", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 
     str = L"abc";
     result = match_maskw(L"abc*d", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 
     str = L"abc";
     result = match_maskw(L"a?cd", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 
     str = L"abc";
     result = match_maskw(L"????", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 
     // Trailing backslash
     str = L"abc";
     result = match_maskw(L"abc\\", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str + wcslen(str));
 }
 
 static void test_exact_matches()
@@ -394,20 +420,74 @@ static void test_exact_matches()
     str = L"hello world";
     result = match_maskw(L"hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == wcsstr(str, L" wo"));
 
     // Partial match at end - should fail
     str = L"hello world";
     result = match_maskw(L"world", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str);
 
     // Substring match - should fail
     str = L"hello";
     result = match_maskw(L"ell", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == NULL);
+    assert(last_pos == str);
 }
+
+#ifdef _DEBUG
+static void test_last_pos_differences()
+{
+    wchar_t* last_pos = NULL;
+    const wchar_t* str;
+    int result;
+
+    // Test 1: Simple pattern with asterisk
+    str = L"hello world";
+    result = match_maskw(L"h*o", str, &last_pos, 0);
+    assert(result == 0);
+    assert(last_pos == str + wcslen(str)); // points to end of string
+
+    last_pos = NULL;
+    result = match_maskw0(L"h*o", str, &last_pos, 0);
+    assert(result == 0);
+    assert(last_pos == str + wcslen(str)); // points to after "hello"
+
+    // Test 2: Pattern with multiple asterisks
+    str = L"hello world test";
+    result = match_maskw(L"h*o*d*t", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // points to end of string
+
+    last_pos = NULL;
+    result = match_maskw0(L"h*o*d*t", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // points to somewhere in the middle
+
+    // Test 3: Exact match (no wildcards)
+    str = L"hello";
+    result = match_maskw(L"hello", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // points to end of string
+
+    last_pos = NULL;
+    result = match_maskw0(L"hello", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // should be the same for exact matches
+
+    // Test 4: Pattern with question marks
+    str = L"hello world";
+    result = match_maskw(L"h?llo w?rld", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // points to end of string
+
+    last_pos = NULL;
+    result = match_maskw0(L"h?llo w?rld", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str)); // should be the same for exact matches
+}
+#endif
+
 static void test_match_maskw()
 {
     test_question_mark_wildcard();
@@ -417,6 +497,9 @@ static void test_match_maskw()
     test_complex_patterns();
     test_edge_cases();
     test_exact_matches();
+#ifdef _DEBUG
+    test_last_pos_differences();
+#endif
 }
 
 void tests_qsearch_findex()
