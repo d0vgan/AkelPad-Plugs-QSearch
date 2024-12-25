@@ -19,16 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="QSearch\QSearchFindEx.c" />
     <ClCompile Include="QSearch\XMemStrFunc.c" />
     <ClCompile Include="Tests\main.c" />
     <ClCompile Include="Tests\code\find_in_sorted_array.c" />
     <ClCompile Include="Tests\tests\tests_find_in_sorted_array.c" />
+    <ClCompile Include="Tests\tests\tests_QSearchFindEx.c" />
     <ClCompile Include="Tests\tests\tests_XMemStrFunc.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="QSearch\QSearchFindEx.h" />
     <ClInclude Include="QSearch\XMemStrFunc.h" />
     <ClInclude Include="Tests\code\find_in_sorted_array.h" />
     <ClInclude Include="Tests\tests\tests_find_in_sorted_array.h" />
+    <ClInclude Include="Tests\tests\tests_QSearchFindEx.h" />
     <ClInclude Include="Tests\tests\tests_XMemStrFunc.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

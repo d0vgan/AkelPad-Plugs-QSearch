@@ -45,8 +45,9 @@ extern QSearchDlgState g_QSearchDlg;
 */
 
 // QSearchFind_WholeWord:
-#define QSF_WW_DELIM     1
-#define QSF_WW_SPACE     2
+#define QSF_WW_DELIM   0x01
+#define QSF_WW_SPACE   0x02
+#define QSF_WW_ANY     (QSF_WW_DELIM | QSF_WW_SPACE)
 
 
 typedef struct sStringWrapperW {
@@ -89,7 +90,19 @@ static void AemGetWordDelimiters(HWND hWndEdit, tStringWrapperW* pWordDelimiters
 
 int is_wordbreakw(int whole_word, const wchar_t wch)
 {
-    if ( whole_word == QSF_WW_DELIM )
+    if ( whole_word & QSF_WW_SPACE )
+    {
+        switch ( wch )
+        {
+            case L' ':
+            case L'\t':
+            case L'\n':
+            case L'\r':
+            case 0:
+                return 1;
+        }
+    }
+    if ( whole_word & QSF_WW_DELIM )
     {
         static wchar_t szWordDelimitersW__[128] = { 0 };
         static tStringWrapperW wordDelimiters = { szWordDelimitersW__, 128, 0 };
@@ -126,18 +139,6 @@ int is_wordbreakw(int whole_word, const wchar_t wch)
 
         if ( tStringWrapperW_FindCh(&wordDelimiters, wch) )
             return 1;
-    }
-    else if ( whole_word == QSF_WW_SPACE )
-    {
-        switch ( wch )
-        {
-            case L' ':
-            case L'\t':
-            case L'\n':
-            case L'\r':
-            case 0:
-                return 1;
-        }
     }
     return 0;
 }
@@ -287,129 +288,109 @@ int match_mask(const char* mask, const char* str, char** last_pos, int whole_wor
 
 int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, int whole_word)
 {
+    const wchar_t* mp = NULL;    // last asterisk position in mask
+    const wchar_t* sp = NULL;    // position in string for backtracking
+
     if ( last_pos )
-        *last_pos = 0;
+        *last_pos = NULL;
+    if ( !maskw || !strw )
+        return 0;
 
-    if ( maskw && strw )
+    if ( whole_word )
+        whole_word = QSF_WW_ANY;
+
+    while ( *strw )
     {
-        int matched = 0;
-        int done = 0;
-
-        while ( !done )
+        if ( *maskw == L'*' )
         {
-            if ( *maskw == L'*' ) // 0 or more characters
+            if ( whole_word )
+                whole_word = QSF_WW_ANY; // single '*'
+
+            while ( *(++maskw) == L'*' )
             {
                 if ( whole_word )
-                    whole_word = QSF_WW_DELIM;
-                ++maskw;
-                while ( *maskw == L'*' ) // "**", "***", ...
-                {
-                    if ( whole_word )
-                        whole_word = QSF_WW_SPACE;
-                    ++maskw;
-                }
-                if ( *maskw == 0 )
-                {
-                    matched = 1;
-                    if ( whole_word )
-                    {
-                        if ( whole_word == QSF_WW_SPACE )
-                        {
-                            while ( (*strw != 0) &&
-                                    (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
-                                    (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
-                            {
-                                ++strw;
-                            }
-                        }
-                        else
-                        {
-                            if ( (*strw != 0) &&
-                                 (!is_wordbreakw(QSF_WW_SPACE, *strw)) &&
-                                 (!is_wordbreakw(QSF_WW_DELIM, *strw)) )
-                            {
-                                matched = 0;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    matched = match_maskw(maskw, strw, last_pos, whole_word);
-                    while ( (matched == 0) && (*strw != 0) )
-                    {
-                        ++strw;
-                        matched = match_maskw(maskw, strw, last_pos, whole_word);
-                    }
-                }
-                done = 1;
+                    whole_word = QSF_WW_SPACE; // multiple '*'
             }
-            else if ( *maskw == 0 ) // mask is over
+
+            if ( *maskw == 0 )
             {
-                matched = (*strw == 0) ? 1 : 0;
-                done = 1;
+                if ( whole_word )
+                {
+                    const wchar_t* s = strw;
+                    for ( ; *s != 0; ++s )
+                    {
+                        if ( is_wordbreakw(whole_word, *s) )
+                            return -1;
+                    }
+                }
+                if ( last_pos )
+                    *last_pos = (wchar_t *) strw;
+                return 1;
             }
-            else if ( *maskw == L'\\' )
+
+            mp = maskw;
+            sp = strw;
+            continue;
+        }
+        
+        if ( *maskw == L'\\' )
+        {
+            ++maskw;
+            if ( *maskw == 0 )
+                return 0;
+
+            if ( *maskw != *strw )
             {
-                ++maskw;
-                if ( *maskw == 0 )
-                {
-                    matched = (*strw == 0) ? 1 : 0;
-                    done = 1;
-                }
-                else
-                {
-                    if ( *maskw == *strw ) // exact match, case-sensitive
-                    {
-                        // word-break may be used explicitly (as part of the mask)
-                        ++maskw;
-                        ++strw;
-                    }
-                    else
-                    {
-                        matched = 0;
-                        done = 1;
-                    }
-                }
+                if ( !mp )
+                    return is_wordbreakw(whole_word, *strw) ? -1 : 0;
+
+                strw = ++sp;
+                maskw = mp;
             }
             else
             {
-                if ( *maskw == *strw ) // exact match, case-sensitive
-                {
-                    // word-break may be used explicitly (as part of the mask)
-                    ++maskw;
-                    ++strw;
-                }
-                else if ( (*maskw == L'?') && (*strw != 0) ) // any character
-                {
-                    if ( is_wordbreakw(whole_word, *strw) )
-                    {
-                        matched = -1;
-                        done = 1;
-                    }
-                    else
-                    {
-                        ++maskw;
-                        ++strw;
-                    }
-                }
-                else
-                {
-                    if ( is_wordbreakw(whole_word, *strw) )
-                        matched = -1;
-                    else
-                        matched = 0;
-                    done = 1;
-                }
+                ++maskw;
+                ++strw;
             }
+            continue;
+        }
+        
+        if ( *maskw == L'?' && *strw )
+        {
+            if ( is_wordbreakw(whole_word, *strw) )
+                return -1;
+
+            ++maskw;
+            ++strw;
+            continue;
+        }
+        
+        if ( *maskw == *strw )
+        {
+            ++maskw;
+            ++strw;
+            continue;
         }
 
-        if ( last_pos && (strw > *last_pos) )
-            *last_pos = (wchar_t *) strw;
+        if ( is_wordbreakw(whole_word, *strw) )
+            return -1;
 
-        return matched;
+        if ( !mp )
+            return 0;
+
+        strw = ++sp;
+        maskw = mp;
     }
-    return 0;
+
+    while ( *maskw == L'*' ) // Skip trailing asterisks
+        ++maskw;
+
+    if ( *maskw )
+        return 0;
+
+    if ( last_pos )
+        *last_pos = (wchar_t *) strw;
+    return 1;
 }
 
 #ifdef QS_OLD_WINDOWS

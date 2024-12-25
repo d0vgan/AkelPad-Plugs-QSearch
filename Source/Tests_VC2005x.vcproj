@@ -60,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib $(NoInherit)"
+				AdditionalDependencies="kernel32.lib user32.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -134,7 +134,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib $(NoInherit)"
+				AdditionalDependencies="kernel32.lib user32.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -185,7 +185,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\QSearch\QSearchFindEx.c"
+				>
+			</File>
+			<File
 				RelativePath=".\Tests\tests\tests_find_in_sorted_array.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Tests\tests\tests_QSearchFindEx.c"
 				>
 			</File>
 			<File
@@ -207,7 +215,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\QSearch\QSearchFindEx.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Tests\tests\tests_find_in_sorted_array.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Tests\tests\tests_QSearchFindEx.h"
 				>
 			</File>
 			<File

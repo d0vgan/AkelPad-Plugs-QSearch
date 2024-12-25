@@ -42,6 +42,12 @@
     <ClCompile Include="Tests\tests\tests_XMemStrFunc.c">
       <Filter>Source Files\tests</Filter>
     </ClCompile>
+    <ClCompile Include="QSearch\QSearchFindEx.c">
+      <Filter>Source Files\code</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\tests\tests_QSearchFindEx.c">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tests\code\find_in_sorted_array.h">
@@ -54,6 +60,12 @@
       <Filter>Header Files\code</Filter>
     </ClInclude>
     <ClInclude Include="Tests\tests\tests_XMemStrFunc.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="QSearch\QSearchFindEx.h">
+      <Filter>Header Files\code</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\tests\tests_QSearchFindEx.h">
       <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>
