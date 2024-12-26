@@ -24,8 +24,8 @@ HWND GetWndEdit(HWND hWnd)
     return NULL;
 }
 
-#define QSF_WW_DELIM  1
-#define QSF_WW_SPACE  2
+#define QSF_WW_DELIM   0x01
+#define QSF_WW_SPACE   0x02
 
 static void test_question_mark_wildcard()
 {
@@ -51,12 +51,12 @@ static void test_question_mark_wildcard()
     str = L"hello world";
     result = match_maskw(L"h?llo", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L" wo"));
+    assert(last_pos == NULL);
 
     str = L"hello world";
     result = match_maskw(L"?llo*", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L"ell"));
+    assert(last_pos == NULL);
 
     // With asterisk can match partial
     str = L"hello world";
@@ -88,12 +88,18 @@ static void test_question_mark_wildcard()
     str = L"hello";
     result = match_maskw(L"?hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L"ell"));
+    assert(last_pos == NULL);
 
     str = L"hello";
     result = match_maskw(L"hello?", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
+
+    // Test with word_wrap
+    str = L"hello.";
+    result = match_maskw(L"hello?", str, &last_pos, 1);
+    assert(result < 0);
+    assert(last_pos == NULL);
 }
 
 static void test_asterisk_wildcard()
@@ -134,16 +140,37 @@ static void test_asterisk_wildcard()
     assert(result > 0);
     assert(last_pos == str + wcslen(str));
 
+    str = L"hello.";
+    result = match_maskw(L"hel*", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == wcsstr(str, L"lo."));
+
+    str = L".hello";
+    result = match_maskw(L"*llo", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
+
+    // No match with word_wrap
+    str = L"hello.";
+    result = match_maskw(L"hel*", str, &last_pos, 1);
+    assert(result == 0);
+    assert(last_pos == NULL);
+
+    str = L".hello";
+    result = match_maskw(L"*llo", str, &last_pos, 1);
+    assert(result < 0);
+    assert(last_pos == NULL);
+
     // No match without wildcard
     str = L"hello world";
     result = match_maskw(L"hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L" wo"));
+    assert(last_pos == NULL);
 
     str = L"hello world";
     result = match_maskw(L"world", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str);
+    assert(last_pos == NULL);
 }
 
 static void test_double_asterisk()
@@ -185,7 +212,7 @@ static void test_double_asterisk()
     str = L"hello world";
     result = match_maskw(L"h**d", str, &last_pos, 1);
     assert(result < 0);
-    assert(last_pos == wcsstr(str, L" wo"));
+    assert(last_pos == NULL);
 
     str = L"hello ";
     result = match_maskw(L"hel**", str, &last_pos, 1);
@@ -195,7 +222,7 @@ static void test_double_asterisk()
     str = L" hello";
     result = match_maskw(L"**llo", str, &last_pos, 1);
     assert(result < 0);
-    assert(last_pos == str);
+    assert(last_pos == NULL);
 
     // Should match across non-spaces when whole_word is set
     str = L"hello.world";
@@ -268,7 +295,7 @@ static void test_double_asterisk()
     str = L"hello world,?. ";
     result = match_maskw(L"**h** **r*", str, &last_pos, 1);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L"ld"));
+    assert(last_pos == NULL);
 }
 
 static void test_escaped_characters()
@@ -310,6 +337,17 @@ static void test_escaped_characters()
     result = match_maskw(L"hello\\*", str, &last_pos, 0);
     assert(result > 0);
     assert(last_pos == str + wcslen(str));
+
+    // Test with word_wrap
+    str = L"hello.";
+    result = match_maskw(L"hello\\x", str, &last_pos, 1);
+    assert(result < 0);
+    assert(last_pos == NULL);
+
+    str = L"hello.";
+    result = match_maskw(L"h*o\\x", str, &last_pos, 1);
+    assert(result < 0);
+    assert(last_pos == NULL);
 }
 
 static void test_complex_patterns()
@@ -372,28 +410,28 @@ static void test_edge_cases()
     str = L"abc";
     result = match_maskw(L"abcd", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
 
     str = L"abc";
     result = match_maskw(L"abc*d", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
 
     str = L"abc";
     result = match_maskw(L"a?cd", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
 
     str = L"abc";
     result = match_maskw(L"????", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
 
     // Trailing backslash
     str = L"abc";
     result = match_maskw(L"abc\\", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str));
+    assert(last_pos == NULL);
 }
 
 static void test_exact_matches()
@@ -420,19 +458,19 @@ static void test_exact_matches()
     str = L"hello world";
     result = match_maskw(L"hello", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == wcsstr(str, L" wo"));
+    assert(last_pos == NULL);
 
     // Partial match at end - should fail
     str = L"hello world";
     result = match_maskw(L"world", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str);
+    assert(last_pos == NULL);
 
     // Substring match - should fail
     str = L"hello";
     result = match_maskw(L"ell", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str);
+    assert(last_pos == NULL);
 }
 
 #ifdef _DEBUG
@@ -446,12 +484,12 @@ static void test_last_pos_differences()
     str = L"hello world";
     result = match_maskw(L"h*o", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str)); // points to end of string
+    assert(last_pos == NULL);
 
     last_pos = NULL;
     result = match_maskw0(L"h*o", str, &last_pos, 0);
     assert(result == 0);
-    assert(last_pos == str + wcslen(str)); // points to after "hello"
+    assert(last_pos == str + wcslen(str));
 
     // Test 2: Pattern with multiple asterisks
     str = L"hello world test";

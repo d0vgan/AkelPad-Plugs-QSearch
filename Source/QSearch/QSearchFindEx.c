@@ -415,21 +415,13 @@ int match_maskw0(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, 
 }
 #endif
 
-static int match_maskw_ret(int ret, const wchar_t* strw, wchar_t** last_pos)
-{
-    if ( last_pos && (strw > *last_pos) )
-        *last_pos = (wchar_t *) strw;
-
-    return ret;
-}
-
 int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, int whole_word)
 {
     const wchar_t* mp = NULL;    // last asterisk position in mask
     const wchar_t* sp = NULL;    // position in string for backtracking
 
     if ( last_pos )
-        *last_pos = NULL;
+        *last_pos = NULL; // will be non-NULL when the result > 0
     if ( !maskw || !strw )
         return 0;
 
@@ -461,9 +453,11 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
                 {
                     // special case: the trailing "*" matches the rest of the string if the current character is a word-break
                     if ( *strw != 0 && !is_wordbreakw(QSF_WW_ANY, *strw) )
-                        return match_maskw_ret(0, strw, last_pos);
+                        return 0;
                 }
-                return match_maskw_ret(1, strw, last_pos);
+                if ( last_pos )
+                    *last_pos = (wchar_t *) strw;
+                return 1;
             }
 
             mp = maskw;
@@ -475,12 +469,12 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
         {
             ++maskw;
             if ( *maskw == 0 )
-                return match_maskw_ret(0, strw, last_pos);
+                return 0;
 
             if ( *maskw != *strw )
             {
                 if ( !mp )
-                    return match_maskw_ret(is_wordbreakw(whole_word, *strw) ? -1 : 0, strw, last_pos);
+                    return (is_wordbreakw(whole_word, *strw) ? -1 : 0);
 
                 strw = ++sp;
                 maskw = mp;
@@ -496,7 +490,7 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
         if ( *maskw == L'?' && *strw )
         {
             if ( is_wordbreakw(whole_word, *strw) )
-                return match_maskw_ret(-1, strw, last_pos);
+                return -1;
 
             ++maskw;
             ++strw;
@@ -511,10 +505,10 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
         }
 
         if ( is_wordbreakw(whole_word, *strw) )
-            return match_maskw_ret(-1, strw, last_pos);
+            return -1;
 
         if ( !mp )
-            return match_maskw_ret(0, strw, last_pos);
+            return 0;
 
         strw = ++sp;
         maskw = mp;
@@ -524,9 +518,11 @@ int match_maskw(const wchar_t* maskw, const wchar_t* strw, wchar_t** last_pos, i
         ++maskw;
 
     if ( *maskw )
-        return match_maskw_ret(0, strw, last_pos);
+        return 0;
 
-    return match_maskw_ret(1, strw, last_pos);
+    if ( last_pos )
+        *last_pos = (wchar_t *) strw;
+    return 1;
 }
 
 #ifdef QS_OLD_WINDOWS
