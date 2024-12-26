@@ -348,6 +348,11 @@ static void test_escaped_characters()
     result = match_maskw(L"h*o\\x", str, &last_pos, 1);
     assert(result < 0);
     assert(last_pos == NULL);
+
+    str = L"hello.o?";
+    result = match_maskw(L"h**o\\?", str, &last_pos, 1);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
 }
 
 static void test_complex_patterns()
@@ -382,6 +387,11 @@ static void test_complex_patterns()
     result = match_maskw(L"h*o*r*", str, &last_pos, 0);
     assert(result > 0);
     assert(last_pos == wcsstr(str, L"ld"));
+
+    str = L"abcx abcd abcef abceg";
+    result = match_maskw(L"abc*d a?c*g", str, &last_pos, 0);
+    assert(result > 0);
+    assert(last_pos == str + wcslen(str));
 }
 
 static void test_edge_cases()
