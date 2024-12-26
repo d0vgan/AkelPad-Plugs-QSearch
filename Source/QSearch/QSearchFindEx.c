@@ -16,6 +16,10 @@
 #define  STACK_LINES_TO_CHECK  4 // pre-allocated on stack
 
 // progress bar will not be
+// shown for smaller documents:
+#define TEXTLEN_FOR_PROGRESSBAR    (2*1024*1024)
+
+// progress bar will not be
 // shown and updated before:
 #define  LINES_TO_SKIP       50
 
@@ -1373,6 +1377,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     int       n;
     int       len;
     BOOL      bIsProgressBarVisible;
+    BOOL      bShouldShowProgressBar;
     BOOL      bSearchUp;
     BOOL      bWholeLastLine;
     BOOL      bExactBeginning;
@@ -1448,6 +1453,11 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     nEditStartLine = nLine;
 
     bIsProgressBarVisible = FALSE;
+    bShouldShowProgressBar = FALSE;
+    if ( SendMessageW(g_Plugin.hMainWnd, AKD_GETTEXTLENGTH, (WPARAM) hEd, 0) >= TEXTLEN_FOR_PROGRESSBAR )
+    {
+        bShouldShowProgressBar = TRUE;
+    }
 
     while ( bSearchUp ? (nLine >= nLinesToCheck - 1) : (nLine <= nEditMaxLine) )
     {
@@ -1504,11 +1514,8 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                                 {
                                     for ( ; pos2 > 0; pos2-- )
                                     {
-                                        if ( is_wordbreakw(QSF_WW_SPACE, pszLineW[pos2]) ||
-                                             is_wordbreakw(QSF_WW_DELIM, pszLineW[pos2]) )
-                                        {
+                                        if ( is_wordbreakw(QSF_WW_ANY, pszLineW[pos2]) )
                                             break;
-                                        }
                                     }
                                     if ( pos2 == 0 )
                                         break;
@@ -1660,7 +1667,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                 updateSearchProgressBar();
             }
         }
-        else
+        else if ( bShouldShowProgressBar )
         {
             if ( bSearchUp )
             {
