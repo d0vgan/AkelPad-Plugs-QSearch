@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug QSearch.dll",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "C:/Progs/Progs/AkelPad/AkelPad64.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "C:/Progs/Progs/AkelPad",
+            "environment": [],
+            "console": "internalConsole"
+        },
+        {
+            "name": "Debug Tests_VC2017.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Source/x64/Debug/Tests_VC2017.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/Source/x64/Debug",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Debug Tests_VC2022.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Source/x64/Debug/Tests_VC2022.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/Source/x64/Debug",
+            "environment": [],
+            "console": "externalTerminal"
+        }
+    ]
+}
