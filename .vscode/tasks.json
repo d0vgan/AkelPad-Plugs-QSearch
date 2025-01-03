@@ -6,14 +6,14 @@
         {
             "label": "build QSearch (VS2017)",
             "type": "shell",
-            "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\MSBuild\\15.0\\Bin\\MSBuild.exe",
+            "command": "${workspaceFolder}\\.vscode\\build_vc2017.bat",
             "args": [
+                "${workspaceFolder}\\Source\\QSearch_VC2017.vcxproj",
                 // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
                 "/t:build",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
-                "${workspaceFolder}\\Source\\QSearch_VC2017.vcxproj",
                 "/p:Configuration=Debug",
                 "/p:Platform=x64"
             ],
@@ -28,14 +28,14 @@
         {
             "label": "build QSearch (VS2022)",
             "type": "shell",
-            "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+            "command": "${workspaceFolder}\\.vscode\\build_vc2022.bat",
             "args": [
+                "${workspaceFolder}\\Source\\QSearch_VC2022.vcxproj",
                 // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
                 "/t:build",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
-                "${workspaceFolder}\\Source\\QSearch_VC2022.vcxproj",
                 "/p:Configuration=Debug",
                 "/p:Platform=x64"
             ],
@@ -50,14 +50,14 @@
         {
             "label": "build Tests (VS2017)",
             "type": "shell",
-            "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\MSBuild\\15.0\\Bin\\MSBuild.exe",
+            "command": "${workspaceFolder}\\.vscode\\build_vc2017.bat",
             "args": [
+                "${workspaceFolder}\\Source\\Tests_VC2017.vcxproj",
                 // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
                 "/t:build",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
-                "${workspaceFolder}\\Source\\Tests_VC2017.vcxproj",
                 "/p:Configuration=Debug",
                 "/p:Platform=x64"
             ],
@@ -72,14 +72,14 @@
         {
             "label": "build Tests (VS2022)",
             "type": "shell",
-            "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+            "command": "${workspaceFolder}\\.vscode\\build_vc2022.bat",
             "args": [
+                "${workspaceFolder}\\Source\\Tests_VC2022.vcxproj",
                 // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
                 "/t:build",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
-                "${workspaceFolder}\\Source\\Tests_VC2022.vcxproj",
                 "/p:Configuration=Debug",
                 "/p:Platform=x64"
             ],
