@@ -1352,18 +1352,84 @@ static int prepareFindMasksW(
     return nLines;
 }
 
-static void cleanupFindTextExW(wchar_t* pszLineW, wchar_t* pszMasksW[MAX_LINES_TO_CHECK])
+static void cleanupFindTextExW(tDynamicBuffer* pLineBuf, wchar_t* pszMasksW[MAX_LINES_TO_CHECK])
 {
     int n;
 
-    if ( pszLineW )
-        x_mem_free(pszLineW);
+    tDynamicBuffer_Free(pLineBuf);
 
     for ( n = STACK_LINES_TO_CHECK; n < MAX_LINES_TO_CHECK; n++ )
     {
         if ( pszMasksW[n] )
             x_mem_free(pszMasksW[n]);
     }
+}
+
+static INT_PTR GetUnwrappedLineAtIndexW(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf)
+{
+    x_mem_cpy( &tr->cr.ciMin, ciChar, sizeof(AECHARINDEX) );
+    tr->cr.ciMin.nCharInLine = 0;
+
+    x_mem_cpy( &tr->cr.ciMax, ciChar, sizeof(AECHARINDEX) );
+    tr->cr.ciMax.nCharInLine = ciChar->lpLine->nLineLen;
+
+    tr->bColumnSel = FALSE;
+    tr->pBuffer = NULL;
+    tr->dwBufferMax = 0;
+    tr->nNewLine = AELB_ASOUTPUT;
+    tr->bFillSpaces = FALSE;
+
+    tr->dwBufferMax = SendMessageW(hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) tr);
+    if ( tr->dwBufferMax != 0 )
+    {
+        UINT_PTR dwBytesToAllocate;
+
+        dwBytesToAllocate = ((tr->dwBufferMax*sizeof(wchar_t) + 16)/1024 + 1)*1024 - 16;
+        if ( tDynamicBuffer_Allocate(pTextBuf, dwBytesToAllocate) )
+        {
+            tr->pBuffer = (wchar_t *) pTextBuf->ptr;
+            tr->dwBufferMax = SendMessageW(hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) tr);
+            pTextBuf->nBytesStored = sizeof(wchar_t) * tr->dwBufferMax;
+            return (INT_PTR) tr->dwBufferMax;
+        }
+    }
+
+    return -1;
+}
+
+INT_X getAkelEditLineW(HWND hEd, int nLine, tDynamicBuffer* pLineBuf)
+{
+    INT_X nLineLen;
+    int i;
+    wchar_t ch;
+    AECHARINDEX ciLine;
+    AETEXTRANGEW tr;
+
+    x_zero_mem( &ciLine, sizeof(AECHARINDEX) );
+    if ( !SendMessageW(hEd, AEM_GETLINEINDEX, nLine, (LPARAM) &ciLine) )
+        return -1;
+
+    x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
+    nLineLen = GetUnwrappedLineAtIndexW(hEd, &ciLine, &tr, pLineBuf);
+    if ( nLineLen < 0 )
+        return -1;
+
+    i = 0;
+    while ( nLineLen > 0 && i < 2 )
+    {
+        ch = tr.pBuffer[nLineLen - 1];
+        if ( ch == L'\r' || ch == L'\n' ) // trailing '\r' or '\n'
+        {
+            --nLineLen;
+            ++i;
+        }
+        else
+            break;
+    }
+
+    tr.pBuffer[nLineLen] = 0;
+    pLineBuf->nBytesStored = nLineLen*sizeof(wchar_t);
+    return nLineLen;
 }
 
 INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
@@ -1389,11 +1455,14 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     INT_X       pos1;
     INT_X       pos2;
     CHARRANGE_X cr = { 0, 0 };
+    tDynamicBuffer LineBuf;
 
     bSearchUp = ((ptfW->dwFlags & FR_UP) == FR_UP) ? TRUE : FALSE;
     nWholeWord = ((ptfW->dwFlags & FR_WHOLEWORD) == FR_WHOLEWORD) ? QSF_WW_DELIM : 0;
 
     pszLineW = NULL;
+    tDynamicBuffer_Init(&LineBuf);
+
     for ( n = 0; n < STACK_LINES_TO_CHECK; n++ )
     {
         pszMasksW[n] = szMasksOnStackW[n];
@@ -1408,23 +1477,16 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
       pszMasksW, /*pnMasksLen,*/ nWholeWord, &bWholeLastLine, &bExactBeginning, &bExactEnding);
     if ( nLinesToCheck == 0 )
     {
-        cleanupFindTextExW(pszLineW, pszMasksW);
+        cleanupFindTextExW(&LineBuf, pszMasksW);
         return 0; // error
     }
 
-    nEditMaxLine = (int) SendMessage(hEd, EM_GETLINECOUNT, 0, 0);
+    nEditMaxLine = (int) SendMessageW(hEd, EM_GETLINECOUNT, 0, 0);
     nEditMaxLine -= nLinesToCheck;
     if ( nEditMaxLine < 0 )
     {
-        cleanupFindTextExW(pszLineW, pszMasksW);
+        cleanupFindTextExW(&LineBuf, pszMasksW);
         return (-1); // not found
-    }
-
-    pszLineW = (wchar_t *) x_mem_alloc(MAX_LINE_SIZE*sizeof(wchar_t));
-    if ( !pszLineW )
-    {
-        cleanupFindTextExW(pszLineW, pszMasksW);
-        return 0; // error
     }
 
     if ( (ptfW->dwFlags & FR_MATCHCASE) != FR_MATCHCASE )
@@ -1439,7 +1501,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
     nLine = bSearchUp ? (nLinesToCheck - 1) : 0;
     if ( (ptfW->dwFlags & FR_BEGINNING) != FR_BEGINNING )
     {
-        SendMessage( hEd, EM_EXGETSEL_X, 0, (LPARAM) &cr );
+        SendMessageW( hEd, EM_EXGETSEL_X, 0, (LPARAM) &cr );
         if ( cr.cpMin != cr.cpMax )
         {
             if ( bSearchUp )
@@ -1447,7 +1509,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
             else
                 ++cr.cpMin;
         }
-        nLine = (int) SendMessage(hEd, EM_EXLINEFROMCHAR,
+        nLine = (int) SendMessageW(hEd, EM_EXLINEFROMCHAR,
                         0, bSearchUp ? cr.cpMax : cr.cpMin);
     }
     nEditStartLine = nLine;
@@ -1465,24 +1527,18 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 
         for ( n = 0; n < nLinesToCheck; n++ )
         {
-            *((WORD *) pszLineW) = MAX_LINE_SIZE - 1;
-            len = (int) SendMessageW(
-              hEd,
-              EM_GETLINE,
-              bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n),
-              (LPARAM) pszLineW
+            len = (int) getAkelEditLineW(
+                hEd,
+                bSearchUp ? (nLine - nLinesToCheck + 1 + n) : (nLine + n),
+                &LineBuf
             );
-            pszLineW[len] = 0;
-            if ( (len - 1 >= 0) && (pszLineW[len - 1] == L'\n') )
+            if ( len < 0 )
             {
-                --len;
-                pszLineW[len] = 0;
+                cleanupFindTextExW(&LineBuf, pszMasksW);
+                return 0; // error
             }
-            if ( (len - 1 >= 0) && (pszLineW[len - 1] == L'\r') )
-            {
-                --len;
-                pszLineW[len] = 0;
-            }
+
+            pszLineW = (wchar_t *) LineBuf.ptr;
 
             pos2 = 0;
             bBack = FALSE;
@@ -1509,7 +1565,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                             if ( !bExactEnding )
                             {
                                 pos2 = cr.cpMax;
-                                pos2 -= (INT_X) SendMessage(hEd, EM_LINEINDEX, nLine, 0);
+                                pos2 -= (INT_X) SendMessageW(hEd, EM_LINEINDEX, nLine, 0);
                                 if ( nWholeWord )
                                 {
                                     for ( ; pos2 > 0; pos2-- )
@@ -1536,7 +1592,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                             if ( !bExactBeginning )
                             {
                                 pos2 = cr.cpMin;
-                                pos2 -= (INT_X) SendMessage(hEd, EM_LINEINDEX, nLine, 0);
+                                pos2 -= (INT_X) SendMessageW(hEd, EM_LINEINDEX, nLine, 0);
                                 //++pos2;
                             }
                             else
@@ -1589,7 +1645,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
                     {
                         if ( pos1 < 0 )
                         {
-                            pos1 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
+                            pos1 = (INT_X) SendMessageW(hEd, EM_LINEINDEX,
                               bSearchUp ? (nLine - nLinesToCheck + 1) : nLine, 0);
                             pos1 += pos2;
                         }
@@ -1632,7 +1688,7 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         {
             if ( bWholeLastLine )
             {
-                pos2 = (INT_X) SendMessage(hEd, EM_LINEINDEX,
+                pos2 = (INT_X) SendMessageW(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
                 pos2 += (int) SendMessageW(hEd, EM_LINELENGTH, pos2, 0);
                 if ( bSearchUp && (pos2 > cr.cpMax) )
@@ -1642,19 +1698,19 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
             }
             else
             {
-                pos2 += (INT_X) SendMessage(hEd, EM_LINEINDEX,
+                pos2 += (INT_X) SendMessageW(hEd, EM_LINEINDEX,
                   bSearchUp ? nLine : (nLine + n - 1), 0);
             }
             cr.cpMin = pos1;
             cr.cpMax = pos2;
-            SendMessage( hEd, EM_EXSETSEL_X, 0, (LPARAM) &cr );
+            SendMessageW( hEd, EM_EXSETSEL_X, 0, (LPARAM) &cr );
 
             if ( bIsProgressBarVisible )
             {
                 setSearchProgressBarState(FALSE, 0);
             }
 
-            cleanupFindTextExW(pszLineW, pszMasksW);
+            cleanupFindTextExW(&LineBuf, pszMasksW);
             return 1; // found
         }
 
@@ -1708,6 +1764,6 @@ INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
         setSearchProgressBarState(FALSE, 0);
     }
 
-    cleanupFindTextExW(pszLineW, pszMasksW);
+    cleanupFindTextExW(&LineBuf, pszMasksW);
     return (-1); // not found
 }
