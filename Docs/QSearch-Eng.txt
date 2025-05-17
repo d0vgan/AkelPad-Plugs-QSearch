@@ -630,6 +630,11 @@ or file "AkelFiles\Plugs\QSearch.ini"):
 --------
 History:
 --------
+v.8.4
+ * Glory to Ukraine! Glory to the heroes!
+ * improved: the search with special chars works faster now
+ - fixed: "Find All" with special chars did not find strings with '\n'
+
 v.8.3 (December 2024)
  * Glory to Ukraine! Glory to the heroes!
  * the size of the 64-bit QSearch.dll has been reduced
