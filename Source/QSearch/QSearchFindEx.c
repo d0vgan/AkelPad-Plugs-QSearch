@@ -1442,6 +1442,10 @@ INT_X getAkelEditLineW(HWND hEd, int nLine, tDynamicBuffer* pLineBuf)
     return nLineLen;
 }
 
+// Note:
+// The current implementation of doFindTextExW has the following limitation:
+// - a word-wrapped match can't be found because doFindTextExW deals with
+// word-wrapped lines rather than entire (unwrapped) lines.
 INT_X doFindTextExW(HWND hEd, TEXTFINDW* ptfW)
 {
     /*int       pnMasksLen[MAX_LINES_TO_CHECK];*/
