@@ -6212,6 +6212,12 @@ static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
                 *(pszRegExW++) = wch;
                 break;
 
+            case L'\r':
+            case L'\n':
+                *(pszRegExW++) = L'\\';
+                *(pszRegExW++) = L'n';
+                break;
+
             default:
                 *(pszRegExW++) = wch;
                 break;
@@ -6221,6 +6227,21 @@ static void convertFindExToRegExW(const wchar_t* cszFindExW, wchar_t* pszRegExW)
     }
 
     *pszRegExW = 0;
+}
+
+static BOOL containsNewLineChar(const wchar_t* cszFindExW)
+{
+    wchar_t wch;
+
+    while ( (wch = *cszFindExW) != 0 )
+    {
+        if ( wch == L'\n' || wch == L'\r' )
+            return TRUE;
+
+        ++cszFindExW;
+    }
+
+    return FALSE;
 }
 
 static void CALLBACK CountAllTimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
@@ -6904,9 +6925,18 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
             }
 
             if ( bSearchEx )
+            {
                 convertFindExToRegExW(pszFindTextW, szFindAllW);
+            }
+            else if ( (dwSearchFlags & FRF_REGEXP) == 0 && containsNewLineChar(pszFindTextW) )
+            {
+                aeftW.dwFlags |= (AEFR_REGEXP | AEFR_REGEXPNONEWLINEDOT);
+                convertFindExToRegExW(pszFindTextW, szFindAllW);
+            }
             else
+            {
                 lstrcpyW(szFindAllW, pszFindTextW);
+            }
             aeftW.pText = szFindAllW;
             aeftW.dwTextLen = lstrlenW(szFindAllW);
             aeftW.nNewLine = AELB_ASIS;
@@ -7367,6 +7397,11 @@ void qsearchDoTryHighlightAll(HWND hDlg, const wchar_t* cszFindWhatAW, const DWO
                         else
 #endif
                         {
+                            // Note:
+                            // We may add '\n' and '\r' to the findSpecialCharW
+                            // to set bFindExAsRegExp to TRUE here,
+                            // however AkelEdit does not highlight a string that
+                            // contains a new line.
                             if ( findSpecialCharW(cszFindWhatAW) != -1 )
                                 bFindExAsRegExp = TRUE;
                         }

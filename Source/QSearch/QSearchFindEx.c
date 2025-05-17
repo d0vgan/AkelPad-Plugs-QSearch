@@ -1365,13 +1365,23 @@ static void cleanupFindTextExW(tDynamicBuffer* pLineBuf, wchar_t* pszMasksW[MAX_
     }
 }
 
-static INT_PTR GetUnwrappedLineAtIndexW(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf)
+static INT_PTR GetLineAtIndexExW(HWND hWndEdit, const AECHARINDEX* ciChar, AETEXTRANGEW* tr, tDynamicBuffer* pTextBuf, BOOL bEntireLine)
 {
-    x_mem_cpy( &tr->cr.ciMin, ciChar, sizeof(AECHARINDEX) );
-    tr->cr.ciMin.nCharInLine = 0;
+    if ( bEntireLine )
+    {
+        // entire line
+        AEC_WrapLineBeginEx(ciChar, &tr->cr.ciMin);
+        AEC_WrapLineEndEx(ciChar, &tr->cr.ciMax);
+    }
+    else
+    {
+        // only a word-wrapped part of the line
+        x_mem_cpy( &tr->cr.ciMin, ciChar, sizeof(AECHARINDEX) );
+        tr->cr.ciMin.nCharInLine = 0;
 
-    x_mem_cpy( &tr->cr.ciMax, ciChar, sizeof(AECHARINDEX) );
-    tr->cr.ciMax.nCharInLine = ciChar->lpLine->nLineLen;
+        x_mem_cpy( &tr->cr.ciMax, ciChar, sizeof(AECHARINDEX) );
+        tr->cr.ciMax.nCharInLine = ciChar->lpLine->nLineLen;
+    }
 
     tr->bColumnSel = FALSE;
     tr->pBuffer = NULL;
@@ -1410,7 +1420,7 @@ INT_X getAkelEditLineW(HWND hEd, int nLine, tDynamicBuffer* pLineBuf)
         return -1;
 
     x_zero_mem( &tr, sizeof(AETEXTRANGEW) );
-    nLineLen = GetUnwrappedLineAtIndexW(hEd, &ciLine, &tr, pLineBuf);
+    nLineLen = GetLineAtIndexExW(hEd, &ciLine, &tr, pLineBuf, FALSE);
     if ( nLineLen < 0 )
         return -1;
 
