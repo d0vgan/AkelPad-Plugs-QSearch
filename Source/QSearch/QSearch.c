@@ -772,11 +772,19 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
     {
         if ( g_QSearchDlg.hDlg )
         {
+            UINT uFindFlags = 0;
             UINT uSelectMode = SELECT_MODE_NONE;
             UINT nWordSelected = 0;
 
             switch ( GetExtCallParam(pd->lParam, 1) )
             {
+                case 3: // Pick up the selected text and find from the beginning
+                    uFindFlags = QS_FF_BEGINNING;
+                    uSelectMode = SELECT_MODE_FND;
+                    break;
+                case 2: // Find from the beginning
+                    uFindFlags = QS_FF_BEGINNING;
+                    break;
                 case 1: // Pick up the selected text
                     uSelectMode = SELECT_MODE_FND;
                     break;
@@ -813,7 +821,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
                     g_bFrameActivated = FALSE;
                     SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_FORCEFINDFIRST );
                 }
-                SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, FALSE, QS_FF_NOSETSELFIRST );
+                SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, FALSE, QS_FF_NOSETSELFIRST | uFindFlags );
             }
         }
     }

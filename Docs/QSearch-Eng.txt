@@ -32,17 +32,23 @@ plugin when AkelPad starts. (The purpose of that is to have all the plugin's
 capabilities available at the very start of AkelPad rather than only after
 the QSearch'es panel is activated).
 The additional abilities by the example of the Hotkeys plugin:
- -------------------------------------------------------------
- Name             |  Command                       |  Hotkey
- -------------------------------------------------------------
- Quick Find Next  |  Call("QSearch::FindNext", 1)  |  Ctrl+F3
- -------------------------------------------------------------
-Assigns Ctrl+F3 to the action "pick up the selected text and find next".
+ ----------------------------------------------------------------------
+ Name                  |  Command                       |  Hotkey
+ ----------------------------------------------------------------------
+ Quick Find Next  (1)  |  Call("QSearch::FindNext", 1)  |  Ctrl+F3
+ Find Begin       (2)  |  Call("QSearch::FindNext", 2)  |  Alt+F3
+ Quick Find Begin (3)  |  Call("QSearch::FindNext", 3)  |  Ctrl+Alt+F3
+ ----------------------------------------------------------------------
+(1) Assigns Ctrl+F3 to the action "pick up the selected text and find next".
 If no selection, the current word is selected (according to the option
 'select_by_fnd').
 When both "Search: Pick up selected text" and "Window: Catch main F3" are
 checked, FindNext picks up the selected text or selects the current word
 according to the option 'select_by_f3'.
+(2) Assigns Alt+F3 to the action "find from the beginning of the file".
+(3) Assigns Ctrl+Alt+F3 to the action "pick up the selected text and find
+from the beginning of the file". If no selection, the current word is selected
+(according to the option 'select_by_fnd').
 
 FindPrev - find previous (up).
 Recommended hot-key - Shift+F3.
@@ -630,6 +636,10 @@ or file "AkelFiles\Plugs\QSearch.ini"):
 --------
 History:
 --------
+v.8.5 (April 2026)
+ * Glory to Ukraine! Glory to the heroes!
+ + added: Call("QSearch::FindNext", 2) and Call("QSearch::FindNext", 3)
+
 v.8.4 (March 2026)
  * Glory to Ukraine! Glory to the heroes!
  * improved: the search with special chars works faster now
@@ -991,7 +1001,7 @@ aka Instructor for the AkelPad text editor  ;-)
 The original icon by Yusuke Kamiyamane, http://p.yusukekamiyamane.com/
 The icon has been modified by DV.
 ---------------------------------------------------------------------------
-(C) Sep 2007 - Mar 2026, Vitaliy Dovgan aka DV
+(C) Sep 2007 - Apr 2026, Vitaliy Dovgan aka DV
           dvv81 <at> ukr <dot> net
 
 This plugin is freeware (free for both personal and commercial usage);

@@ -3434,7 +3434,7 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                     // we can have Grey Alt here (e.g. Polish keyboard layout)
                     // even though Alt usually comes under WM_SYSKEYDOWN
                     // Grey Alt comes under WM_KEYDOWN as VK_CONTROL + VK_MENU
-                    if ( (GetKeyState(VK_MENU) & 0x80) != 0x80 ) // no Grey Alt
+                    if ( (GetKeyState(VK_MENU) & 0x80) == 0 ) // no Grey Alt
                     {
                         SendMessage( hEdit, EM_SETSEL, 0, -1 );
                         #ifdef _DEBUG
@@ -4965,6 +4965,10 @@ INT_PTR CALLBACK qsearchDlgProc(HWND hDlg,
             {
                 dwSearch |= QSEARCH_NOHISTORYUPD;
             }
+            if ( lParam & QS_FF_BEGINNING )
+            {
+                dwSearch |= QSEARCH_FINDBEGIN;
+            }
 
             if ( uMsg == QSM_FINDALL )
             {
@@ -6337,7 +6341,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
             if ( !pFindAll )
             {
                 if ( (dwParams & QSEARCH_FINDUP) ||
-                     (((dwParams & QSEARCH_NOFINDUP_VK) != QSEARCH_NOFINDUP_VK) && (GetKeyState(VK_QS_FINDUP) & 0x80)) )
+                     (((dwParams & QSEARCH_NOFINDUP_VK) == 0) && (GetKeyState(VK_QS_FINDUP) & 0x80)) )
                     srchEOF = QSEARCH_EOF_UP;
                 else
                     srchEOF = QSEARCH_EOF_DOWN;
@@ -6463,7 +6467,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
 
     g_QSearchDlg.bIsQSearchingRightNow = TRUE;
 
-    if ( ((dwParams & QSEARCH_SEL) != QSEARCH_SEL) ||
+    if ( ((dwParams & QSEARCH_SEL) == 0) ||
          dwOptFlags[OPTF_SRCH_SELFIND_PICKUP] )
     {
         // not SelFindNext or SelFindPrev
@@ -6475,17 +6479,16 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
     {
         if ( (dwParams & QSEARCH_SEL_FINDUP) ||
              (dwParams & QSEARCH_FINDUP) ||
-             (((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
-              ((dwParams & QSEARCH_NOFINDUP_VK) != QSEARCH_NOFINDUP_VK) &&
-              ((GetKeyState(VK_QS_FINDUP) & 0x80) == 0x80)) )
+             (((dwParams & QSEARCH_SEL) == 0) &&
+              ((dwParams & QSEARCH_NOFINDUP_VK) == 0) &&
+              ((GetKeyState(VK_QS_FINDUP) & 0x80) != 0)) )
         {
             dwSearchFlags = FR_UP;
         }
 
-        if ( ((dwParams & QSEARCH_SEL) != QSEARCH_SEL) &&
-             ((dwParams & QSEARCH_NOFINDBEGIN_VK) != QSEARCH_NOFINDBEGIN_VK) &&
+        if ( ((dwParams & QSEARCH_SEL) == 0) &&
              ((dwParams & QSEARCH_FINDBEGIN) ||
-              ((GetKeyState(VK_QS_FINDBEGIN) & 0x80) == 0x80)) )
+              ((dwParams & QSEARCH_NOFINDBEGIN_VK) == 0 && (GetKeyState(VK_QS_FINDBEGIN) & 0x80) != 0)) )
         {
             dwSearchFlags |= FR_BEGINNING;
             qs_nEditEOF = 0;
