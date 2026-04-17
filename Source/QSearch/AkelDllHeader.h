@@ -1,15 +1,13 @@
 #ifndef _akel_dll_header_h_
 #define _akel_dll_header_h_
 //---------------------------------------------------------------------------
-#ifdef _WIN64
-  #ifndef AKELPAD_X64
-    #define AKELPAD_X64
-  #endif
+#if defined(_WIN64) && !defined(AKELPAD_X64)
+  #define AKELPAD_X64
 #endif
 
 // QS_OLD_WINDOWS specifies whether the old (non-Unicode) Windows is supported
-#ifndef _WIN64
-#define QS_OLD_WINDOWS
+#if !defined(_WIN64) && (!defined(_MSC_VER) || (_MSC_VER < 1930))
+  #define QS_OLD_WINDOWS
 #endif
 
 #ifdef AKELPAD_X64

@@ -639,6 +639,7 @@ History:
 v.8.5 (April 2026)
  * Glory to Ukraine! Glory to the heroes!
  + added: Call("QSearch::FindNext", 2) and Call("QSearch::FindNext", 3)
+ * improved: compatibility with Visual Studio 2022 and newer
 
 v.8.4 (March 2026)
  * Glory to Ukraine! Glory to the heroes!

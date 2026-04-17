@@ -66,12 +66,9 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
                 {
                     if ( (pszFunc[n] == ':') && (pszFunc[n-1] == ':') )
                     {
-                        int i = 0;
-                        for ( ; i < n + 1; i++ )
-                        {
-                            ((char *) g_szFunctionQSearchAW)[i] = pszFunc[i];
-                        }
-                        lstrcpyA( ((char *) g_szFunctionQSearchAW) + i, "QSearch" );
+                        ++n; // length of "QSearch::"
+                        lstrcpynA( ((char *) g_szFunctionQSearchAW), pszFunc, n + 1 ); // including the trailing '\0'
+                        lstrcpyA( ((char *) g_szFunctionQSearchAW) + n, "QSearch" );
                         break;
                     }
                 }
@@ -88,12 +85,9 @@ static DWORD getQSearchHotKey(const PLUGINDATA* pd)
                 {
                     if ( (pszFunc[n] == L':') && (pszFunc[n-1] == L':') )
                     {
-                        int i = 0;
-                        for ( ; i < n + 1; i++ )
-                        {
-                            g_szFunctionQSearchAW[i] = pszFunc[i];
-                        }
-                        lstrcpyW( g_szFunctionQSearchAW + i, L"QSearch" );
+                        ++n; // length of "QSearch::"
+                        lstrcpynW( g_szFunctionQSearchAW, pszFunc, n + 1 ); // including the trailing '\0'
+                        lstrcpyW( g_szFunctionQSearchAW + n, L"QSearch" );
                         break;
                     }
                 }
