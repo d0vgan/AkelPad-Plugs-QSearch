@@ -632,6 +632,28 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      If an empty string is specified, QSearch'es panel does not show any
      reaction to an invalid regular expression.
 
+55) logoutput_occ_begin =
+     When "Find All" uses Log::Output, the given characters are inserted before
+     the beginning of the current occurrence.
+     For example:
+       logoutput_occ_begin = [[
+       logoutput_occ_end = ]]
+     will show something similar to
+       (1:22)    beginning of a string [[occurrence]] end of a string
+     These characters around the occurrence are not added in the "Filter mode"
+     and "Match only" modes.
+
+56) logoutput_occ_end =
+     When "Find All" uses Log::Output, the given characters are inserted after
+     the end of the current occurrence.
+     For example:
+       logoutput_occ_begin = >>
+       logoutput_occ_end = <<
+     will show something similar to
+       (1:22)    beginning of a string >>occurrence<< end of a string
+     These characters around the occurrence are not added in the "Filter mode"
+     and "Match only" modes.
+
 
 --------
 History:
@@ -639,6 +661,7 @@ History:
 v.8.5 (April 2026)
  * Glory to Ukraine! Glory to the heroes!
  + added: Call("QSearch::FindNext", 2) and Call("QSearch::FindNext", 3)
+ + added: 'logoutput_occ_begin' and 'logoutput_occ_end'
  * improved: compatibility with Visual Studio 2022 and newer
 
 v.8.4 (March 2026)
