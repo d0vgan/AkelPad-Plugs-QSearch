@@ -77,10 +77,14 @@
         int      nLenStatusEofCrossedUp;
         int      nLenStatusNotFound;
         int      nLenStatusNotRegExp;
+        int      nLenLogOutputOccBegin;
+        int      nLenLogOutputOccEnd;
         wchar_t  szStatusEofCrossedDownAW[16];
         wchar_t  szStatusEofCrossedUpAW[16];
         wchar_t  szStatusNotFoundAW[16];
         wchar_t  szStatusNotRegExpAW[16];
+        wchar_t  szLogOutputOccBeginAW[16];
+        wchar_t  szLogOutputOccEndAW[16];
         FindResultsOutputPolicy LogOutputFRP;
         FindResultsOutputPolicy FileOutputFRP;
     } QSearchOpt;

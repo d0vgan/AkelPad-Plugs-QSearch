@@ -2068,8 +2068,9 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
 {
     AETEXTRANGEW tr;
     HWND         hWndEdit;
-    UINT_PTR     nBytesToAllocate;
+    UINT_PTR     nLen;
     BOOL         bAddLineCR;
+    BOOL         bAddOccBeginEnd;
     int          nLinesBeforeAfter[2];
 
     if ( !pfrPolicy->pfnStoreResultCallback )
@@ -2087,6 +2088,14 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     {
         if ( !(pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERMODE) || (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_FILTERCONTEXT) )
             bAddLineCR = TRUE;
+    }
+
+    bAddOccBeginEnd = FALSE;
+    if ( (g_Options.nLenLogOutputOccBegin != 0 || g_Options.nLenLogOutputOccEnd != 0) &&
+         ((pFindContext->dwFindAllResult & (QS_FINDALL_RSLT_FILTERMODE|QS_FINDALL_RSLT_MATCHONLY)) == 0) &&
+         ((pFindContext->dwFindAllMode & QS_FINDALL_MASK) == QS_FINDALL_LOGOUTPUT) )
+    {
+        bAddOccBeginEnd = TRUE;
     }
 
     if ( (pFindContext->dwFindAllResult & QS_FINDALL_RSLT_MATCHONLY) == 0 )
@@ -2246,23 +2255,88 @@ static void qsFindResultCallback(tFindAllContext* pFindContext, const AECHARRANG
     if ( tr.dwBufferMax == 0 )
         return; // no text to retrieve
 
-    nBytesToAllocate = sizeof(wchar_t) * tr.dwBufferMax;
+    // bytes to allocate:
+    nLen = tr.dwBufferMax;
+    if ( bAddOccBeginEnd )
+    {
+        nLen += g_Options.nLenLogOutputOccBegin;
+        nLen += g_Options.nLenLogOutputOccEnd;
+    }
     if ( bAddLineCR )
-        nBytesToAllocate += 1*sizeof(wchar_t); // for the trailing '\r'
-
-    if ( !tDynamicBuffer_Allocate(pTempBuf, nBytesToAllocate) )
+    {
+        nLen += 1; // for the trailing '\r'
+    }
+    if ( !tDynamicBuffer_Allocate(pTempBuf, nLen*sizeof(wchar_t)) )
         return; // failed to allocate the memory
 
     pTempBuf->nBytesStored = 0;
     tr.pBuffer = (wchar_t *) pTempBuf->ptr;
     tr.pBuffer[0] = 0;
-    pTempBuf->nBytesStored += sizeof(wchar_t) * (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+
+    if ( bAddOccBeginEnd )
+    {
+        AECHARRANGE crTr;
+
+        x_mem_cpy(&crTr, &tr.cr, sizeof(AECHARRANGE)); // store the tr's cr
+
+        if ( AEC_IndexCompare(&tr.cr.ciMin, &pcrFound->ciMin) == -1 )
+        {
+            // before the occurrence
+            x_mem_cpy(&tr.cr.ciMax, &pcrFound->ciMin, sizeof(AECHARINDEX));
+            nLen = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+            pTempBuf->nBytesStored += nLen*sizeof(wchar_t);
+            tr.pBuffer += nLen;
+            x_mem_cpy(&tr.cr.ciMax, &crTr.ciMax, sizeof(AECHARINDEX));
+        }
+
+        if ( g_Options.nLenLogOutputOccBegin != 0 )
+        {
+            // beginning of the occurrence
+            lstrcpyW(tr.pBuffer, g_Options.szLogOutputOccBeginAW);
+            tr.pBuffer += g_Options.nLenLogOutputOccBegin;
+            pTempBuf->nBytesStored += g_Options.nLenLogOutputOccBegin*sizeof(wchar_t);
+        }
+
+        if ( AEC_IndexCompare(&pcrFound->ciMin, &pcrFound->ciMax) != 0 )
+        {
+            // the occurrence itself
+            x_mem_cpy(&tr.cr, pcrFound, sizeof(AECHARRANGE));
+            nLen = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+            pTempBuf->nBytesStored += nLen*sizeof(wchar_t);
+            tr.pBuffer += nLen;
+            x_mem_cpy(&tr.cr, &crTr, sizeof(AECHARRANGE));
+        }
+
+        if ( g_Options.nLenLogOutputOccEnd != 0 )
+        {
+            // end of the occurrence
+            lstrcpyW(tr.pBuffer, g_Options.szLogOutputOccEndAW);
+            tr.pBuffer += g_Options.nLenLogOutputOccEnd;
+            pTempBuf->nBytesStored += g_Options.nLenLogOutputOccEnd*sizeof(wchar_t);
+        }
+
+        if ( AEC_IndexCompare(&tr.cr.ciMax, &pcrFound->ciMax) == 1 )
+        {
+            // after the occurrence
+            x_mem_cpy(&tr.cr.ciMin, &pcrFound->ciMax, sizeof(AECHARINDEX));
+            nLen = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+            pTempBuf->nBytesStored += nLen*sizeof(wchar_t);
+            tr.pBuffer += nLen;
+        }
+    }
+    else
+    {
+        nLen = (UINT_PTR) SendMessage( hWndEdit, AEM_GETTEXTRANGEW, 0, (LPARAM) &tr );
+        pTempBuf->nBytesStored += nLen*sizeof(wchar_t);
+        tr.pBuffer += nLen;
+    }
+
     if ( bAddLineCR )
     {
-        tr.pBuffer += pTempBuf->nBytesStored / sizeof(wchar_t);
         *tr.pBuffer = L'\r'; // the trailing '\r'
         pTempBuf->nBytesStored += 1*sizeof(wchar_t); // includes the trailing '\r'
     }
+
     pfrPolicy->pfnStoreResultCallback( pFindContext, pcrFound, nLinesBeforeAfter, pTempBuf, pTempBuf2, pfnAddOccurrence );
 }
 

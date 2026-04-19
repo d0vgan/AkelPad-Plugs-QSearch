@@ -65,8 +65,10 @@
 #define  OPT_STATUS_EOF_CROSSED_UP    51
 #define  OPT_STATUS_NOTFOUND          52
 #define  OPT_STATUS_NOTREGEXP         53
+#define  OPT_LOGOUTPUT_OCC_BEGIN      54
+#define  OPT_LOGOUTPUT_OCC_END        55
 
-#define  OPT_TOTALCOUNT               54
+#define  OPT_TOTALCOUNT               56
 
 #define  PICKUP_SEL_ALWAYS             1
 #define  PICKUP_SEL_IF_NOT_QSBTN      11

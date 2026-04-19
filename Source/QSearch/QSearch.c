@@ -92,11 +92,15 @@ void CloseLog(void)
 #define  DEFAULT_STATUS_EOF_CROSSED_UP_W    L"<<"
 #define  DEFAULT_STATUS_NOTFOUND_W          L"--"
 #define  DEFAULT_STATUS_NOTREGEXP_W         L""
+#define  DEFAULT_LOGOUTPUT_OCC_BEGIN_W      L""
+#define  DEFAULT_LOGOUTPUT_OCC_END_W        L""
 
 #define  DEFAULT_STATUS_EOF_CROSSED_DOWN_A  ">>"
 #define  DEFAULT_STATUS_EOF_CROSSED_UP_A    "<<"
 #define  DEFAULT_STATUS_NOTFOUND_A          "--"
 #define  DEFAULT_STATUS_NOTREGEXP_A         ""
+#define  DEFAULT_LOGOUTPUT_OCC_BEGIN_A      ""
+#define  DEFAULT_LOGOUTPUT_OCC_END_A        ""
 
 #define LOGOUTPUT_FRP_MODE       QSFRM_CHARINLINE
 #define LOGOUTPUT_FRP_BEFORE     100
@@ -199,10 +203,14 @@ void CloseLog(void)
         pOptions->nLenStatusEofCrossedUp = WRONG_INT_VALUE;
         pOptions->nLenStatusNotFound = WRONG_INT_VALUE;
         pOptions->nLenStatusNotRegExp = WRONG_INT_VALUE;
+        pOptions->nLenLogOutputOccBegin = WRONG_INT_VALUE;
+        pOptions->nLenLogOutputOccEnd = WRONG_INT_VALUE;
         x_zero_mem(pOptions->szStatusEofCrossedDownAW, sizeof(pOptions->szStatusEofCrossedDownAW));
         x_zero_mem(pOptions->szStatusEofCrossedUpAW, sizeof(pOptions->szStatusEofCrossedUpAW));
         x_zero_mem(pOptions->szStatusNotFoundAW, sizeof(pOptions->szStatusNotFoundAW));
         x_zero_mem(pOptions->szStatusNotRegExpAW, sizeof(pOptions->szStatusNotRegExpAW));
+        x_zero_mem(pOptions->szLogOutputOccBeginAW, sizeof(pOptions->szLogOutputOccBeginAW));
+        x_zero_mem(pOptions->szLogOutputOccEndAW, sizeof(pOptions->szLogOutputOccEndAW));
         initializeFRP(&pOptions->LogOutputFRP);
         initializeFRP(&pOptions->FileOutputFRP);
     }
@@ -282,7 +290,9 @@ const char*    CSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_STATUS_EOF_CROSSED_DOWN  50 */  "status_eof_crossed_down",
     /* OPT_STATUS_EOF_CROSSED_UP    51 */  "status_eof_crossed_up",
     /* OPT_STATUS_NOTFOUND          52 */  "status_notfound",
-    /* OPT_STATUS_NOTREGEXP         53 */  "status_notregexp"
+    /* OPT_STATUS_NOTREGEXP         53 */  "status_notregexp",
+    /* OPT_LOGOUTPUT_OCC_BEGIN      54 */  "logoutput_occ_begin",
+    /* OPT_LOGOUTPUT_OCC_END        55 */  "logoutput_occ_end"
 };
 
 const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
@@ -339,7 +349,9 @@ const wchar_t* CWSZ_OPTIONS[OPT_TOTALCOUNT] = {
     /* OPT_STATUS_EOF_CROSSED_DOWN  50 */  L"status_eof_crossed_down",
     /* OPT_STATUS_EOF_CROSSED_UP    51 */  L"status_eof_crossed_up",
     /* OPT_STATUS_NOTFOUND          52 */  L"status_notfound",
-    /* OPT_STATUS_NOTREGEXP         53 */  L"status_notregexp"
+    /* OPT_STATUS_NOTREGEXP         53 */  L"status_notregexp",
+    /* OPT_LOGOUTPUT_OCC_BEGIN      54 */  L"logoutput_occ_begin",
+    /* OPT_LOGOUTPUT_OCC_END        55 */  L"logoutput_occ_end"
 };
 
 
@@ -2190,6 +2202,18 @@ void ReadOptions(void)
                 g_Options.nLenStatusNotRegExp = lstrlenA( (const char *) g_Options.szStatusNotRegExpAW );
             }
 
+            if ( readStringA(hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_OCC_BEGIN],
+                  (char *) g_Options.szLogOutputOccBeginAW, sizeof(g_Options.szLogOutputOccBeginAW)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenLogOutputOccBegin = lstrlenA( (const char *) g_Options.szLogOutputOccBeginAW );
+            }
+
+            if ( readStringA(hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_OCC_END],
+                  (char *) g_Options.szLogOutputOccEndAW, sizeof(g_Options.szLogOutputOccEndAW)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenLogOutputOccEnd = lstrlenA( (const char *) g_Options.szLogOutputOccEndAW );
+            }
+
             // all options have been read
             SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
         }
@@ -2331,6 +2355,18 @@ void ReadOptions(void)
                   g_Options.szStatusNotRegExpAW, sizeof(g_Options.szStatusNotRegExpAW)/sizeof(wchar_t) - 1) >= 0 )
             {
                 g_Options.nLenStatusNotRegExp = lstrlenW(g_Options.szStatusNotRegExpAW);
+            }
+
+            if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_OCC_BEGIN],
+                  g_Options.szLogOutputOccBeginAW, sizeof(g_Options.szLogOutputOccBeginAW)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenLogOutputOccBegin = lstrlenW(g_Options.szLogOutputOccBeginAW);
+            }
+
+            if ( readStringW(hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_OCC_END],
+                  g_Options.szLogOutputOccEndAW, sizeof(g_Options.szLogOutputOccEndAW)/sizeof(wchar_t) - 1) >= 0 )
+            {
+                g_Options.nLenLogOutputOccEnd = lstrlenW(g_Options.szLogOutputOccEndAW);
             }
 
             // all options have been read
@@ -2565,6 +2601,38 @@ void ReadOptions(void)
         {
             lstrcpyW(g_Options.szStatusNotRegExpAW, DEFAULT_STATUS_NOTREGEXP_W);
             g_Options.nLenStatusNotRegExp = lstrlenW(DEFAULT_STATUS_NOTREGEXP_W);
+        }
+    }
+
+    if ( g_Options.nLenLogOutputOccBegin == WRONG_INT_VALUE )
+    {
+#ifdef QS_OLD_WINDOWS
+        if ( g_Plugin.bOldWindows )
+        {
+            lstrcpyA( (char *) g_Options.szLogOutputOccBeginAW, DEFAULT_LOGOUTPUT_OCC_BEGIN_A );
+            g_Options.nLenLogOutputOccBegin = lstrlenA( DEFAULT_LOGOUTPUT_OCC_BEGIN_A );
+        }
+        else
+#endif
+        {
+            lstrcpyW(g_Options.szLogOutputOccBeginAW, DEFAULT_LOGOUTPUT_OCC_BEGIN_W);
+            g_Options.nLenLogOutputOccBegin = lstrlenW(DEFAULT_LOGOUTPUT_OCC_BEGIN_W);
+        }
+    }
+
+    if ( g_Options.nLenLogOutputOccEnd == WRONG_INT_VALUE )
+    {
+#ifdef QS_OLD_WINDOWS
+        if ( g_Plugin.bOldWindows )
+        {
+            lstrcpyA( (char *) g_Options.szLogOutputOccEndAW, DEFAULT_LOGOUTPUT_OCC_END_A );
+            g_Options.nLenLogOutputOccEnd = lstrlenA( DEFAULT_LOGOUTPUT_OCC_END_A );
+        }
+        else
+#endif
+        {
+            lstrcpyW(g_Options.szLogOutputOccEndAW, DEFAULT_LOGOUTPUT_OCC_END_W);
+            g_Options.nLenLogOutputOccEnd = lstrlenW(DEFAULT_LOGOUTPUT_OCC_END_W);
         }
     }
 }
@@ -2859,6 +2927,20 @@ void SaveOptions(void)
                       (const char *) g_Options.szStatusNotRegExpAW );
                 }
 
+                if ( g_Options0.nLenLogOutputOccBegin != g_Options.nLenLogOutputOccBegin ||
+                     lstrcmpA((const char *) g_Options0.szLogOutputOccBeginAW, (const char *) g_Options.szLogOutputOccBeginAW) != 0 )
+                {
+                    writeStringA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_OCC_BEGIN],
+                      (const char *) g_Options.szLogOutputOccBeginAW );
+                }
+
+                if ( g_Options0.nLenLogOutputOccEnd != g_Options.nLenLogOutputOccEnd ||
+                     lstrcmpA((const char *) g_Options0.szLogOutputOccEndAW, (const char *) g_Options.szLogOutputOccEndAW) != 0 )
+                {
+                    writeStringA( hOptions, CSZ_OPTIONS[OPT_LOGOUTPUT_OCC_END],
+                      (const char *) g_Options.szLogOutputOccEndAW );
+                }
+
                 // all options have been saved
                 SendMessage(g_Plugin.hMainWnd, AKD_ENDOPTIONS, (WPARAM) hOptions, 0);
             }
@@ -3118,6 +3200,20 @@ void SaveOptions(void)
                 {
                     writeStringW( hOptions, CWSZ_OPTIONS[OPT_STATUS_NOTREGEXP],
                       g_Options.szStatusNotRegExpAW );
+                }
+
+                if ( g_Options0.nLenLogOutputOccBegin != g_Options.nLenLogOutputOccBegin ||
+                     lstrcmpW(g_Options0.szLogOutputOccBeginAW, g_Options.szLogOutputOccBeginAW) != 0 )
+                {
+                    writeStringW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_OCC_BEGIN],
+                      g_Options.szLogOutputOccBeginAW );
+                }
+
+                if ( g_Options0.nLenLogOutputOccEnd != g_Options.nLenLogOutputOccEnd ||
+                     lstrcmpW(g_Options0.szLogOutputOccEndAW, g_Options.szLogOutputOccEndAW) != 0 )
+                {
+                    writeStringW( hOptions, CWSZ_OPTIONS[OPT_LOGOUTPUT_OCC_END],
+                      g_Options.szLogOutputOccEndAW );
                 }
 
                 // all options have been saved
