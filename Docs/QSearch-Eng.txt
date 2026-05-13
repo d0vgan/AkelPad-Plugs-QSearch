@@ -173,7 +173,7 @@ or file "AkelFiles\Plugs\QSearch.ini"):
        *  - matches any 0 or more characters (i.e. any (sub)string)
        ** - matches any 0 or more non-space characters ("Whole word" enabled)
      Note:
-       ? and * does not match line feeds, you must use \n obviously.
+       ? and * does not match line feeds, you must use \n explicitly.
    srch_use_specialchars = 0
      Ordinary search, "as is".
 
@@ -467,7 +467,7 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      The value of 2 selects a word if the caret is located somewhere within
      the word - i.e. not before the word's first character or after the word's
      last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
-     The value of 0 does select a word.
+     The value of 0 does not select a word.
 
 35) select_by_selfnd = 1
      This option controls how a word is selected by
