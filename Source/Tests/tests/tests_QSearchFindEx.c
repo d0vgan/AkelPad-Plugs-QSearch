@@ -1,3 +1,5 @@
+#define AEC_FUNCTIONS
+
 #include "tests_QSearchFindEx.h"
 #include "../../QSearch/QSearchFindEx.h"
 
