@@ -248,6 +248,7 @@ void qsUpdateHighlightForFindAll(const wchar_t* cszFindWhat, DWORD dwFindAllFlag
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 
 void qsSetInfoEmpty(void);
+void qsSetNotFound(BOOL bNotFound);
 
 BOOL qsIsHotKeyPressed(DWORD dwHotKey, UINT uMsg, LPARAM lParam);
 

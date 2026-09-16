@@ -2497,6 +2497,27 @@ static void getEditFindText(HWND hEdit, wchar_t szTextAW[MAX_TEXT_SIZE])
         GetWindowTextW( hEdit, szTextAW, MAX_TEXT_SIZE - 1 );
 }
 
+static BOOL containsSpecialChar(const wchar_t* szTextAW)
+{
+    int n =
+#ifdef QS_OLD_WINDOWS
+    g_Plugin.bOldWindows ? findSpecialCharA((LPCSTR) szTextAW) :
+#endif
+    findSpecialCharW(szTextAW);
+    return (n >= 0);
+}
+
+static BOOL strStartsWith(const wchar_t* szStrAW, const wchar_t* szSubStrAW)
+{
+    return (
+#ifdef QS_OLD_WINDOWS
+    g_Plugin.bOldWindows ?
+        x_astr_startswith((const char *) szStrAW, (const char *) szSubStrAW)
+        :
+#endif
+    x_wstr_startswith(szStrAW, szSubStrAW) );
+}
+
 static void setEditFindText(HWND hEdit, const wchar_t* pszTextAW)
 {
 #ifdef QS_OLD_WINDOWS
@@ -3432,20 +3453,16 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
                 }
                 else if ( wParam == VK_DELETE ) // Del
                 {
+                    LRESULT lResult = callWndProc(prev_editWndProc, hEdit, uMsg, wParam, lParam);
                     if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
                     {
-                        LRESULT lResult = callWndProc(prev_editWndProc,
-                                            hEdit, uMsg, wParam, lParam);
                         SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP_VK | QSEARCH_NOFINDBEGIN_VK | QSEARCH_USEDELAY, 0 );
-                        return lResult;
                     }
                     else
                     {
-                        LRESULT lResult = callWndProc(prev_editWndProc,
-                                            hEdit, uMsg, wParam, lParam);
                         SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
-                        return lResult;
                     }
+                    return lResult;
                 }
                 // BS is processed in WM_CHAR
             }
@@ -3691,22 +3708,37 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
             }
             else
             {
-                qs_bEditTextChanged = TRUE;
+                LRESULT lResult = callWndProc(prev_editWndProc, hEdit, uMsg, wParam, lParam);
+
                 g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
+
+                if ( qs_bEditNotFound ) // already "not found"
+                {
+                    if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] == 0 &&  // not RegExp
+                         g_QSearchDlg.szFindTextAW[0] != 0 )  // previous find text exists
+                    {
+                        wchar_t szNewFindTextAW[MAX_TEXT_SIZE];
+
+                        getEditFindText(hEdit, szNewFindTextAW);
+                        if ( g_Options.dwFlags[OPTF_SRCH_USE_SPECIALCHARS] == 0 ||
+                             !containsSpecialChar(szNewFindTextAW) )
+                        {
+                            if ( strStartsWith(szNewFindTextAW, g_QSearchDlg.szFindTextAW) ) // appended
+                                return lResult; // preserving "not found"
+                        }
+                    }
+                }
+
+                qs_bEditTextChanged = TRUE;
                 if ( g_Options.dwFlags[OPTF_SRCH_ONTHEFLY_MODE] )
                 {
-                    LRESULT lResult = callWndProc(prev_editWndProc,
-                                        hEdit, uMsg, wParam, lParam);
                     SendMessage( g_QSearchDlg.hDlg, QSM_FINDFIRST, QSEARCH_NOFINDUP_VK | QSEARCH_NOFINDBEGIN_VK | QSEARCH_USEDELAY, 0 );
-                    return lResult;
                 }
                 else
                 {
-                    LRESULT lResult = callWndProc(prev_editWndProc,
-                                        hEdit, uMsg, wParam, lParam);
                     SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, 0 );
-                    return lResult;
                 }
+                return lResult;
             }
             break;
         }
@@ -5816,6 +5848,14 @@ void qsearchDoSetNotFound(HWND hEdit, BOOL bNotFound, BOOL bNotRegExp, INT nIsEO
         qsSetInfoEofOrNotFound(0, bNotFound, bNotRegExp);
     }
     RedrawWindowEntire(hEdit);
+}
+
+void qsSetNotFound(BOOL bNotFound)
+{
+    if ( bNotFound != qs_bEditNotFound )
+    {
+        qsearchDoSetNotFound( g_QSearchDlg.hFindEdit, bNotFound, FALSE, 0 );
+    }
 }
 
 void qsearchDoShowHide(HWND hDlg, BOOL bShow, UINT uShowFlags, const DWORD dwOptFlags[])

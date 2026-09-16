@@ -2012,6 +2012,10 @@ void CheckEditNotification(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         case AETCT_WRAP:
                             break; // do nothing
                         default:
+                            if ( !g_QSearchDlg.bIsQSearchingRightNow && g_QSearchDlg.hDlg )
+                            {
+                                qsSetNotFound(FALSE);
+                            }
                             if ( !g_QSearchDlg.bIsQSearchingRightNow ||
                                  g_Plugin.nMDI != WMD_SDI ||
                                  (g_Options.dwFindAllMode & QS_FINDALL_MASK) != QS_FINDALL_FILEOUTPUT_SNGL )
