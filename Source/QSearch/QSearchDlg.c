@@ -3712,10 +3712,9 @@ LRESULT CALLBACK editWndProc(HWND hEdit,
 
                 g_QSearchDlg.uSearchOrigin = QS_SO_QSEARCH;
 
-                if ( qs_bEditNotFound ) // already "not found"
+                if ( qs_bEditNotFound && g_QSearchDlg.szFindTextAW[0] != 0 ) // already "not found"
                 {
-                    if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] == 0 &&  // not RegExp
-                         g_QSearchDlg.szFindTextAW[0] != 0 )  // previous find text exists
+                    if ( g_Options.dwFlags[OPTF_SRCH_USE_REGEXP] == 0 ) // not RegExp
                     {
                         wchar_t szNewFindTextAW[MAX_TEXT_SIZE];
 
