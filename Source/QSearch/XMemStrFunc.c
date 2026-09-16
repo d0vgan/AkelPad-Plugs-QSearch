@@ -200,6 +200,23 @@ BOOL x_wstr_startswith(const WCHAR* str, const WCHAR* substr)
     return TRUE;
 }
 
+BOOL x_astr_startswith(const char* str, const char* substr)
+{
+    for ( ; ; )
+    {
+        if ( *substr == 0 )
+            break; // end of substr - OK
+
+        if ( *substr != *str )
+            return FALSE; // diff
+
+        ++substr;
+        ++str;
+    }
+
+    return TRUE;
+}
+
 BOOL x_wstr_endswith(const WCHAR* str, int nStrLen, const WCHAR* substr, int nSubstrLen)
 {
     if ( nSubstrLen > nStrLen )

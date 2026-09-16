@@ -32,6 +32,8 @@ int  x_wstr_rfindch(const WCHAR* str, WCHAR ch, int nLen);
 int  x_wstr_cmp(const WCHAR* str1, const WCHAR* str2);
 void x_wstr_cpy(WCHAR* dst, const WCHAR* src);
 
+BOOL x_astr_startswith(const char* str, const char* substr);
+
 INT_PTR xatoiW(const wchar_t *wpStr, const wchar_t **wpNext);
 int xitoaW(INT_PTR nNumber, wchar_t *wszStr);
 
