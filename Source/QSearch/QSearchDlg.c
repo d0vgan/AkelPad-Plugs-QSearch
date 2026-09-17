@@ -988,7 +988,44 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
     }
 }
 
+#define THREE_DOTS_LEN 3
+
 #ifdef QS_OLD_WINDOWS
+static const char* const cszThreeDotsA = "...";
+
+static BOOL hasThreeDotsInInfoTextA(const char* szInfoTextA, int nLen)
+{
+    if ( nLen >= THREE_DOTS_LEN )
+    {
+        int n;
+        int i;
+        int nSubLen[2];
+        const char* szSubStrA[2];
+        const char* pszInfoTextEndA;
+
+        pszInfoTextEndA = szInfoTextA + nLen;
+        if ( lstrcmpA(pszInfoTextEndA - THREE_DOTS_LEN, cszThreeDotsA) == 0 )
+            return TRUE;
+
+        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
+        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
+        szSubStrA[0] = (const char *) g_Options.szStatusEofCrossedDownAW;
+        szSubStrA[1] = (const char *) g_Options.szStatusEofCrossedUpAW;
+
+        for ( i = 0; i < 2; ++i )
+        {
+            if ( nSubLen[i] == 0 )
+                continue;
+
+            n = THREE_DOTS_LEN + nSubLen[i];
+            if ( nLen >= n && lstrcmpA(pszInfoTextEndA - nSubLen[i], szSubStrA[i]) == 0 )
+                return (x_mem_cmp(pszInfoTextEndA - n, cszThreeDotsA, THREE_DOTS_LEN*sizeof(char)) == 0);
+        }
+    }
+
+    return FALSE;
+}
+
 static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
 {
     int nEofLen = 0;
@@ -1013,6 +1050,41 @@ static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
     return nLen;
 }
 #endif
+
+static const wchar_t* const cszThreeDotsW = L"...";
+
+static BOOL hasThreeDotsInInfoTextW(const wchar_t* szInfoTextW, int nLen)
+{
+    if ( nLen >= THREE_DOTS_LEN )
+    {
+        int n;
+        int i;
+        int nSubLen[2];
+        const wchar_t* szSubStrW[2];
+        const wchar_t* pszInfoTextEndW;
+
+        pszInfoTextEndW = szInfoTextW + nLen;
+        if ( lstrcmpW(pszInfoTextEndW - THREE_DOTS_LEN, cszThreeDotsW) == 0 )
+            return TRUE;
+
+        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
+        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
+        szSubStrW[0] = g_Options.szStatusEofCrossedDownAW;
+        szSubStrW[1] = g_Options.szStatusEofCrossedUpAW;
+
+        for ( i = 0; i < 2; ++i )
+        {
+            if ( nSubLen[i] == 0 )
+                continue;
+
+            n = THREE_DOTS_LEN + nSubLen[i];
+            if ( nLen >= n && lstrcmpW(pszInfoTextEndW - nSubLen[i], szSubStrW[i]) == 0 )
+                return (x_mem_cmp(pszInfoTextEndW - n, cszThreeDotsW, THREE_DOTS_LEN*sizeof(wchar_t)) == 0);
+        }
+    }
+
+    return FALSE;
+}
 
 static int removeEofOrNotFoundFromInfoTextW(wchar_t szInfoTextW[], int nLen)
 {
@@ -6490,10 +6562,10 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                     if ( (dwParams & QSEARCH_SEL) == 0 )
                         bNeedsFindAllCountOnly = TRUE;
 
-                    if ( (nLen < 3) || (lstrcmpA(szInfoTextA + nLen - 3, "...") != 0) )
+                    if ( !hasThreeDotsInInfoTextA(szInfoTextA, nLen) )
                     {
                         nLen = removeEofOrNotFoundFromInfoTextA(szInfoTextA, nLen);
-                        lstrcatA(szInfoTextA, "...");
+                        lstrcatA(szInfoTextA, cszThreeDotsA);
                         SetWindowTextA(g_QSearchDlg.hStInfo, szInfoTextA);
 
                         #ifdef _DEBUG
@@ -6543,10 +6615,10 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                     if ( (dwParams & QSEARCH_SEL) == 0 )
                         bNeedsFindAllCountOnly = TRUE;
 
-                    if ( (nLen < 3) || (lstrcmpW(szInfoTextW + nLen - 3, L"...") != 0) )
+                    if ( !hasThreeDotsInInfoTextW(szInfoTextW, nLen) )
                     {
                         nLen = removeEofOrNotFoundFromInfoTextW(szInfoTextW, nLen);
-                        lstrcatW(szInfoTextW, L"...");
+                        lstrcatW(szInfoTextW, cszThreeDotsW);
                         SetWindowTextW(g_QSearchDlg.hStInfo, szInfoTextW);
 
                         #ifdef _DEBUG
@@ -7002,7 +7074,8 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
 
             if ( (iFindResult >= 0) &&
                  ((g_Options.dwFindAllMode & QS_FINDALL_AUTO_COUNT_FLAG) != 0) &&
-                 (g_QSearchDlg.currentMatchesBuf.nBytesStored != 0) )
+                 (g_QSearchDlg.currentMatchesBuf.nBytesStored != 0) &&
+                 (pFindAll || !bNeedsFindAllCountOnly) )
             {
                 qsSetInfoOccurrencesFound_Tracking( (unsigned int) (g_QSearchDlg.currentMatchesBuf.nBytesStored/sizeof(matchpos_t)), 0, "qsearchDoSearchText, iFindResult >= 0" );
             }
