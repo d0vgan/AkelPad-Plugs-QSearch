@@ -863,19 +863,14 @@ void qsSetInfoEmpty(void)
     QSearchDlgState_clearCurrentMatches(&g_QSearchDlg, FALSE);
 }
 
+#define THREE_DOTS_LEN 3
+
 #ifdef QS_OLD_WINDOWS
 static BOOL endsWithSubStrA(const char* szStrA, int nLen, const char* szSubA, int nSubLen)
 {
     return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpA(szStrA + nLen - nSubLen, szSubA) == 0 );
 }
-#endif
 
-static BOOL endsWithSubStrW(const wchar_t* szStrW, int nLen, const wchar_t* szSubW, int nSubLen)
-{
-    return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpW(szStrW + nLen - nSubLen, szSubW) == 0 );
-}
-
-#ifdef QS_OLD_WINDOWS
 static int appendToInfoTextA(char szInfoTextA[], int nInfoLen, const char* szTextAppendA, int nLenAppend)
 {
     if ( nLenAppend != 0 )
@@ -890,7 +885,71 @@ static int appendToInfoTextA(char szInfoTextA[], int nInfoLen, const char* szTex
     }
     return nInfoLen;
 }
+
+static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
+{
+    int nEofLen = 0;
+
+    if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotFoundAW, g_Options.nLenStatusNotFound) )
+        nEofLen = g_Options.nLenStatusNotFound;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotRegExpAW, g_Options.nLenStatusNotRegExp) )
+        nEofLen = g_Options.nLenStatusNotRegExp;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedDownAW, g_Options.nLenStatusEofCrossedDown) )
+        nEofLen = g_Options.nLenStatusEofCrossedDown;
+    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedUpAW, g_Options.nLenStatusEofCrossedUp) )
+        nEofLen = g_Options.nLenStatusEofCrossedUp;
+
+    if ( nEofLen != 0 )
+    {
+        nLen -= nEofLen;
+        if ( nLen != 0 )
+            --nLen;
+        szInfoTextA[nLen] = 0;
+    }
+
+    return nLen;
+}
+
+static const char* const cszThreeDotsA = "...";
+
+static BOOL hasThreeDotsInInfoTextA(const char* szInfoTextA, int nLen)
+{
+    if ( nLen >= THREE_DOTS_LEN )
+    {
+        int n;
+        int i;
+        int nSubLen[2];
+        const char* szSubStrA[2];
+        const char* pszInfoTextEndA;
+
+        pszInfoTextEndA = szInfoTextA + nLen;
+        if ( lstrcmpA(pszInfoTextEndA - THREE_DOTS_LEN, cszThreeDotsA) == 0 )
+            return TRUE;
+
+        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
+        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
+        szSubStrA[0] = (const char *) g_Options.szStatusEofCrossedDownAW;
+        szSubStrA[1] = (const char *) g_Options.szStatusEofCrossedUpAW;
+
+        for ( i = 0; i < 2; ++i )
+        {
+            if ( nSubLen[i] == 0 )
+                continue;
+
+            n = THREE_DOTS_LEN + 1 + nSubLen[i]; // e.g. "... >>", see appendToInfoTextA
+            if ( nLen >= n && lstrcmpA(pszInfoTextEndA - nSubLen[i], szSubStrA[i]) == 0 )
+                return (x_mem_cmp(pszInfoTextEndA - n, cszThreeDotsA, THREE_DOTS_LEN*sizeof(char)) == 0);
+        }
+    }
+
+    return FALSE;
+}
 #endif
+
+static BOOL endsWithSubStrW(const wchar_t* szStrW, int nLen, const wchar_t* szSubW, int nSubLen)
+{
+    return ( nSubLen != 0 && nLen >= nSubLen && lstrcmpW(szStrW + nLen - nSubLen, szSubW) == 0 );
+}
 
 static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t* szTextAppendW, int nLenAppend)
 {
@@ -905,6 +964,65 @@ static int appendToInfoTextW(wchar_t szInfoTextW[], int nInfoLen, const wchar_t*
         nInfoLen += nLenAppend;
     }
     return nInfoLen;
+}
+
+static int removeEofOrNotFoundFromInfoTextW(wchar_t szInfoTextW[], int nLen)
+{
+    int nEofLen = 0;
+
+    if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotFoundAW, g_Options.nLenStatusNotFound) )
+        nEofLen = g_Options.nLenStatusNotFound;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotRegExpAW, g_Options.nLenStatusNotRegExp) )
+        nEofLen = g_Options.nLenStatusNotRegExp;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedDownAW, g_Options.nLenStatusEofCrossedDown) )
+        nEofLen = g_Options.nLenStatusEofCrossedDown;
+    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedUpAW, g_Options.nLenStatusEofCrossedUp) )
+        nEofLen = g_Options.nLenStatusEofCrossedUp;
+
+    if ( nEofLen != 0 )
+    {
+        nLen -= nEofLen;
+        if ( nLen != 0 )
+            --nLen;
+        szInfoTextW[nLen] = 0;
+    }
+
+    return nLen;
+}
+
+static const wchar_t* const cszThreeDotsW = L"...";
+
+static BOOL hasThreeDotsInInfoTextW(const wchar_t* szInfoTextW, int nLen)
+{
+    if ( nLen >= THREE_DOTS_LEN )
+    {
+        int n;
+        int i;
+        int nSubLen[2];
+        const wchar_t* szSubStrW[2];
+        const wchar_t* pszInfoTextEndW;
+
+        pszInfoTextEndW = szInfoTextW + nLen;
+        if ( lstrcmpW(pszInfoTextEndW - THREE_DOTS_LEN, cszThreeDotsW) == 0 )
+            return TRUE;
+
+        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
+        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
+        szSubStrW[0] = g_Options.szStatusEofCrossedDownAW;
+        szSubStrW[1] = g_Options.szStatusEofCrossedUpAW;
+
+        for ( i = 0; i < 2; ++i )
+        {
+            if ( nSubLen[i] == 0 )
+                continue;
+
+            n = THREE_DOTS_LEN + 1 + nSubLen[i]; // e.g. "... >>", see appendToInfoTextW
+            if ( nLen >= n && lstrcmpW(pszInfoTextEndW - nSubLen[i], szSubStrW[i]) == 0 )
+                return (x_mem_cmp(pszInfoTextEndW - n, cszThreeDotsW, THREE_DOTS_LEN*sizeof(wchar_t)) == 0);
+        }
+    }
+
+    return FALSE;
 }
 
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
@@ -964,6 +1082,13 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
             szInfoTextW[nLen] = 0; // without the trailing '.'
         }
 
+        if ( nFlags & QS_SIOF_COUNTINGALL )
+        {
+            lstrcpyW(szInfoTextW + nLen, cszThreeDotsW);
+            nLen += THREE_DOTS_LEN;
+            szInfoTextW[nLen] = 0;
+        }
+
         if ( nIsEOF != 0 && (nFlags & QS_SIOF_REMOVECURRENTMATCH) == 0 )
         {
             lstrcpyW(szInfoTextW + nLen, L" ");
@@ -986,128 +1111,6 @@ void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags)
           Debug_OutputW(L"%S -> InfoText = \"%s\"\n", __func__, szInfoTextW);
         #endif
     }
-}
-
-#define THREE_DOTS_LEN 3
-
-#ifdef QS_OLD_WINDOWS
-static const char* const cszThreeDotsA = "...";
-
-static BOOL hasThreeDotsInInfoTextA(const char* szInfoTextA, int nLen)
-{
-    if ( nLen >= THREE_DOTS_LEN )
-    {
-        int n;
-        int i;
-        int nSubLen[2];
-        const char* szSubStrA[2];
-        const char* pszInfoTextEndA;
-
-        pszInfoTextEndA = szInfoTextA + nLen;
-        if ( lstrcmpA(pszInfoTextEndA - THREE_DOTS_LEN, cszThreeDotsA) == 0 )
-            return TRUE;
-
-        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
-        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
-        szSubStrA[0] = (const char *) g_Options.szStatusEofCrossedDownAW;
-        szSubStrA[1] = (const char *) g_Options.szStatusEofCrossedUpAW;
-
-        for ( i = 0; i < 2; ++i )
-        {
-            if ( nSubLen[i] == 0 )
-                continue;
-
-            n = THREE_DOTS_LEN + nSubLen[i];
-            if ( nLen >= n && lstrcmpA(pszInfoTextEndA - nSubLen[i], szSubStrA[i]) == 0 )
-                return (x_mem_cmp(pszInfoTextEndA - n, cszThreeDotsA, THREE_DOTS_LEN*sizeof(char)) == 0);
-        }
-    }
-
-    return FALSE;
-}
-
-static int removeEofOrNotFoundFromInfoTextA(char szInfoTextA[], int nLen)
-{
-    int nEofLen = 0;
-
-    if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotFoundAW, g_Options.nLenStatusNotFound) )
-        nEofLen = g_Options.nLenStatusNotFound;
-    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusNotRegExpAW, g_Options.nLenStatusNotRegExp) )
-        nEofLen = g_Options.nLenStatusNotRegExp;
-    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedDownAW, g_Options.nLenStatusEofCrossedDown) )
-        nEofLen = g_Options.nLenStatusEofCrossedDown;
-    else if ( endsWithSubStrA(szInfoTextA, nLen, (const char *) g_Options.szStatusEofCrossedUpAW, g_Options.nLenStatusEofCrossedUp) )
-        nEofLen = g_Options.nLenStatusEofCrossedUp;
-
-    if ( nEofLen != 0 )
-    {
-        nLen -= nEofLen;
-        if ( nLen != 0 )
-            --nLen;
-        szInfoTextA[nLen] = 0;
-    }
-
-    return nLen;
-}
-#endif
-
-static const wchar_t* const cszThreeDotsW = L"...";
-
-static BOOL hasThreeDotsInInfoTextW(const wchar_t* szInfoTextW, int nLen)
-{
-    if ( nLen >= THREE_DOTS_LEN )
-    {
-        int n;
-        int i;
-        int nSubLen[2];
-        const wchar_t* szSubStrW[2];
-        const wchar_t* pszInfoTextEndW;
-
-        pszInfoTextEndW = szInfoTextW + nLen;
-        if ( lstrcmpW(pszInfoTextEndW - THREE_DOTS_LEN, cszThreeDotsW) == 0 )
-            return TRUE;
-
-        nSubLen[0] = g_Options.nLenStatusEofCrossedDown;
-        nSubLen[1] = g_Options.nLenStatusEofCrossedUp;
-        szSubStrW[0] = g_Options.szStatusEofCrossedDownAW;
-        szSubStrW[1] = g_Options.szStatusEofCrossedUpAW;
-
-        for ( i = 0; i < 2; ++i )
-        {
-            if ( nSubLen[i] == 0 )
-                continue;
-
-            n = THREE_DOTS_LEN + nSubLen[i];
-            if ( nLen >= n && lstrcmpW(pszInfoTextEndW - nSubLen[i], szSubStrW[i]) == 0 )
-                return (x_mem_cmp(pszInfoTextEndW - n, cszThreeDotsW, THREE_DOTS_LEN*sizeof(wchar_t)) == 0);
-        }
-    }
-
-    return FALSE;
-}
-
-static int removeEofOrNotFoundFromInfoTextW(wchar_t szInfoTextW[], int nLen)
-{
-    int nEofLen = 0;
-
-    if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotFoundAW, g_Options.nLenStatusNotFound) )
-        nEofLen = g_Options.nLenStatusNotFound;
-    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusNotRegExpAW, g_Options.nLenStatusNotRegExp) )
-        nEofLen = g_Options.nLenStatusNotRegExp;
-    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedDownAW, g_Options.nLenStatusEofCrossedDown) )
-        nEofLen = g_Options.nLenStatusEofCrossedDown;
-    else if ( endsWithSubStrW(szInfoTextW, nLen, g_Options.szStatusEofCrossedUpAW, g_Options.nLenStatusEofCrossedUp) )
-        nEofLen = g_Options.nLenStatusEofCrossedUp;
-
-    if ( nEofLen != 0 )
-    {
-        nLen -= nEofLen;
-        if ( nLen != 0 )
-            --nLen;
-        szInfoTextW[nLen] = 0;
-    }
-
-    return nLen;
 }
 
 static void qsSetInfoEofOrNotFound(INT nIsEOF, BOOL bNotFound, BOOL bNotRegExp)

@@ -245,6 +245,7 @@ void qsUpdateHighlightForFindAll(const wchar_t* cszFindWhat, DWORD dwFindAllFlag
 #endif
 
 #define QS_SIOF_REMOVECURRENTMATCH 0x01
+#define QS_SIOF_COUNTINGALL        0x02
 void qsSetInfoOccurrencesFound(unsigned int nOccurrences, unsigned int nFlags);
 
 void qsSetInfoEmpty(void);
