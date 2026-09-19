@@ -7459,8 +7459,8 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
 
     if ( bNeedsFindAllCountOnly && !pFindAll && IsWindowVisible(g_QSearchDlg.hDlg) )
     {
-        UINT nDelayMs;
         UINT_PTR nTimerId;
+        UINT nDelayMs;
         BOOL bGotCountAllResults = FALSE;
 
         if ( !QSearchDlgState_isFindAllMatchesEmpty(&g_QSearchDlg) &&
@@ -7499,16 +7499,9 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
             else
                 nDelayMs = 0;
 
-            EnterCriticalSection(&csFindAllTimerId);
-            if ( nFindAllTimerId != 0 )
-            {
-                KillTimer(NULL, nFindAllTimerId);
-                nFindAllTimerId = 0;
-            }
-            LeaveCriticalSection(&csFindAllTimerId);
-
             if ( nDelayMs != 0 )
             {
+                // new timer id, different from nFindAllTimerId
                 nTimerId = SetTimer(NULL, 0, nDelayMs, CountAllTimerProc);
             }
             else
@@ -7516,7 +7509,13 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                 nTimerId = 0;
             }
 
+            EnterCriticalSection(&csFindAllTimerId);
+            if ( nFindAllTimerId != 0 )
+            {
+                KillTimer(NULL, nFindAllTimerId);
+            }
             nFindAllTimerId = nTimerId;
+            LeaveCriticalSection(&csFindAllTimerId);
 
             if ( nDelayMs == 0 )
             {
