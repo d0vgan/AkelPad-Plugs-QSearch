@@ -7206,7 +7206,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                 {
                     g_QSearchDlg.nGoToNextFindAllPosToCompare = -1;
 
-                    if ( pFindAll->ShowFindResults.pfnInit == qsShowFindResults_LogOutput_Init && 
+                    if ( pFindAll->ShowFindResults.pfnInit == qsShowFindResults_LogOutput_Init &&
                          (FindContext.dwFindAllResult & (QS_FINDALL_RSLT_POS | QS_FINDALL_FILTERMODE)) == QS_FINDALL_RSLT_POS )
                         g_QSearchDlg.bFindAllWasUsingLogOutput = TRUE;
                     else
@@ -7499,6 +7499,14 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
             else
                 nDelayMs = 0;
 
+            EnterCriticalSection(&csFindAllTimerId);
+            if ( nFindAllTimerId != 0 )
+            {
+                KillTimer(NULL, nFindAllTimerId);
+                nFindAllTimerId = 0;
+            }
+            LeaveCriticalSection(&csFindAllTimerId);
+
             if ( nDelayMs != 0 )
             {
                 nTimerId = SetTimer(NULL, 0, nDelayMs, CountAllTimerProc);
@@ -7508,13 +7516,7 @@ void qsearchDoSearchText(HWND hEdit, const wchar_t* cszFindWhatAW, DWORD dwParam
                 nTimerId = 0;
             }
 
-            EnterCriticalSection(&csFindAllTimerId);
-            if ( nFindAllTimerId != 0 )
-            {
-                KillTimer(NULL, nFindAllTimerId);
-            }
             nFindAllTimerId = nTimerId;
-            LeaveCriticalSection(&csFindAllTimerId);
 
             if ( nDelayMs == 0 )
             {
