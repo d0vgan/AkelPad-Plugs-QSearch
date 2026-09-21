@@ -1707,7 +1707,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         if ( g_QSearchDlg.hDlg )
                         {
                             g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                            SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                            SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY | QS_SNF_ANOTHERDOCUMENT );
                         }
                         QSearchDlgState_clearLastHighlighted(&g_QSearchDlg);
                     }
@@ -1813,7 +1813,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if ( g_QSearchDlg.hDlg && !g_Plugin.bAkelPadOnFinish )
                     {
                         g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                        SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                        SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY | QS_SNF_ANOTHERDOCUMENT );
                     }
                 }
                 g_bFrameActivated = TRUE;
@@ -1829,7 +1829,7 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 if ( g_QSearchDlg.hDlg )
                 {
                     g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                    SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY | QS_SNF_ANOTHERDOCUMENT );
                 }
             }
             if ( g_Options.dwFlags[OPTF_QSEARCH_AUTOFOCUS_FILE] )
@@ -1916,7 +1916,7 @@ LRESULT CALLBACK NewFrameProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
             if ( g_QSearchDlg.hDlg && !g_Plugin.bAkelPadOnFinish )
             {
                 g_QSearchDlg.uSearchOrigin = QS_SO_UNKNOWN;
-                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
+                SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY | QS_SNF_ANOTHERDOCUMENT );
                 g_bFrameActivated = TRUE;
                 QSearchDlgState_clearLastHighlighted(&g_QSearchDlg);
             }
