@@ -683,6 +683,9 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 #define  SCW_FALSE           0x00  //  did not do anything
 #define  SCW_TRUE            0x01  //  tried to select a word
 #define  SCW_WORDSELECTED    0x02  //  selected a word
+#define  SCW_SELFINDNEXT     0x10  //  select and find next
+#define  SCW_SELFINDPREV     0x20  //  select and find prev
+#define  SCW_SELFINDALL      0x40  //  select and find all
 
 static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNewSelection)
 {
@@ -720,7 +723,7 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 crWord.cpMax = (INT_X) SendMessage(hEdit, EM_FINDWORDBREAK, WB_RIGHTBREAK, crWord.cpMin);
             }
             if ( (crWord.cpMax >= cr.cpMin) &&
-                 ( (dwSelectWord == 1) ||
+                 ( (dwSelectWord & 0x01) ||
                    ((cr.cpMin > crWord.cpMin) && (cr.cpMin < crWord.cpMax)) )
                )
             {
@@ -733,6 +736,15 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 if ( crWord.cpMin != crWord.cpMax )
                 {
                     nResult |= SCW_WORDSELECTED; // selected a word
+                    if ( uSelectMode & SELECT_MODE_FND )
+                    {
+                        if ( dwSelectWord & 0x10 )
+                            nResult |= SCW_SELFINDNEXT;
+                        if ( dwSelectWord & 0x20 )
+                            nResult |= SCW_SELFINDPREV;
+                        if ( dwSelectWord & 0x40 )
+                            nResult |= SCW_SELFINDALL;
+                    }
                 }
             }
             else
@@ -825,7 +837,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
                 }
             }
 
-            if ( (nWordSelected == 0) ||
+            if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDNEXT) ||
                  ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
             {
                 if ( g_bFrameActivated )
@@ -885,7 +897,7 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
             }
         }
 
-        if ( (nWordSelected == 0) ||
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDPREV) ||
              ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
         {
             if ( g_bFrameActivated )
@@ -946,7 +958,7 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
         }
 
-        if ( (nWordSelected == 0) ||
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDALL) ||
              ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
         {
             if ( g_bFrameActivated )
