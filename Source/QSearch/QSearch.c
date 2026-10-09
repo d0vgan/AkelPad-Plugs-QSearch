@@ -736,7 +736,7 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 if ( crWord.cpMin != crWord.cpMax )
                 {
                     nResult |= SCW_WORDSELECTED; // selected a word
-                    if ( uSelectMode & SELECT_MODE_FND )
+                    if ( (uSelectMode & SELECT_MODE_FND) || (uSelectMode & SELECT_MODE_SELFND) )
                     {
                         if ( dwSelectWord & 0x10 )
                             nResult |= SCW_SELFINDNEXT;
@@ -987,19 +987,12 @@ void __declspec(dllexport) SelFindNext(PLUGINDATA* pd)
     if ( pd->dwSupport & PDS_GETSUPPORT )
         return;
 
-    if ( pd->bOnStart )
+    doQSearch(pd, TRUE);
+    if ( !pd->bOnStart )
     {
-        doQSearch(pd, TRUE);
-        /*
-        g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] |= 0x01;
-        g_Options.dwFlags[OPTF_CATCH_MAIN_F3] |= 1;
-        */
-    }
-    else
-    {
-        if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL) )
+        UINT nWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL);
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDNEXT) )
         {
-            doQSearch(pd, TRUE);
             if ( g_QSearchDlg.hDlg )
             {
                 SendMessage( g_QSearchDlg.hDlg, QSM_SELFIND, FALSE, 0 );
@@ -1018,12 +1011,16 @@ void __declspec(dllexport) SelFindPrev(PLUGINDATA* pd)
     if ( pd->dwSupport & PDS_GETSUPPORT )
         return;
 
-    if ( !doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL) )
+    doQSearch(pd, TRUE);
+    if ( !pd->bOnStart )
     {
-        doQSearch(pd, TRUE);
-        if ( g_QSearchDlg.hDlg )
+        UINT nWordSelected = doSelectCurrentWord(pd->hWndEdit, SELECT_MODE_SELFND, NULL);
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDPREV) )
         {
-            SendMessage( g_QSearchDlg.hDlg, QSM_SELFIND, TRUE, 0 );
+            if ( g_QSearchDlg.hDlg )
+            {
+                SendMessage( g_QSearchDlg.hDlg, QSM_SELFIND, TRUE, 0 );
+            }
         }
     }
 

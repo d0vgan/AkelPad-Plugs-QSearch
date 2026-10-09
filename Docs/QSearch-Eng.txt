@@ -490,6 +490,16 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      the word - i.e. not before the word's first character or after the word's
      last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
      The value of 0 does not select a word.
+     The following modifiers can be added to 1 or 2:
+      16 - select and immediately SelFindNext (for "QSearch::SelFindNext");
+      32 - select and immediately SelFindPrev (for "QSearch::SelFindPrev").
+     For example:
+      select_by_selfnd = 1
+        SelFindNext/Prev - only selects.
+      select_by_selfnd = 49  (1 + 16 + 32)
+        SelFindNext/Prev - selects and finds.
+      select_by_selfnd = 50  (2 + 16 + 32)
+        SelFindNext/Prev - selects (within the word) and finds.
 
 36) adj_incompl_regexp = 1
      Adjusts "incomplete" RegExp: the symbols "+", "*", "+?" and "*?" at the
@@ -672,6 +682,8 @@ History:
 v.8.7 (October 2026)
  * Glory to Ukraine! Glory to the heroes!
  + added: modifiers for 'select_by_fnd' to select & find
+ + added: modifiers for 'select_by_selfnd' to select & find
+ - fixed: the very first SelFindNext did not read the plugin's settings
 
 v.8.6 (September 2026)
  * Glory to Ukraine! Glory to the heroes!
