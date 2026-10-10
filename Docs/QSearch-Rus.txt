@@ -479,7 +479,8 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
 
 34) select_by_fnd = 1
      Эта настройка контролирует, будет ли выделяться текущее слово вызовом
-      Call("QSearch::FindNext", 1), Call("QSearch::FindPrev", 1),
+      Call("QSearch::FindNext", 1), Call("QSearch::FindNext", 3),
+      Call("QSearch::FindPrev", 1),
       Call("QSearch::FindAll", 1) и Call("QSearch::FindAll", 3)
      при отсутствии выделенного текста в редакторе.
      Значение 1 выделяет слово возле каретки (пример: сл|ово, слово|, |слово).
@@ -488,16 +489,17 @@ SelFindNext или SelFindPrev. В результате выделение переходит к
      с|лово, сл|ово, сло|во, слов|о - но не слово| или |слово).
      Значение 0 не выделяет слово.
      Следующие модификаторы могут быть добавлены к 1 или 2:
-      16 - выделить и тут же искать далее вниз (для "QSearch::FindNext");
-      32 - выделить и тут же искать далее вверх (для "QSearch::FindPrev");
-      64 - выделить и тут же искать все (для "QSearch::FindAll").
+      16 - выделить и тут же искать далее вниз для Call("QSearch::FindNext", 1);
+      32 - выделить и тут же искать далее вверх для Call("QSearch::FindPrev", 1);
+      64 - выделить и тут же искать с начала для Call("QSearch::FindNext", 3);
+      128 - выделить и тут же искать все для Call("QSearch::FindAll", 1 или 3).
      Например:
-      select_by_fnd = 65  (1 + 64)
-        FindAll - выделяет и ищет; FindNext/Prev - только выделяет.
+      select_by_fnd = 193  (1 + 64 + 128)
+        FindAll/FindBegin - выделяет и ищет; FindNext/Prev - только выделяет.
       select_by_fnd = 49  (1 + 16 + 32)
-        FindNext/Prev - выделяет и ищет; FindAll - только выделяет.
-      select_by_fnd = 114  (2 + 16 + 32 + 64)
-        FindNext/Prev/All - выделяет (внутри слова) и ищет.
+        FindNext/Prev - выделяет и ищет; FindAll/FindBegin - только выделяет.
+      select_by_fnd = 242  (2 + 16 + 32 + 64 + 128)
+        FindNext/Prev/Begin/All - выделяет (внутри слова) и ищет.
 
 35) select_by_selfnd = 1
      Эта настройка контролирует, будет ли выделяться текущее слово вызовом

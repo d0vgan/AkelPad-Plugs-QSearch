@@ -685,7 +685,8 @@ static int doQSearch(PLUGINDATA* pd, BOOL bInternalCall)
 #define  SCW_WORDSELECTED    0x02  //  selected a word
 #define  SCW_SELFINDNEXT     0x10  //  select and find next
 #define  SCW_SELFINDPREV     0x20  //  select and find prev
-#define  SCW_SELFINDALL      0x40  //  select and find all
+#define  SCW_SELFINDBEGIN    0x40  //  select and find from the beginning
+#define  SCW_SELFINDALL      0x80  //  select and find all
 
 static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNewSelection)
 {
@@ -736,13 +737,15 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 if ( crWord.cpMin != crWord.cpMax )
                 {
                     nResult |= SCW_WORDSELECTED; // selected a word
-                    if ( (uSelectMode & SELECT_MODE_FND) || (uSelectMode & SELECT_MODE_SELFND) )
+                    if ( uSelectMode & (SELECT_MODE_FND | SELECT_MODE_SELFND) )
                     {
                         if ( dwSelectWord & 0x10 )
                             nResult |= SCW_SELFINDNEXT;
                         if ( dwSelectWord & 0x20 )
                             nResult |= SCW_SELFINDPREV;
                         if ( dwSelectWord & 0x40 )
+                            nResult |= SCW_SELFINDBEGIN;
+                        if ( dwSelectWord & 0x80 )
                             nResult |= SCW_SELFINDALL;
                     }
                 }
@@ -837,7 +840,8 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
                 }
             }
 
-            if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDNEXT) ||
+            if ( (nWordSelected == 0) ||
+                 (nWordSelected & (uFindFlags == 0 ? SCW_SELFINDNEXT : SCW_SELFINDBEGIN)) ||
                  ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
             {
                 if ( g_bFrameActivated )

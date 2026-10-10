@@ -459,7 +459,8 @@ or file "AkelFiles\Plugs\QSearch.ini"):
 
 34) select_by_fnd = 1
      This option controls how a word is selected by
-      Call("QSearch::FindNext", 1), Call("QSearch::FindPrev", 1),
+      Call("QSearch::FindNext", 1), Call("QSearch::FindNext", 3),
+      Call("QSearch::FindPrev", 1),
       Call("QSearch::FindAll", 1) and Call("QSearch::FindAll", 3)
      when there is no selection.
      The value of 1 selects a word close to the caret (example: w|ord, word|,
@@ -469,16 +470,17 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
      The value of 0 does not select a word.
      The following modifiers can be added to 1 or 2:
-      16 - select and immediately Find Next (for "QSearch::FindNext");
-      32 - select and immediately Find Prev (for "QSearch::FindPrev");
-      64 - select and immediately Find All (for "QSearch::FindAll").
+      16 - select and immediately Find Next for Call("QSearch::FindNext", 1);
+      32 - select and immediately Find Prev for Call("QSearch::FindPrev", 1);
+      64 - select and immediately Find Begin for Call("QSearch::FindNext", 3);
+      128 - select and immediately Find All for Call("QSearch::FindAll", 1 or 3).
      For example:
-      select_by_fnd = 65  (1 + 64)
-        FindAll - selects and finds; FindNext/Prev - only selects.
+      select_by_fnd = 193  (1 + 64 + 128)
+        FindAll/FindBegin - selects and finds; FindNext/Prev - only selects.
       select_by_fnd = 49  (1 + 16 + 32)
-        FindNext/Prev - selects and finds; FindAll - only selects.
-      select_by_fnd = 114  (2 + 16 + 32 + 64)
-        FindNext/Prev/All - selects (within the word) and finds.
+        FindNext/Prev - selects and finds; FindAll/FindBegin - only selects.
+      select_by_fnd = 242  (2 + 16 + 32 + 64 + 128)
+        FindNext/Prev/Begin/All - selects (within the word) and finds.
 
 35) select_by_selfnd = 1
      This option controls how a word is selected by
