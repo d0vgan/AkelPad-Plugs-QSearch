@@ -257,6 +257,7 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      When F3 (Shift+F3) is pressed in AkelPad's editor window, the QSearch
      plugin continues searching if there was no previous call to AkelPad's
      standard Find or Replace Dialog.
+     See also: select_by_f3.
    catch_main_f3 = 0
      Standard AkelPad behaviour.
 
@@ -456,6 +457,17 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      the word - i.e. not before the word's first character or after the word's
      last character.
      (Example: w|ord, wo|rd, wor|d - but not word| or |word.)
+    The following modifiers can be added to 1 or 2:
+      16 - select and immediately Find Next (for F3 and QSearch::FindNext);
+      32 - select and immediately Find Prev (for Shift+F3 and QSearch::FindPrev);
+      128 - select and immediately Find All (for QSearch::FindAll).
+     For example:
+      select_by_f3 = 1
+        F3/Shift+F3/FindAll - only selects.
+      select_by_f3 = 49  (1 + 16 + 32)
+        F3/Shift+F3 - selects and finds; FindAll - only selects.
+      select_by_f3 = 130  (2 + 128)
+        F3/Shift+F3 - only selects (within the word); FindAll - selects and finds.
 
 34) select_by_fnd = 1
      This option controls how a word is selected by
@@ -493,8 +505,8 @@ or file "AkelFiles\Plugs\QSearch.ini"):
      last character (example: w|ord, wo|rd, wor|d - but not word| or |word).
      The value of 0 does not select a word.
      The following modifiers can be added to 1 or 2:
-      16 - select and immediately SelFindNext (for "QSearch::SelFindNext");
-      32 - select and immediately SelFindPrev (for "QSearch::SelFindPrev").
+      16 - select and immediately SelFindNext (for QSearch::SelFindNext);
+      32 - select and immediately SelFindPrev (for QSearch::SelFindPrev).
      For example:
       select_by_selfnd = 1
         SelFindNext/Prev - only selects.
@@ -685,6 +697,7 @@ v.8.7 (October 2026)
  * Glory to Ukraine! Glory to the heroes!
  + added: modifiers for 'select_by_fnd' to select & find
  + added: modifiers for 'select_by_selfnd' to select & find
+ + added: modifiers for 'select_by_f3' to select & find
  - fixed: the very first SelFindNext did not read the plugin's settings
 
 v.8.6 (September 2026)

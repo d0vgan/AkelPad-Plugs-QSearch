@@ -737,7 +737,7 @@ static UINT doSelectCurrentWord(HWND hEdit, UINT uSelectMode, CHARRANGE_X* pcrNe
                 if ( crWord.cpMin != crWord.cpMax )
                 {
                     nResult |= SCW_WORDSELECTED; // selected a word
-                    if ( uSelectMode & (SELECT_MODE_FND | SELECT_MODE_SELFND) )
+                    if ( uSelectMode & (SELECT_MODE_F3 | SELECT_MODE_FND | SELECT_MODE_SELFND) )
                     {
                         if ( dwSelectWord & 0x10 )
                             nResult |= SCW_SELFINDNEXT;
@@ -841,8 +841,7 @@ void __declspec(dllexport) FindNext(PLUGINDATA* pd)
             }
 
             if ( (nWordSelected == 0) ||
-                 (nWordSelected & (uFindFlags == 0 ? SCW_SELFINDNEXT : SCW_SELFINDBEGIN)) ||
-                 ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
+                 (nWordSelected & (uFindFlags == 0 ? SCW_SELFINDNEXT : SCW_SELFINDBEGIN)) )
             {
                 if ( g_bFrameActivated )
                 {
@@ -901,8 +900,7 @@ void __declspec(dllexport) FindPrev(PLUGINDATA* pd)
             }
         }
 
-        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDPREV) ||
-             ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDPREV) )
         {
             if ( g_bFrameActivated )
             {
@@ -962,8 +960,7 @@ void __declspec(dllexport) FindAll(PLUGINDATA* pd)
                 SendMessage( g_QSearchDlg.hDlg, QSM_SETNOTFOUND, FALSE, QS_SNF_SETINFOEMPTY );
         }
 
-        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDALL) ||
-             ((uSelectMode == SELECT_MODE_F3) && !(nWordSelected & SCW_WORDSELECTED)) )
+        if ( (nWordSelected == 0) || (nWordSelected & SCW_SELFINDALL) )
         {
             if ( g_bFrameActivated )
             {
@@ -1732,23 +1729,22 @@ LRESULT CALLBACK NewMainProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         if ( g_QSearchDlg.bQSearching ||
                              (g_QSearchDlg.hDlg && (g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01)) )
                         {
-                            WPARAM bFindPrev;
+                            WPARAM bFindPrev = (LOWORD(wParam) == IDM_EDIT_FINDNEXTUP) ? TRUE : FALSE;
 
                             if ( g_Options.dwFlags[OPTF_SRCH_PICKUP_SELECTION] & 0x01 )
                             {
-                                HWND hWndEdit;
-
-                                hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
+                                HWND hWndEdit = GetWndEdit(g_Plugin.hMainWnd);
                                 if ( hWndEdit )
                                 {
-                                    if ( doSelectCurrentWord(hWndEdit, SELECT_MODE_F3, NULL) & SCW_WORDSELECTED )
+                                    UINT nWordSelected = doSelectCurrentWord(hWndEdit, SELECT_MODE_F3, NULL);
+                                    if ( (nWordSelected & SCW_WORDSELECTED) &&
+                                         !(nWordSelected & (bFindPrev ? SCW_SELFINDPREV : SCW_SELFINDNEXT)) )
                                     {
                                         return 0; // just select current word - and nothing more
                                     }
                                 }
                             }
 
-                            bFindPrev = (LOWORD(wParam) == IDM_EDIT_FINDNEXTUP) ? TRUE : FALSE;
                             SendMessage( g_QSearchDlg.hDlg, QSM_FINDNEXT, bFindPrev, g_bWordJustSelectedByFnd ? QS_FF_NOSETSELFIRST : 0 );
                             g_bWordJustSelectedByFnd = FALSE;
                             return 0;
