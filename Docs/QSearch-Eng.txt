@@ -677,6 +677,8 @@ or file "AkelFiles\Plugs\QSearch.ini"):
        (1:22)    beginning of a string [[occurrence]] end of a string
      These characters around the occurrence are not added in the "Filter mode"
      and "Match only" modes.
+     It's a good idea to use a Unicode character here. For example, this one:
+     Left Black Lenticular Bracket, U+3010 (Hex) / 12304 (Decimal).
 
 56) logoutput_occ_end =
      When "Find All" uses Log::Output, the given characters are inserted after
@@ -688,6 +690,8 @@ or file "AkelFiles\Plugs\QSearch.ini"):
        (1:22)    beginning of a string >>occurrence<< end of a string
      These characters around the occurrence are not added in the "Filter mode"
      and "Match only" modes.
+     It's a good idea to use a Unicode character here. For example, this one:
+     Right Black Lenticular Bracket, U+3011 (Hex) / 12305 (Decimal).
 
 
 --------
